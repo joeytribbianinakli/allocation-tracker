@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-OeDuXFtsBWA8vvYqQHPxTymHK1SEMr3/VrM10lFMWak='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
+<link rel="icon" href="data:,">
+<title>Portfolio tracker</title>
+<style>
+:root{--bg:#f4f6f8;--c:#fff;--t:#0f1b2d;--m:#5f6c80;--b:#e2e7ee;--a:#1f6feb;--r:#d92d20;--g:#12805c}
+@media(prefers-color-scheme:dark){:root{--bg:#0d1218;--c:#151c26;--t:#e6ebf2;--m:#8d99ab;--b:#263040;--a:#5b9bff;--r:#ff6b60;--g:#3ccf9b}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px}
+header{background:var(--c);border-bottom:1px solid var(--b);position:sticky;top:0;z-index:5}
+.top{display:flex;align-items:center;gap:10px;padding:12px 16px;flex-wrap:wrap}
+h1{font-size:17px;margin:0;flex:1;letter-spacing:-.01em}h2{font-size:16px;margin:0}
+nav{display:flex;gap:4px;overflow-x:auto}
+nav button{border:0;background:none;color:var(--m);padding:10px 12px;font:inherit;font-weight:500;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap}
+nav button.on{color:var(--t);border-color:var(--a)}
+.cnt{background:var(--r);color:#fff;border-radius:99px;padding:0 6px;font-size:11px;margin-left:4px}
+button{font:inherit;cursor:pointer}button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--a);outline-offset:1px}
+.b,.ib,.chip{border:1px solid var(--b);background:var(--c);color:var(--t);border-radius:8px;padding:7px 12px}
+.b.p{background:var(--a);border-color:var(--a);color:#fff;font-weight:600}.ib{padding:4px 8px;color:var(--m);font-size:12px}.chip{font-size:12px;color:var(--m)}
+.seg{display:flex;border:1px solid var(--b);border-radius:8px;overflow:hidden}.seg button{border:0;background:none;color:var(--m);padding:6px 12px}.seg button.on{background:var(--a);color:#fff}
+main{padding-bottom:48px}
+.card{background:var(--c);border:1px solid var(--b);border-radius:12px;padding:16px;margin:12px 0}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}.grid .card{margin:0}
+.k{color:var(--m);font-size:12px}.v{font-size:22px;font-weight:650;margin-top:2px;letter-spacing:-.02em}
+select,input{font:inherit;color:var(--t);background:var(--bg);border:1px solid var(--b);border-radius:8px;padding:8px 10px;width:100%}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.sp{flex:1}
+table{width:100%;border-collapse:collapse}td{padding:8px 4px;border-bottom:1px solid var(--b)}tr:last-child td{border:0}.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:8px}
+.bar{height:8px;border-radius:99px;background:var(--b);overflow:hidden;display:flex;position:relative;margin:10px 0}.bar i{display:block;height:100%}
+.bar u{position:absolute;top:0;bottom:0;width:2px;background:var(--t)}
+.alert{border:1px solid var(--r);background:color-mix(in srgb,var(--r) 9%,transparent);border-radius:12px;padding:12px 14px;margin:12px 0}
+.tag{border-radius:99px;padding:2px 10px;font-size:12px;font-weight:600}.tag.ok{color:var(--g);background:color-mix(in srgb,var(--g) 14%,transparent)}.tag.bad{color:var(--r);background:color-mix(in srgb,var(--r) 14%,transparent)}
+.th{display:flex;justify-content:space-between;margin:22px 4px 0;font-weight:650;font-size:15px}
+.charts{display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}.donut{width:100%;max-width:210px;display:block;margin:0 auto 12px}
+.sel{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}.sel label{flex:1;min-width:160px;display:grid;gap:4px;color:var(--m);font-size:12px}
+.empty{text-align:center;padding:40px 16px}.empty p{color:var(--m)}
+dialog{border:1px solid var(--b);border-radius:14px;background:var(--c);color:var(--t);padding:20px;width:min(440px,92vw)}dialog::backdrop{background:#0009}
+dialog h3{margin:0 0 14px}.f{display:grid;gap:12px}.f label{display:grid;gap:4px;color:var(--m);font-size:12px}.two{display:grid;grid-template-columns:2fr 1fr;gap:10px}
+.ar{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}.er{color:var(--r);margin:0;min-height:1em;font-size:13px}.lk .cx{display:none}
+.menu{display:grid;gap:8px}.menu .b{text-align:left}
+.rk{font:600 15px/1.7 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.04em;text-align:center;background:var(--bg);border:1px dashed var(--b);border-radius:10px;padding:12px;user-select:all}
+.f .chk{display:flex;align-items:center;gap:8px;color:var(--t);font-size:13px}.f .chk input{width:auto}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--t);color:var(--bg);padding:9px 16px;border-radius:99px;opacity:0;pointer-events:none;transition:opacity .2s}#toast.show{opacity:1}
+.foot{color:var(--m);font-size:12px;text-align:center;margin-top:24px}
+.g a{color:var(--a)}.g ol,.g ul{margin:8px 0 0;padding-left:20px}.g li{margin:6px 0}.g code{background:var(--bg);border:1px solid var(--b);border-radius:6px;padding:0 5px}.g h2{margin-bottom:4px}.g .k{margin-top:8px}
+</style></head><body>
+<header>
+ <div class="wrap top"><h1>Portfolio</h1>
+  <div class="seg"><button data-act="cur" data-v="CAD">CAD</button><button data-act="cur" data-v="USD">USD</button></div>
+  <button class="chip" id="fxb" data-act="fx" title="Exchange rate"></button>
+  <button class="b" data-act="menu" aria-label="Backup and privacy">Backup &amp; privacy</button></div>
+ <nav class="wrap" id="tabs"></nav>
+</header>
+<main class="wrap" id="app"></main>
+<dialog id="dlg"></dialog><div id="toast"></div>
+<input type="file" id="file" accept=".json,application/json" hidden>
+<script>
+const $=s=>document.querySelector(s),K='portfolio.v1';
+const TYPES=['TFSA','RRSP','FHSA','Non-registered','RESP','Other'],CLS=['ETFs','Stocks','Bonds','Gold','Cash','Crypto','Real estate','Other'];
+const COL=['#2f6fed','#17a58a','#f2a30f','#e5484d','#8e6bf2','#3bb5e8','#7bb83d','#e5609f','#8a97a8'];
+const uid=()=>Math.random().toString(36).slice(2,9),esc=s=>String(s??'').replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
+const today=()=>new Date().toLocaleDateString('en-CA'),YR=new Date().getFullYear();
+const dflt=()=>({accounts:[],limits:[],contribs:[],fx:{r:1.37,d:null,manual:false},cur:'CAD',sync:{},cats:{types:[...TYPES],cls:[...CLS]}});
+let S=dflt(),lock=null,U={tab:'overview',scope:'all',by:'cls',year:YR};
+const norm=o=>{const d=dflt();for(const k in d)if(o&&o[k]!=null&&typeof o[k]==typeof d[k])d[k]=o[k];const nu=v=>Number.isFinite(+v)?+v:0;d.accounts.forEach(a=>{a.h=Array.isArray(a.h)?a.h:[];a.h.forEach(h=>h.amt=nu(h.amt));a.room=nu(a.room);if(a.rooms&&typeof a.rooms=='object')for(const y in a.rooms)a.rooms[y]=nu(a.rooms[y])});d.contribs.forEach(c=>{c.amt=nu(c.amt);c.cad=nu(c.cad);c.date=String(c.date||'')});d.limits.forEach(l=>l.max=nu(l.max));if(!(d.fx.r>0))d.fx.r=1.37;if(!Array.isArray(d.cats.types)||!Array.isArray(d.cats.cls))d.cats=dflt().cats;return d};
+/* ---------- money ---------- */
+const R=()=>S.fx.r,toCAD=(a,c)=>c=='USD'?a*R():a,pc=x=>(x*100).toFixed(1)+'%';
+const nf=(c,d=0)=>new Intl.NumberFormat('en-CA',{style:'currency',currency:c,maximumFractionDigits:d,minimumFractionDigits:d});
+const fmt=v=>nf(S.cur).format(S.cur=='CAD'?v:v/R()),fmtN=(a,c)=>nf(c,2).format(a);
+const cm={},col=n=>cm[n]??=COL[Object.keys(cm).length%COL.length];
+/* ---------- data helpers ---------- */
+const acc=id=>S.accounts.find(a=>a.id==id);
+const rows=()=>S.accounts.flatMap(a=>a.h.map(h=>({a,h,v:toCAD(h.amt,h.cur)})));
+const sum=r=>r.reduce((s,x)=>s+x.v,0);
+const filt=(sc,r=rows())=>sc=='all'?r:sc[0]=='a'?r.filter(x=>x.a.id==sc.slice(2)):r.filter(x=>x.a.type==sc.slice(2));
+const KEY={cls:x=>x.h.cls,acc:x=>x.a.name,type:x=>x.a.type,cur:x=>x.h.cur};
+const group=(r,by)=>{const m={};r.forEach(x=>{const k=KEY[by](x);m[k]=(m[k]||0)+x.v});return Object.entries(m).filter(e=>e[1]>0).sort((a,b)=>b[1]-a[1])};
+const catT=()=>[...new Set([...S.cats.types,...S.accounts.map(a=>a.type)])];
+const types=()=>{const c=catT();return[...new Set(S.accounts.map(a=>a.type))].sort((a,b)=>c.indexOf(a)-c.indexOf(b))};
+const allCls=()=>[...new Set([...S.cats.cls,...rows().map(x=>x.h.cls)])];
+const canon=(v,l)=>l.find(x=>x.toLowerCase()==v.toLowerCase())||v;
+const scopeName=sc=>sc=='all'?'entire portfolio':sc[0]=='t'?sc.slice(2)+' accounts':(acc(sc.slice(2))?.name||'deleted account');
+const scopeOpts=()=>[['all','Entire portfolio'],...types().map(t=>['t:'+t,'All '+t+' accounts']),...S.accounts.map(a=>['a:'+a.id,a.name+' ('+a.type+')'])];
+const O=(l,sel)=>l.map(x=>{const[v,t]=Array.isArray(x)?x:[x,x];return `<option value="${esc(v)}"${v==sel?' selected':''}>${esc(t)}</option>`}).join('');
+const lim=L=>{const r=filt(L.sc),t=sum(r),m=sum(r.filter(x=>L.k=='cur'?x.h.cur==L.val:x.h.cls==L.val));return{t,m,p:t?m/t:0}};
+const breaches=()=>S.limits.map(L=>({L,...lim(L)})).filter(x=>x.p*100>x.L.max+1e-9);
+const lname=L=>L.k=='cur'?L.val+' holdings':L.val;
+const roomOf=(a,y)=>a.rooms?.[y]??a.room??0;
+/* ---------- persistence & privacy (AES-GCM, key derived from your passphrase) ---------- */
+const b64=b=>btoa(String.fromCharCode(...new Uint8Array(b))),ub=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+const IT=600000,itOf=o=>{const n=+o.it;return Number.isInteger(n)&&n>=250000&&n<=2e6?n:250000};
+async function key(p,salt,it=250000){const m=await crypto.subtle.importKey('raw',new TextEncoder().encode(p),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:it,hash:'SHA-256'},m,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+const rb=n=>crypto.getRandomValues(new Uint8Array(n)),aes=b=>crypto.subtle.importKey('raw',b,'AES-GCM',false,['encrypt','decrypt']);
+/* Your data is locked with a random master key. That key is itself locked twice: by your passphrase and by a recovery key. Either one opens it. */
+const wrap=async(k,mb)=>{const i=rb(12);return{i:b64(i),d:b64(await crypto.subtle.encrypt({name:'AES-GCM',iv:i},k,mb))}},unwrap=async(k,w)=>new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:ub(w.i)},k,ub(w.d)));
+const B32='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567',normRK=x=>String(x).toUpperCase().replace(/0/g,'O').replace(/1/g,'I').replace(/[^A-Z2-7]/g,'');
+function genRK(){let v=0,n=0,o='';for(const x of rb(20)){v=(v<<8)|x;n+=8;while(n>=5){o+=B32[(v>>>(n-5))&31];n-=5}}return o.match(/.{4}/g).join('-')}
+const hdrOf=o=>({s:o.s,w:o.w,rs:o.rs,r:o.r,it:o.it});
+async function enc(o=S){const iv=rb(12),ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},lock.k,new TextEncoder().encode(JSON.stringify(o))),b={i:b64(iv),d:b64(ct)};return lock.hdr?{enc:2,...lock.hdr,...b}:{enc:1,s:b64(lock.s),...b}}
+async function opn(o,mb){const k=await aes(mb),pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:ub(o.i)},k,ub(o.d));return[JSON.parse(new TextDecoder().decode(pt)),{k,mb,hdr:hdrOf(o)}]}
+async function dec(o,p){const s=ub(o.s),k=await key(p,s,itOf(o));if(o.enc==2)return opn(o,await unwrap(k,o.w));const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:ub(o.i)},k,ub(o.d));return[JSON.parse(new TextDecoder().decode(pt)),{k,s,legacy:1}]}
+const recDec=async(o,rk)=>opn(o,await unwrap(await key(normRK(rk),ub(o.rs)),o.r));
+async function openAny(o,x){try{const[d,l]=await dec(o,x);return[d,l,0]}catch(e){if(o.enc==2&&o.r&&normRK(x).length==32){const[d,l]=await recDec(o,x);return[d,l,1]}throw e}}
+const pack=async(exp)=>{let o=S;if(exp){const{sync,...r}=S;o=r}return lock?await enc(o):o};
+const persist=()=>pack().then(o=>localStorage.setItem(K,JSON.stringify(o)));
+let tm;
+const save=()=>{if(S.sync?.token){S.sync.dirty=true;S.sync.n=(S.sync.n||0)+1;clearTimeout(tm);tm=setTimeout(doSync,2500)}return persist().catch(e=>toast('Could not save: '+e.message))};
+const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('show'),2800)};
+/* ---------- forex (free, no key; only the rate is requested, never your data) ---------- */
+async function fetchFx(){const src=[['https://api.frankfurter.dev/v1/latest?base=USD&symbols=CAD',j=>[j.rates.CAD,j.date]],['https://open.er-api.com/v6/latest/USD',j=>[j.rates.CAD,today()]]];
+ for(const[u,f]of src){try{const r=await fetch(u,{cache:'no-store',referrerPolicy:'no-referrer'});if(!r.ok)continue;const[x,d]=f(await r.json());if(x>0){S.fx={r:x,d,manual:false};persist().catch(()=>{});render();return true}}catch(e){}}return false}
+/* ---------- charts ---------- */
+function donut(g,t){let o=25,s='';g.forEach(([n,v])=>{const p=v/t*100;s+=`<circle r="15.9155" cx="21" cy="21" fill="none" stroke="${col(n)}" stroke-width="6" stroke-dasharray="${p} ${100-p}" stroke-dashoffset="${o}"><title>${esc(n)}: ${pc(v/t)}</title></circle>`;o-=p});
+ return `<svg viewBox="0 0 42 42" class="donut" role="img">${s}<text x="21" y="22.3" text-anchor="middle" font-size="3.1" font-weight="700" fill="currentColor">${fmt(t)}</text></svg>`}
+const legend=(g,t)=>`<table>${g.map(([n,v])=>`<tr><td><span class="dot" style="background:${col(n)}"></span>${esc(n)}</td><td class="n">${fmt(v)}</td><td class="n">${pc(v/t)}</td></tr>`).join('')}</table>`;
+/* ---------- views ---------- */
+const emptyCard=`<div class="card empty"><h2>No accounts yet</h2><p>Add an account (TFSA, RRSP, FHSA, non-registered…), then add what you hold in it.</p><button class="b p" data-act="addAcc">Add account</button></div>`;
+function vOver(){const all=rows(),T=sum(all);if(!S.accounts.length)return emptyCard;
+ const al=breaches(),cadN=sum(all.filter(x=>x.h.cur=='CAD')),usdV=sum(all.filter(x=>x.h.cur=='USD'));
+ const sr=filt(U.scope),st=sum(sr),g=group(sr,U.by),gc=group(sr,'cur');
+ return (al.length?`<div class="alert"><b>${al.length} limit${al.length>1?'s':''} exceeded</b>${al.map(b=>`<div>${esc(lname(b.L))} is ${pc(b.p)} of ${esc(scopeName(b.L.sc))} (limit ${b.L.max}%)</div>`).join('')}</div>`:'')+
+ `<div class="grid" style="margin-top:12px"><div class="card"><div class="k">Total value</div><div class="v">${fmt(T)}</div><div class="k">1 USD = ${R().toFixed(4)} CAD</div></div>
+ <div class="card"><div class="k">Held in CAD</div><div class="v">${fmtN(cadN,'CAD')}</div><div class="k">${pc(T?cadN/T:0)} of portfolio</div></div>
+ <div class="card"><div class="k">Held in USD</div><div class="v">${fmtN(usdV/R(),'USD')}</div><div class="k">${pc(T?usdV/T:0)} of portfolio · ≈ ${fmt(usdV)}</div></div></div>
+ <div class="card"><div class="sel"><label>View<select data-chg="scope">${O(scopeOpts(),U.scope)}</select></label>
+ <label>Group by<select data-chg="by">${O([['cls','Investment type'],['acc','Account'],['type','Account type'],['cur','Currency']],U.by)}</select></label></div>
+ ${st?`<div class="charts"><div>${donut(g,st)}${legend(g,st)}</div><div><div class="k" style="text-align:center;margin-bottom:6px">CAD vs USD</div>${donut(gc,st)}${legend(gc,st)}</div></div>`:'<p class="k">Nothing held in this selection yet.</p>'}</div>`}
+function vAcc(){const T=sum(rows());let h=`<div class="row" style="margin:16px 0 0"><h2 class="sp">Accounts</h2><button class="b" data-act="manage">Manage types</button><button class="b p" data-act="addAcc">Add account</button></div>`;if(!S.accounts.length)return h+emptyCard;
+ types().forEach(t=>{h+=`<div class="th"><span>${esc(t)}</span><span>${fmt(sum(filt('t:'+t)))}</span></div>`;
+  S.accounts.filter(a=>a.type==t).forEach(a=>{const r=filt('a:'+a.id),at=sum(r),g=group(r,'cls'),cn=sum(r.filter(x=>x.h.cur=='CAD')),us=sum(r.filter(x=>x.h.cur=='USD'));
+   h+=`<div class="card"><div class="row"><div class="sp"><b>${esc(a.name)}</b><div class="k">${pc(T?at/T:0)} of portfolio · CAD ${pc(at?cn/at:0)} / USD ${pc(at?us/at:0)}</div></div><div class="v" style="font-size:18px">${fmt(at)}</div>
+   <button class="ib" data-act="editAcc" data-id="${esc(a.id)}">Edit</button><button class="ib" data-act="delAcc" data-id="${esc(a.id)}">Delete</button></div>
+   <div class="bar">${g.map(([n,v])=>`<i title="${esc(n)}" style="width:${v/at*100}%;background:${col(n)}"></i>`).join('')}</div>
+   <table>${a.h.map(x=>`<tr><td><span class="dot" style="background:${col(x.cls)}"></span>${esc(x.cls)}</td><td class="n">${fmtN(x.amt,x.cur)}</td><td class="n">${fmt(toCAD(x.amt,x.cur))}</td><td class="n">${pc(at?toCAD(x.amt,x.cur)/at:0)}</td>
+   <td class="n"><button class="ib" data-act="editH" data-id="${esc(a.id)}" data-h="${esc(x.id)}">Edit</button><button class="ib" data-act="delH" data-id="${esc(a.id)}" data-h="${esc(x.id)}">Remove</button></td></tr>`).join('')}</table>
+   <button class="b" style="margin-top:8px" data-act="addH" data-id="${esc(a.id)}">Add holding</button></div>`})});return h}
+function vCon(){const ys=[...new Set([YR,U.year,...S.contribs.map(c=>+c.date.slice(0,4))])].sort((a,b)=>b-a),y=U.year,cs=S.contribs.filter(c=>c.date.startsWith(y)).sort((a,b)=>b.date.localeCompare(a.date));
+ const as=S.accounts.filter(a=>roomOf(a,y)>0||cs.some(c=>c.acc==a.id));
+ return `<div class="row" style="margin:16px 0"><h2 class="sp">Contributions</h2><select data-chg="year" style="width:auto">${O(ys.map(String),String(y))}</select><button class="b p" data-act="addC">Add contribution</button></div>`+
+ (as.length?as.map(a=>{const p=sum(cs.filter(c=>c.acc==a.id).map(c=>({v:c.cad}))),rm=roomOf(a,y),o=rm>0&&p>rm;
+  return `<div class="card"><div class="row"><div class="sp"><b>${esc(a.name)}</b> <span class="k">${esc(a.type)}</span><div class="k">${rm>0?`${fmt(p)} of ${fmt(rm)} room · ${o?`<b style="color:var(--r)">${fmt(p-rm)} over</b>`:fmt(rm-p)+' left'}`:`${fmt(p)} contributed · no room set`}</div></div>
+  ${rm>0?`<span class="tag ${o?'bad':'ok'}">${o?'Over limit':pc(p/rm)}</span>`:''}<button class="ib" data-act="editRoom" data-id="${esc(a.id)}">Set ${y} room</button></div>
+  ${rm>0?`<div class="bar"><i style="width:${Math.min(100,p/rm*100)}%;background:${o?'var(--r)':'var(--g)'}"></i></div>`:''}</div>`}).join(''):`<div class="card empty"><p>Set yearly contribution room on an account (Edit account), or log a contribution to begin.</p></div>`)+
+ (cs.length?`<div class="card"><table>${cs.map(c=>`<tr><td>${esc(c.date)}</td><td>${esc(acc(c.acc)?.name||'Deleted account')}</td><td class="n">${fmtN(c.amt,c.cur)}</td><td class="n"><button class="ib" data-act="delC" data-id="${esc(c.id)}">Delete</button></td></tr>`).join('')}</table></div>`:'')}
+function vLim(){const al=breaches().length;return `<div class="row" style="margin:16px 0"><h2 class="sp">Limits &amp; alerts</h2><button class="b p" data-act="addL">Add limit</button></div>`+
+ (S.limits.length?S.limits.map(L=>{const x=lim(L),o=x.p*100>L.max+1e-9;return `<div class="card"><div class="row"><div class="sp"><b>${esc(lname(L))}</b> ≤ ${L.max}% of ${esc(scopeName(L.sc))}<div class="k">Now ${pc(x.p)} (${fmt(x.m)} of ${fmt(x.t)})</div></div><span class="tag ${o?'bad':'ok'}">${o?'Over limit':'OK'}</span><button class="ib" data-act="delL" data-id="${esc(L.id)}">Delete</button></div>
+ <div class="bar"><i style="width:${Math.min(100,x.p*100)}%;background:${o?'var(--r)':'var(--g)'}"></i><u style="left:${Math.min(99.5,L.max)}%"></u></div></div>`}).join(''):`<div class="card empty"><p>Cap any investment type or currency, for example Gold at 10% of your portfolio. You'll get an alert when it's exceeded.</p></div>`)}
+const A=(u,t)=>`<a href="${u}" target="_blank" rel="noopener noreferrer">${t}</a>`;
+function vGuide(){return `<div class="g"><div class="row" style="margin:16px 0 0"><h2 class="sp">Setup guide</h2></div>
+<div class="card"><h2>How it fits together</h2><ul><li><b>Site repo</b>: holds only this app's <code>index.html</code>. GitHub Pages publishes it. It contains no data.</li>
+<li><b>Data repo</b> (private): holds one encrypted file with your portfolio, used to sync devices.</li><li><b>Passphrase</b>: encrypts your data in the browser before anything is saved or uploaded. Only you have it.</li><li><b>Recovery key</b>: a one-time code that unlocks your data if you forget the passphrase. Keep it somewhere safe.</li></ul>
+<div class="k">Do Parts 1 to 4 once. Part 5 is for each extra device.</div></div>
+<div class="card"><h2>Part 1: Publish the app on GitHub Pages</h2><ol>
+<li>Sign in at ${A('https://github.com','github.com')} and ${A('https://github.com/new','create a new repository')}. Name it something like <code>portfolio</code>. Public is fine here because the repo holds no data.</li>
+<li>On the repo page choose <b>Add file → Upload files</b>, drop in <code>index.html</code>, and click <b>Commit changes</b>.</li>
+<li>Open <b>Settings → Pages</b>. Under Build and deployment, set Source to <b>Deploy from a branch</b>, Branch to <b>main</b>, folder to <b>/ (root)</b>, then <b>Save</b>.</li>
+<li>After about a minute your app is live at <code>https://YOURNAME.github.io/portfolio/</code>. Bookmark it.</li></ol>
+<div class="k">Never put exported backups or any data file in this repo. It is public.</div></div>
+<div class="card"><h2>Part 2: Set your passphrase</h2><ol>
+<li>The first time you open the app it asks you to create a passphrase. You can change it later in <b>Backup &amp; privacy → Change passphrase</b>.</li>
+<li>It needs 8+ characters with upper and lower case letters, a number and a symbol. Longer is stronger: aim for 14+ and don't reuse one from elsewhere.</li>
+<li>The next screen shows your <b>recovery key</b> once. Copy it or download it, save it in your password manager, and tick the box. <b>Without your passphrase or this key, your data cannot be recovered.</b></li></ol>
+<div class="k">From now on, data saved in this browser is encrypted (AES-256) and you'll be asked for the passphrase when you open the app. If you forget it, choose <b>Forgot it? Use recovery key</b> on the lock screen and set a new passphrase.</div></div>
+<div class="card"><h2>Part 3: Create the private data repo and token</h2><ol>
+<li>${A('https://github.com/new','Create another repository')} named <code>portfolio-data</code> and set it to <b>Private</b>. It can be empty.</li>
+<li>Open ${A('https://github.com/settings/personal-access-tokens/new','fine-grained token creation')}. Name it <code>portfolio-sync</code> and pick an expiry (up to 1 year).</li>
+<li>Under <b>Repository access</b> choose <b>Only select repositories</b> and select <code>portfolio-data</code> only.</li>
+<li>Under <b>Permissions → Repository permissions</b> set <b>Contents</b> to <b>Read and write</b>. Leave everything else off.</li>
+<li>Click <b>Generate token</b> and copy it right away. GitHub shows it once. Store it in your password manager.</li></ol></div>
+<div class="card"><h2>Part 4: Connect the app</h2><ol>
+<li>Click <b>Backup &amp; privacy → Git Repo setup</b>.</li>
+<li>Enter the repository as <code>YOURNAME/portfolio-data</code>, paste the token, leave the file path as is, and click <b>Save &amp; sync</b>. If the data repo already has a saved portfolio, it replaces whatever is in this browser.</li>
+<li>Check your data repo. It should now contain <code>portfolio-data.enc.json</code> with unreadable text. That's the encrypted copy.</li>
+<li>The footer shows <b>Synced at …</b> after each change.</li></ol></div>
+<div class="card"><h2>Part 5: Add another device, or recover after clearing your browser</h2><ol>
+<li>Open your Pages address on the device.</li>
+<li>On the welcome screen choose <b>Restore from GitHub</b>.</li>
+<li>Enter the same repo name, token and file path.</li>
+<li>Enter your original passphrase (or your recovery key) and click <b>Restore</b>. Your data loads and sync is already on. If you used the recovery key, you'll be asked to choose a new passphrase.</li></ol></div>
+<div class="card"><h2>Good habits and troubleshooting</h2><ul>
+<li><b>Backups:</b> use <b>Export backup</b> now and then and keep the file somewhere private. It is encrypted when a passphrase is set.</li>
+<li><b>“Sync failed: GitHub rejected the token”:</b> the token expired or was revoked. Create a new one (Part 3) and paste it into the Sync dialog.</li>
+<li><b>“Repo not found, or the token has no access”:</b> check the repo name spelling and that the token includes that repo.</li>
+<li><b>Two devices changed data:</b> the app asks which copy to keep. Sync one device before editing on another.</li>
+<li><b>Recovery key:</b> keep it apart from exported backups, since anyone who has it can read your data. You can make a new one in <b>Backup &amp; privacy → Make a new recovery key</b>; the old one then stops working.</li>
+<li><b>Forgot the passphrase:</b> choose <b>Forgot it? Use recovery key</b> on the lock screen, enter the key and pick a new passphrase. Only if you've lost both: use <b>Erase data</b> on the lock screen, delete the file in your data repo, and start fresh or restore a backup you can still open.</li>
+<li><b>Stop syncing:</b> Backup &amp; privacy → Git Repo setup → Turn off sync on this device.</li></ul></div></div>`}
+function render(){const n=breaches().length;
+ $('#tabs').innerHTML=[['overview','Overview'],['accounts','Accounts'],['contrib','Contributions'],['limits','Limits & alerts'+(n?`<span class="cnt">${n}</span>`:'')],['guide','Setup guide']].map(([k,l])=>`<button class="${U.tab==k?'on':''}" data-act="tab" data-v="${k}">${l}</button>`).join('');
+ document.querySelectorAll('.seg button').forEach(b=>b.classList.toggle('on',b.dataset.v==S.cur));
+ $('#fxb').textContent=`USD/CAD ${R().toFixed(4)}${S.fx.manual?' (manual)':S.fx.d?' · '+S.fx.d:''}`;
+ $('#app').innerHTML=({overview:vOver,accounts:vAcc,contrib:vCon,limits:vLim,guide:vGuide})[U.tab]()+`<p class="foot">${S.sync?.token?(S.sync.dirty?'Sync pending':'Synced'+(S.sync.at?' at '+new Date(S.sync.at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):''))+' · encrypted before upload':'Your data stays in this browser. Back it up or turn on encrypted sync in “Backup &amp; privacy”.'}</p>`}
+/* ---------- modals ---------- */
+const bad=m=>{$('#er').textContent=m;return false};
+function modal(title,body,ok,fn,cls=''){const d=$('#dlg');d.className=cls;d.innerHTML=`<h3>${title}</h3><div class="f">${body}</div><p class="er" id="er"></p><div class="ar"><button class="b cx" data-act="x">${ok?'Cancel':'Close'}</button>${ok?`<button class="b p" id="ok">${ok}</button>`:''}</div>`;
+ if(!d.open)d.showModal();d.querySelector('input,select')?.focus();
+ if(ok)$('#ok').onclick=async()=>{try{if(await fn()!==false)d.close()}catch(e){bad(e.message)}}}
+$('#dlg').onkeydown=e=>{if(e.key=='Enter'&&e.target.tagName!='BUTTON'){e.preventDefault();if(e.target.id?.startsWith('cn-')){e.target.parentElement.querySelector('[data-act]')?.click();return}$('#ok')?.click()}};
+$('#dlg').oncancel=e=>{if($('#dlg').classList.contains('lk'))e.preventDefault()};
+const num=id=>parseFloat($(id).value);
+const pick=(id,nid,list,cur,ph)=>`<select id="${id}" data-new="${nid}">${O(list,cur)}<option value="__new">+ New…</option></select><input id="${nid}" placeholder="${ph}" ${list.length?'hidden':''}>`;
+const pv=(id,nid)=>$('#'+id).value=='__new'?$('#'+nid).value.trim():$('#'+id).value;
+function accModal(id){const a=id?acc(id):{name:'',type:catT()[0]||'',room:''};
+ modal(id?'Edit account':'New account',`<label>Name<input id="n" value="${esc(a.name)}" placeholder="e.g. Wealthsimple TFSA"></label>
+ <label>Account type${pick('t','tn',catT(),a.type,'New account type')}</label>
+ <label>Yearly contribution room, CAD (optional)<input id="r" type="number" min="0" step="any" value="${a.room||''}"></label><span class="k">Your personal room is in CRA My Account. You can change it per year later.</span>`,'Save',()=>{
+ const n=$('#n').value.trim(),t=canon(pv('t','tn'),catT()),r=$('#r').value===''?0:num('#r');
+ if(!n||!t)return bad('Enter a name and an account type');if(!(r>=0))return bad('Room must be zero or more');
+ if(id)Object.assign(a,{name:n,type:t,room:r});else S.accounts.push({id:uid(),name:n,type:t,room:r,h:[]});save();render()})}
+function hModal(aid,hid){const a=acc(aid),h=hid?a.h.find(x=>x.id==hid):{cls:allCls()[0]||'',amt:'',cur:'CAD'};
+ modal(hid?'Edit holding':'Add holding to '+esc(a.name),`<label>Investment type${pick('c','cn',allCls(),h.cls,'New investment type')}</label>
+ <div class="two"><label>Amount invested<input id="m" type="number" min="0" step="any" value="${h.amt}"></label><label>Currency<select id="u">${O(['CAD','USD'],h.cur)}</select></label></div>`,'Save',()=>{
+ const cls=canon(pv('c','cn'),allCls()),amt=num('#m');if(!cls)return bad('Choose an investment type');if(!(amt>=0))return bad('Enter a valid amount');
+ const o={id:hid||uid(),cls,amt,cur:$('#u').value};if(hid)Object.assign(h,o);else a.h.push(o);save();render()})}
+function cModal(){if(!S.accounts.length)return toast('Add an account first');
+ modal('Add contribution',`<label>Account<select id="a">${O(S.accounts.map(a=>[a.id,a.name+' ('+a.type+')']))}</select></label><label>Date<input id="d" type="date" value="${today()}"></label>
+ <div class="two"><label>Amount<input id="m" type="number" min="0" step="any"></label><label>Currency<select id="u">${O(['CAD','USD'])}</select></label></div><span class="k">USD amounts are converted to CAD at today's rate.</span>`,'Save',()=>{
+ const amt=num('#m'),d=$('#d').value;if(!(amt>0))return bad('Enter an amount above zero');if(!d)return bad('Choose a date');
+ S.contribs.push({id:uid(),acc:$('#a').value,date:d,amt,cur:$('#u').value,cad:toCAD(amt,$('#u').value)});U.year=+d.slice(0,4);save();U.tab='contrib';render()})}
+function roomModal(id){const a=acc(id);modal(`${U.year} room for ${esc(a.name)}`,`<label>Contribution room, CAD<input id="r" type="number" min="0" step="any" value="${roomOf(a,U.year)||''}"></label>`,'Save',()=>{
+ const r=$('#r').value===''?0:num('#r');if(!(r>=0))return bad('Enter zero or more');(a.rooms??={})[U.year]=r;save();render()})}
+function lModal(){if(!S.accounts.length)return toast('Add an account first');
+ modal('New limit',`<label>Applies to<select id="s">${O(scopeOpts())}</select></label><label>Investment type or currency<select id="g"><optgroup label="Investment type">${O(allCls().map(c=>['cls:'+c,c]))}</optgroup><optgroup label="Currency">${O([['cur:CAD','CAD holdings'],['cur:USD','USD holdings']])}</optgroup></select></label>
+ <label>Maximum share (%)<input id="x" type="number" min="0" max="100" step="any" placeholder="10"></label>`,'Save',()=>{
+ const m=num('#x');if(!(m>=0&&m<=100))return bad('Enter a percentage from 0 to 100');const[k,...v]=$('#g').value.split(':');
+ S.limits.push({id:uid(),sc:$('#s').value,k,val:v.join(':'),max:m});save();U.tab='limits';render()})}
+function fxModal(){modal('Exchange rate',`<div class="k">Live rate comes from the free Frankfurter (ECB) service, with open.er-api.com as backup. It's a daily reference rate. Only the rate is requested.</div>
+ <label>1 USD in CAD<input id="r" type="number" step="any" min="0" value="${R()}"></label><button class="b" data-act="live">Fetch live rate</button>`,'Save',()=>{
+ const r=num('#r');if(!(r>0))return bad('Enter a rate above zero');if(r!=R())S.fx={r,d:today(),manual:true};save();render()})}
+function menuModal(){modal('Backup & privacy',`<div class="menu"><button class="b" data-act="exp">Export backup (JSON)</button><button class="b" data-act="imp">Import backup</button><button class="b" data-act="sync">Git Repo setup${S.sync?.token?' (on)':''}</button>${S.sync?.token?'<button class="b" data-act="syncNow">Sync now</button>':''}
+ <button class="b" data-act="setPass">Change passphrase</button><button class="b" data-act="recKey">${lock?.hdr?'Make a new recovery key':'Set up recovery key'}</button><button class="b" data-act="lockNow">Lock now</button><button class="b" data-act="wipe" style="color:var(--r)">Erase all data</button></div>
+ <div class="k">Saved data is always encrypted (AES-256), and the app locks itself after 10 minutes idle. ${lock?.hdr?'If you forget your passphrase, your recovery key can unlock your data. Keep a backup too.':'<b>No recovery key yet.</b> If you forget your passphrase, your data can\'t be opened. Set one up now.'}</div>`)}
+const pwErr=(p,q)=>p.length<8?'Use at least 8 characters':!(/[a-z]/.test(p)&&/[A-Z]/.test(p)&&/\d/.test(p)&&/[^A-Za-z0-9]/.test(p))?'Include an uppercase letter, a lowercase letter, a number and a symbol':p!=q?'Passphrases don\'t match':'';
+async function mkLock(p,base){const mb=rb(32),rs=rb(16),rk=genRK(),kr=await key(normRK(rk),rs);let kp,s;
+ if(base){kp=base.k;s=base.s}else{s=rb(16);kp=await key(p,s,IT)}
+ return{L:{k:await aes(mb),mb,hdr:{s:b64(s),...(base?{}:{it:IT}),w:await wrap(kp,mb),rs:b64(rs),r:await wrap(kr,mb)}},rk}}
+async function newRK(){const rs=rb(16),rk=genRK(),kr=await key(normRK(rk),rs);return{L:{...lock,hdr:{...lock.hdr,rs:b64(rs),r:await wrap(kr,lock.mb)}},rk}}
+let curRK='';
+function showKey(rk,L,done,cls=''){curRK=rk;
+ modal('Save your recovery key',`<div class="k">If you ever forget your passphrase, this key unlocks your data. It is shown <b>only once</b>. Save it in your password manager or print it, and keep it apart from your backups. Anyone who has it can read your portfolio.</div>
+ <div class="rk" id="rk">${rk.slice(0,19)}<br>${rk.slice(20)}</div>
+ <div class="row"><button class="b" data-act="rkCopy" id="rkc">Copy</button><button class="b" data-act="rkSave">Download .txt</button></div>
+ <label class="chk"><input type="checkbox" id="rkok"> I've saved my recovery key somewhere safe</label>`,'Done',async()=>{
+ if(!$('#rkok').checked)return bad('Tick the box once your recovery key is saved');
+ lock=L;await save();done?.()},cls)}
+function recModal(){const v2=!!lock?.hdr;
+ modal(v2?'Make a new recovery key':'Set up a recovery key',v2?'<div class="k">This replaces your current recovery key. The old one will stop working, so save the new one before you close it.</div>':`<div class="k">A recovery key unlocks your data if you forget your passphrase. You'll see it once on the next screen.</div>`,v2?'Make new key':'Create recovery key',async()=>{
+ const{L,rk}=v2?await newRK():await mkLock('',lock);showKey(rk,L,()=>toast('Recovery key saved'));return false})}
+function passModal(){const v2=!!lock?.hdr;
+ modal('Change passphrase',`<label>New passphrase (8+ characters with upper and lower case, a number and a symbol)<input id="p1" type="password" autocomplete="new-password"></label><label>Confirm<input id="p2" type="password" autocomplete="new-password"></label>
+ <div class="k">${v2?'':'Changing the passphrase here also sets up your recovery key.'}</div>`,'Save',async()=>{
+ const p=$('#p1').value,q=$('#p2').value;
+ const e=pwErr(p,q);if(e)return bad(e);
+ if(!v2){const{L,rk}=await mkLock(p);showKey(rk,L,()=>toast('Passphrase changed'));return false}
+ const s=rb(16);lock.hdr={...lock.hdr,s:b64(s),it:IT,w:await wrap(await key(p,s,IT),lock.mb)};await save();toast('Passphrase changed')})}
+function resetPass(done){
+ modal('Choose a new passphrase',`<div class="k">Your recovery key worked. Choose a new passphrase for this app. Your recovery key stays valid.</div><label>New passphrase (8+ characters with upper and lower case, a number and a symbol)<input id="p1" type="password" autocomplete="new-password"></label><label>Confirm<input id="p2" type="password" autocomplete="new-password"></label>`,'Save',async()=>{
+ const p=$('#p1').value,e=pwErr(p,$('#p2').value);if(e)return bad(e);
+ const s=rb(16);lock.hdr={...lock.hdr,s:b64(s),it:IT,w:await wrap(await key(p,s,IT),lock.mb)};await save();toast('New passphrase saved');done()},'lk')}
+let UL;
+function unlock(o,done,keep){UL={o,done,keep};const rec=o.enc==2&&o.r;
+ modal('Unlock portfolio',`<label>Passphrase<input id="p" type="password" autocomplete="current-password"></label>${rec?'<button class="b" data-act="useRK">Forgot it? Use recovery key</button>':''}${keep?'':`<button class="b" data-act="wipe">${rec?'Erase all data instead':'Forgot it? Erase data'}</button>`}`,'Unlock',async()=>{
+ let r;try{r=await dec(o,$('#p').value)}catch{return bad('Wrong passphrase')}
+ S=norm(r[0]);if(!keep){lock=r[1];if(lock.hdr&&itOf(lock.hdr)<IT)try{const s=rb(16);lock.hdr={...lock.hdr,s:b64(s),it:IT,w:await wrap(await key($('#p').value,s,IT),lock.mb)};await persist()}catch{}}done()},keep?'':'lk')}
+function recUnlock(){const{o,done,keep}=UL;
+ modal('Use your recovery key',`<label>Recovery key<input id="rk1" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX-XXXX-XXXX-…" style="font-family:ui-monospace,Menlo,Consolas,monospace"></label>${keep?'':'<div class="k">After it unlocks your data you\'ll choose a new passphrase.</div>'}<button class="b" data-act="backUL">Back</button>`,'Unlock',async()=>{
+ let r;try{r=await recDec(o,$('#rk1').value)}catch{return bad('That recovery key doesn\'t match this data')}
+ S=norm(r[0]);if(keep){done();return}lock=r[1];resetPass(done);return false},keep?'':'lk')}
+/* ---------- encrypted sync via a private GitHub repo ---------- */
+let busy=false;
+const gh=(m,b)=>fetch(`https://api.github.com/repos/${S.sync.repo}/contents/${S.sync.path}`,{method:m,cache:'no-store',referrerPolicy:'no-referrer',headers:{Authorization:'Bearer '+S.sync.token,Accept:'application/vnd.github+json'},body:b&&JSON.stringify(b)});
+const ghErr=r=>new Error(r.status==401?'GitHub rejected the token':r.status==403?'Token lacks permission, or rate-limited':r.status==404?'Repo not found, or the token has no access to it':'GitHub error '+r.status);
+async function remote(){const r=await gh('GET');if(r.status==404)return null;if(!r.ok)throw ghErr(r);const j=await r.json();return{sha:j.sha,o:JSON.parse(atob(j.content.replace(/\s/g,'')))}}
+async function push(sha){const n0=S.sync.n||0,{sync,...rest}=S,body={message:'Update portfolio data',content:btoa(JSON.stringify(await enc(rest)))};if(sha)body.sha=sha;
+ const r=await gh('PUT',body);if(!r.ok)throw ghErr(r);S.sync.sha=(await r.json()).content.sha;S.sync.dirty=(S.sync.n||0)!=n0;S.sync.at=Date.now();
+ if(S.sync.dirty){clearTimeout(tm);tm=setTimeout(doSync,2500)}}
+async function pullDec(o){
+ if(lock?.hdr&&o.enc==2){try{const[d]=await opn(o,lock.mb);return[d,{...lock,hdr:hdrOf(o)}]}catch{}}
+ else if(lock?.legacy&&o.enc!=2&&o.s==b64(lock.s)){const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:ub(o.i)},lock.k,ub(o.d));return[JSON.parse(new TextDecoder().decode(pt)),lock]}
+ return new Promise((res,rej)=>{modal('Passphrase from your other device','<div class="k">The synced data was locked with a different passphrase than this device uses. Enter that passphrase, or its recovery key.</div><label>Passphrase or recovery key<input id="p" type="password"></label>','Unlock',async()=>{try{const[d,l]=await openAny(o,$('#p').value);res([d,l])}catch{return bad('Wrong passphrase or recovery key')}});
+  $('#dlg').addEventListener('close',()=>rej(new Error('cancelled')),{once:true})})}
+async function doSync(manual){
+ if(!S.sync?.token||busy||(manual!==true&&$('#dlg').open))return;busy=true;
+ try{if(!lock)throw new Error('Set a passphrase first');
+  const rm=await remote();
+  if(rm&&rm.sha!=S.sync.sha){const[d,l]=await pullDec(rm.o);
+   const first=!S.sync.sha,had=first&&S.accounts.length>0;
+   if(first||!(S.sync.dirty&&S.accounts.length)||confirm('Newer data from another device was found.\n\nOK: load it (replaces this device\'s data)\nCancel: keep this device\'s data and overwrite the other copy')){
+    const sy={...S.sync,sha:rm.sha,dirty:false,at:Date.now()};S=norm(d);S.sync=sy;lock=l;await persist();toast(had?'Replaced local data with your GitHub copy':'Loaded your latest synced data');return}}
+  if(S.sync.dirty||!rm||manual===true){await push(rm?.sha);await persist();if(manual===true)toast('Synced')}else S.sync.at=Date.now();
+ }catch(e){if(e.message!='cancelled')toast('Sync failed: '+e.message)}finally{busy=false;render()}}
+function syncModal(){const s=S.sync||{};
+ modal('Git Repo setup',`<div class="k">Data is encrypted with your passphrase before it leaves this device, so GitHub only stores unreadable text. Use a <b>private</b> repo and a fine-grained token limited to that one repo with “Contents: Read and write”. Use the same repo, token and passphrase on each device. If the repo already holds data, it replaces the data in this browser.</div>
+ <label>Repository (owner/name)<input id="gr" value="${esc(s.repo||'')}" placeholder="yourname/portfolio-data"></label>
+ <label>Access token<input id="gt" type="password" autocomplete="off" value="${esc(s.token||'')}"></label>
+ <label>File path<input id="gp" value="${esc(s.path||'portfolio-data.enc.json')}"></label>${s.token?'<button class="b" data-act="unsync">Turn off sync on this device</button>':''}`,'Save & sync',async()=>{
+ const repo=$('#gr').value.trim(),token=$('#gt').value.trim(),path=$('#gp').value.trim().replace(/^\/+/,'');
+ if(!/^[\w.-]+\/[\w.-]+$/.test(repo))return bad('Use the form owner/name');if(!token)return bad('Paste your access token');if(!path)return bad('Enter a file path');
+ const same=s.repo==repo&&s.path==path;S.sync={...s,repo,token,path,sha:same?s.sha:null,dirty:true,n:(s.n||0)+1};await persist();doSync(true)})}
+/* ---------- manage account types & investment types ---------- */
+const usage=(k,n)=>k=='types'?S.accounts.filter(a=>a.type==n).length:rows().filter(x=>x.h.cls==n).length;
+function catModal(){S.cats.types=catT();S.cats.cls=allCls();
+ const sec=(k,t,hint)=>`<div><b>${t}</b>${S.cats[k].map((n,i)=>`<div class="row" style="margin-top:6px"><input id="cn-${k}-${i}" value="${esc(n)}" style="flex:1;min-width:120px"><span class="k">${usage(k,n)} in use</span><button class="ib" data-act="catRen" data-k="${k}" data-i="${i}">Rename</button><button class="ib" data-act="catDel" data-k="${k}" data-i="${i}">Delete</button></div>`).join('')}
+ <div class="row" style="margin-top:8px"><input id="cn-${k}-new" placeholder="${hint}" style="flex:1;min-width:120px"><button class="b" data-act="catAdd" data-k="${k}">Add</button></div></div>`;
+ modal('Manage categories',sec('types','Account types','New type, e.g. LIRA')+sec('cls','Investment types','New type, e.g. REITs')+'<div class="k">Renaming updates everything that uses the name. Renaming to an existing name merges the two. Types that are in use can\'t be deleted.</div>')}
+/* ---------- first run: create passphrase or restore from GitHub ---------- */
+let boot;
+function welcome(done){boot=done;
+ modal('Create a passphrase',`<div class="k">Your portfolio is encrypted with this passphrase before it is saved, and you'll enter it each time you open the app. On the next screen you'll get a recovery key for the day you forget it.</div>
+ <label>Passphrase (8+ characters with upper and lower case, a number and a symbol)<input id="p1" type="password" autocomplete="new-password"></label><label>Confirm<input id="p2" type="password" autocomplete="new-password"></label>
+ 
+ ${S.accounts.length?'':'<button class="b" data-act="restoreGH">Already use this on another device? Restore from GitHub</button>'}`,'Create',async()=>{
+ const p=$('#p1').value,e=pwErr(p,$('#p2').value);if(e)return bad(e);
+ const{L,rk}=await mkLock(p);showKey(rk,L,done,'lk');return false},'lk')}
+function restoreModal(){
+ modal('Restore from GitHub',`<div class="k">Enter the same repository, token and passphrase you use on your other device. If you forgot the passphrase, enter your recovery key instead.</div>
+ <label>Repository (owner/name)<input id="gr" placeholder="yourname/portfolio-data"></label><label>Access token<input id="gt" type="password" autocomplete="off"></label>
+ <label>File path<input id="gp" value="portfolio-data.enc.json"></label><label>Passphrase or recovery key<input id="pp" type="password" autocomplete="current-password"></label><button class="b" data-act="welcomeBack">Back</button>`,'Restore',async()=>{
+ const repo=$('#gr').value.trim(),token=$('#gt').value.trim(),path=$('#gp').value.trim().replace(/^\/+/,''),p=$('#pp').value;
+ if(!/^[\w.-]+\/[\w.-]+$/.test(repo))return bad('Use the form owner/name');if(!token||!path||!p)return bad('Fill in every field');
+ S.sync={repo,token,path};let rm;try{rm=await remote()}finally{S.sync={}}
+ if(!rm)return bad('No synced file found at that path');
+ let d,l,rv;try{[d,l,rv]=await openAny(rm.o,p)}catch{return bad('Wrong passphrase or recovery key')}
+ lock=l;S=norm(d);S.sync={repo,token,path,sha:rm.sha,dirty:false,n:0,at:Date.now()};
+ if(rv){resetPass(boot);return false}
+ await persist();boot()},'lk')}
+/* ---------- events ---------- */
+const ACT={tab:d=>{U.tab=d.v;render()},cur:d=>{S.cur=d.v;save();render()},fx:fxModal,menu:menuModal,x:()=>$('#dlg').close(),
+ addAcc:()=>accModal(),editAcc:d=>accModal(d.id),addH:d=>hModal(d.id),editH:d=>hModal(d.id,d.h),addC:cModal,addL:lModal,editRoom:d=>roomModal(d.id),setPass:passModal,
+ delAcc:d=>{if(!confirm('Delete this account and all its holdings, contributions and limits?'))return;S.accounts=S.accounts.filter(a=>a.id!=d.id);S.contribs=S.contribs.filter(c=>c.acc!=d.id);S.limits=S.limits.filter(l=>l.sc!='a:'+d.id);if(U.scope=='a:'+d.id)U.scope='all';save();render()},
+ delH:d=>{if(!confirm('Remove this holding?'))return;const a=acc(d.id);a.h=a.h.filter(x=>x.id!=d.h);save();render()},
+ delC:d=>{S.contribs=S.contribs.filter(c=>c.id!=d.id);save();render()},delL:d=>{S.limits=S.limits.filter(l=>l.id!=d.id);save();render()},
+ live:async()=>{toast('Fetching…');const ok=await fetchFx();toast(ok?'Rate updated':'Could not reach the rate service');if(ok)fxModal()},
+ exp:async()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(await pack(true),null,1)],{type:'application/json'}));a.download=`portfolio-backup-${today()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1e3);toast(lock?'Encrypted backup saved':'Backup saved (unencrypted)')},
+ imp:()=>$('#file').click(),manage:catModal,
+ catAdd:d=>{const n=$(`#cn-${d.k}-new`).value.trim();if(!n)return;if(S.cats[d.k].some(x=>x.toLowerCase()==n.toLowerCase()))return toast('That name already exists');S.cats[d.k].push(n);save();catModal()},
+ catDel:d=>{const n=S.cats[d.k][d.i],u=usage(d.k,n);if(u)return toast(`“${n}” is in use (${u}). Rename it to merge, or remove those items first.`);S.cats[d.k].splice(d.i,1);save();catModal()},
+ catRen:d=>{const L=S.cats[d.k],old=L[d.i],n=$(`#cn-${d.k}-${d.i}`).value.trim();if(!n||n==old)return;
+  const j=L.findIndex((x,i)=>i!=d.i&&x.toLowerCase()==n.toLowerCase());if(j>=0&&!confirm(`“${L[j]}” already exists. Merge “${old}” into it?`))return;const nn=j>=0?L[j]:n;
+  if(d.k=='types'){S.accounts.forEach(a=>{if(a.type==old)a.type=nn});S.limits.forEach(l=>{if(l.sc=='t:'+old)l.sc='t:'+nn});if(U.scope=='t:'+old)U.scope='t:'+nn}
+  else{rows().forEach(x=>{if(x.h.cls==old)x.h.cls=nn});S.limits.forEach(l=>{if(l.k=='cls'&&l.val==old)l.val=nn})}
+  if(j>=0)L.splice(d.i,1);else L[d.i]=nn;save();render();catModal()},sync:()=>lock?syncModal():(toast('Set a passphrase first. Sync only uploads encrypted data.'),passModal()),syncNow:()=>doSync(true),
+ unsync:()=>{if(!confirm('Stop syncing on this device? Your local data and the GitHub copy are kept.'))return;S.sync={};persist();render();$('#dlg').close()},
+ restoreGH:()=>restoreModal(),welcomeBack:()=>welcome(boot),
+ useRK:recUnlock,backUL:()=>unlock(UL.o,UL.done,UL.keep),recKey:recModal,
+ rkCopy:async()=>{try{await navigator.clipboard.writeText(curRK);$('#rkc').textContent='Copied ✓'}catch{bad('Could not copy automatically. Select the key above and copy it.')}},
+ rkSave:()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([`Portfolio tracker recovery key\n${curRK}\n\nCreated ${today()}. Anyone with this key can unlock your portfolio data. Keep it private and apart from your backups.\n`],{type:'text/plain'}));a.download='portfolio-recovery-key.txt';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1e3)},
+ lockNow:()=>location.reload(),
+ wipe:()=>{if((prompt('Erase ALL saved data in this browser? Your GitHub copy, if any, is not touched. This cannot be undone.\n\nType ERASE to confirm.')||'').trim()=='ERASE'){localStorage.removeItem(K);location.reload()}else toast('Nothing was erased')}};
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(b)ACT[b.dataset.act]?.(b.dataset)});
+document.addEventListener('change',e=>{const t=e.target,k=t.dataset.chg;if(t.dataset.new){const n=$('#'+t.dataset.new);n.hidden=t.value!='__new';if(!n.hidden)n.focus()}if(k){U[k]=k=='year'?+t.value:t.value;render()}});
+$('#file').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
+ try{const o=JSON.parse(await f.text()),sy=S.sync;if(o.enc){unlock(o,()=>{S.sync=sy;save();render();toast('Backup restored')},true);$('#dlg').querySelector('.cx').style.display='';$('#dlg').className='';}else{if(!confirm('Replace current data with this backup?'))return;S=norm(o);S.sync=sy;await save();render();toast('Backup restored')}}catch(err){toast('That file isn\'t a valid backup')}};
+/* ---------- start ---------- */
+(async()=>{let o=null;const raw=localStorage.getItem(K);try{o=JSON.parse(raw)}catch{if(raw)localStorage.setItem(K+'.bak',raw)}
+ if(o&&o.enc)await new Promise(r=>unlock(o,r));else{if(o)S=norm(o);await new Promise(r=>welcome(r))}
+ render();if(!S.fx.manual)fetchFx().then(ok=>{if(!ok)toast('Offline: using last saved rate')});setTimeout(doSync,500);if(lock?.legacy)setTimeout(()=>{recModal();$('#dlg').addEventListener('close',()=>doSync(),{once:true})},60)})();
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)doSync()});addEventListener('online',()=>doSync());
+let idle;const bump=()=>{clearTimeout(idle);idle=setTimeout(()=>{if(lock)location.reload()},6e5)};['click','keydown','touchstart','mousemove'].forEach(ev=>addEventListener(ev,bump,{passive:true}));bump();
+</script></body></html>
