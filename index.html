@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-lz6EFj2r/9Avap+utkktsLovjnbVL4NzgVS/03tuORM='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-YEJwQ1xF4i/GKm8IVxeoMvXIeYUixWs8j/DeqoXoMfc='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
 <link rel="icon" href="data:,">
 <title>Portfolio tracker</title>
 <style>
@@ -49,6 +49,13 @@ dialog h3{margin:0 0 14px}.f{display:grid;gap:12px}.f label{display:grid;gap:4px
 .tg{border:0;background:none;color:var(--m);padding:4px 6px;font-size:15px;line-height:1;width:26px}
 .cg{display:block;width:100%;height:auto;margin-top:8px}.cg text{fill:var(--m);font-size:11px}.cg .gl{stroke:var(--b);stroke-width:1}
 .eye{display:inline-flex;align-items:center;justify-content:center;padding:6px 9px;color:var(--m)}.eye svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block}
+.dd{cursor:pointer}tr.dd:hover td{background:color-mix(in srgb,var(--a) 7%,transparent)}tr.dd.sl td{background:color-mix(in srgb,var(--a) 13%,transparent)}circle.dd{transition:opacity .15s}circle.dd:focus-visible{outline:none;stroke-width:7}tr.dd:focus-visible{outline:2px solid var(--a);outline-offset:-2px}
+#dd{scroll-margin-top:110px}
+.thr{display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:10px}
+dialog.wide{width:min(600px,94vw)}#cb{max-height:58vh;overflow-y:auto;padding-right:6px}
+.cr{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:6px 0;border-bottom:1px solid var(--b)}.cn{flex:1;min-width:110px;line-height:1.25}.cn .k{display:block;font-size:11px}.cn.dead{text-decoration:line-through;opacity:.6}
+.cr input{padding:5px 8px;width:auto}.cr input[data-rm]{width:112px}.cr input[data-al]{width:84px}
+.ic{display:inline-flex;align-items:center;padding:5px 7px}.ic svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 </style></head><body>
 <header>
  <div class="wrap top"><h1>Portfolio</h1>
@@ -68,7 +75,7 @@ const COL=['#2f6fed','#17a58a','#f2a30f','#e5484d','#8e6bf2','#3bb5e8','#7bb83d'
 const uid=()=>Math.random().toString(36).slice(2,9),esc=s=>String(s??'').replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 const today=()=>new Date().toLocaleDateString('en-CA'),YR=new Date().getFullYear();
 const dflt=()=>({accounts:[],limits:[],contribs:[],fx:{r:1.37,d:null,manual:false},cur:'CAD',sync:{},cats:{types:[...TYPES],cls:[...CLS],inst:[],rooms:{},alerts:{}}});
-let S=dflt(),lock=null,U={tab:'overview',scope:'all',by:'cls',year:YR,open:new Set(),cg:'m'};
+let S=dflt(),lock=null,U={tab:'overview',scope:'all',by:'cls',dd:[],ddb:null,year:YR,open:new Set(),cg:'m'};
 const norm=o=>{const d=dflt();for(const k in d)if(o&&o[k]!=null&&typeof o[k]==typeof d[k])d[k]=o[k];const nu=v=>Number.isFinite(+v)?+v:0;d.accounts.forEach(a=>{a.h=Array.isArray(a.h)?a.h:[];a.h.forEach(h=>h.amt=nu(h.amt));a.inst=typeof a.inst=='string'?a.inst:'';if(a.rooms&&typeof a.rooms=='object')for(const y in a.rooms)a.rooms[y]=nu(a.rooms[y])});d.contribs.forEach(c=>{c.amt=nu(c.amt);c.cad=nu(c.cad);c.date=String(c.date||'')});d.limits.forEach(l=>l.max=nu(l.max));if(!(d.fx.r>0))d.fx.r=1.37;if(!Array.isArray(d.cats.types)||!Array.isArray(d.cats.cls))d.cats=dflt().cats;d.cats.inst=Array.isArray(d.cats.inst)?d.cats.inst.filter(x=>typeof x=='string'):[];
  const r0=d.cats.rooms;d.cats.rooms={};if(r0&&typeof r0=='object'&&!Array.isArray(r0))for(const t in r0){const v=nu(r0[t]);if(v>0)d.cats.rooms[t]=v}
  /* one-time carry-over: room once typed on individual accounts moves to their account type (largest value wins) */
@@ -96,6 +103,8 @@ const allCls=()=>[...new Set([...S.cats.cls,...rows().map(x=>x.h.cls)])];
 const canon=(v,l)=>l.find(x=>x.toLowerCase()==v.toLowerCase())||v;
 const scopeName=sc=>sc=='all'?'entire portfolio':sc[0]=='t'?sc.slice(2)+' accounts':(acc(sc.slice(2))?.name||'deleted account');
 const scopeOpts=()=>[['all','Entire portfolio'],...types().map(t=>['t:'+t,'All '+t+' accounts']),...S.accounts.map(a=>['a:'+a.id,a.name+' ('+a.type+')'])];
+const scopeSel=sel=>{const o=(v,t)=>`<option value="${esc(v)}"${v==sel?' selected':''}>${esc(t)}</option>`;
+ return `<optgroup label="Portfolio">${o('all','Entire portfolio')}</optgroup>`+types().map(t=>`<optgroup label="${esc(t)}">${o('t:'+t,'All '+t+' accounts')}${S.accounts.filter(a=>a.type==t).map(a=>o('a:'+a.id,'\u00A0\u00A0'+a.name)).join('')}</optgroup>`).join('')};
 const O=(l,sel)=>l.map(x=>{const[v,t]=Array.isArray(x)?x:[x,x];return `<option value="${esc(v)}"${v==sel?' selected':''}>${esc(t)}</option>`}).join('');
 const lim=L=>{const r=filt(L.sc),t=sum(r),m=sum(r.filter(x=>L.k=='cur'?x.h.cur==L.val:x.h.cls==L.val));return{t,m,p:t?m/t:0}};
 const breaches=()=>S.limits.map(L=>({L,...lim(L)})).filter(x=>x.p*100>x.L.max+1e-9);
@@ -130,11 +139,19 @@ const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('show');clea
 async function fetchFx(){const src=[['https://api.frankfurter.dev/v1/latest?base=USD&symbols=CAD',j=>[j.rates.CAD,j.date]],['https://open.er-api.com/v6/latest/USD',j=>[j.rates.CAD,today()]]];
  for(const[u,f]of src){try{const r=await fetch(u,{cache:'no-store',referrerPolicy:'no-referrer'});if(!r.ok)continue;const[x,d]=f(await r.json());if(x>0){S.fx={r:x,d,manual:false};persist().catch(()=>{});render();return true}}catch(e){}}return false}
 /* ---------- charts ---------- */
-function donut(g,t){let o=25,s='';g.forEach(([n,v])=>{const p=v/t*100;s+=`<circle r="15.9155" cx="21" cy="21" fill="none" stroke="${col(n)}" stroke-width="6" stroke-dasharray="${p} ${100-p}" stroke-dashoffset="${o}"><title>${esc(n)}: ${pc(v/t)}</title></circle>`;o-=p});
- return `<svg viewBox="0 0 42 42" class="donut" role="img">${s}<text x="21" y="22.3" text-anchor="middle" font-size="3.1" font-weight="700" fill="currentColor">${fmt(t)}</text></svg>`}
-const legend=(g,t)=>`<table>${g.map(([n,v])=>`<tr><td><span class="dot" style="background:${col(n)}"></span>${esc(n)}</td><td class="n">${fmt(v)}</td><td class="n">${pc(v/t)}</td></tr>`).join('')}</table>`;
+function donut(g,t,by,act='dd'){const sel=act=='dd'&&U.dd[0]&&U.dd[0].by==by?U.dd[0].n:null;let o=25,s='';g.forEach(([n,v])=>{const p=v/t*100;s+=`<circle class="dd" role="button" tabindex="0" aria-label="${esc(n)}, ${pc(v/t)}. Show breakdown" data-act="${act}" data-by="${by}" data-n="${esc(n)}" r="15.9155" cx="21" cy="21" fill="none" stroke="${col(n)}" stroke-width="6"${sel!=null&&sel!=n?' opacity=".3"':''} stroke-dasharray="${p} ${100-p}" stroke-dashoffset="${o}"><title>${esc(n)}: ${pc(v/t)}</title></circle>`;o-=p});
+ return `<svg viewBox="0 0 42 42" class="donut" role="group" aria-label="Allocation chart">${s}<text x="21" y="22.3" text-anchor="middle" font-size="3.1" font-weight="700" fill="currentColor">${fmt(t)}</text></svg>`}
+const legend=(g,t,by,act='dd')=>`<table>${g.map(([n,v])=>`<tr class="dd${act=='dd'&&U.dd[0]&&U.dd[0].by==by&&U.dd[0].n==n?' sl':''}" tabindex="0" data-act="${act}" data-by="${by}" data-n="${esc(n)}"><td><span class="dot" style="background:${col(n)}"></span>${esc(n)}</td><td class="n">${fmt(v)}</td><td class="n">${pc(v/t)}</td></tr>`).join('')}</table>`;
 /* ---------- views ---------- */
 const emptyCard=`<div class="card empty"><h2>No accounts yet</h2><p>Add an account (TFSA, RRSP, FHSA, non-registered…), then add what you hold in it.</p><button class="b p" data-act="addAcc">Add account</button></div>`;
+const BYN={cls:'Investment type',acc:'Account',type:'Account type',cur:'Currency'},SUB={cls:'acc',acc:'cls',type:'cls',cur:'cls'};
+function vDD(sr){const P=U.dd;if(!P.length)return '';const r=sr.filter(x=>P.every(f=>KEY[f.by](x)==f.n)).sort((a,b)=>b.v-a.v),t=sum(r);if(!(t>0)){U.dd=[];return ''}
+ const L=P[P.length-1],av=['cls','acc','type','cur'].filter(k=>!P.some(f=>f.by==k)),dim=av.includes(U.ddb)?U.ddb:av.includes(SUB[L.by])?SUB[L.by]:av[0],g=dim?group(r,dim):[],st=sum(sr);
+ const cr=`<button class="chip" data-act="ddt" data-i="-1">Overview</button>`+P.map((f,i)=>' › '+(i==P.length-1?`<b>${esc(f.n)}</b>`:`<button class="chip" data-act="ddt" data-i="${i}">${esc(f.n)}</button>`)).join('');
+ return `<div class="card" id="dd"><div class="row" style="gap:6px">${cr}<span class="sp"></span><button class="ib" data-act="ddx">Close</button></div>
+ <div class="row" style="margin-top:10px"><div class="sp"><b>${esc(L.n)}</b> <span class="k">· ${BYN[L.by]}</span><div class="k">${pc(st?t/st:0)} of ${esc(scopeName(U.scope))} · ${r.length} holding${r.length==1?'':'s'}</div></div><div class="v" style="font-size:18px">${fmt(t)}</div></div>
+ ${dim?`<div class="sel" style="margin-top:12px"><label>Break down by<select data-chg="ddb">${O(av.map(k=>[k,BYN[k]]),dim)}</select></label></div><div style="max-width:340px;margin:0 auto">${donut(g,t,dim,'dd2')}${legend(g,t,dim,'dd2')}</div><div class="k" style="text-align:center;margin-top:6px">Click a slice or row to drill further.</div>`:''}
+ <table style="margin-top:14px">${r.map(x=>`<tr><td><span class="dot" style="background:${col(x.h.cls)}"></span>${esc(x.a.name)} <span class="k">· ${esc(x.h.cls)}</span></td><td class="n">${fmtN(x.h.amt,x.h.cur)}</td>${x.h.cur!=S.cur?`<td class="n">${fmt(x.v)}</td>`:'<td></td>'}<td class="n">${pc(x.v/t)}</td></tr>`).join('')}</table></div>`}
 function vOver(){const all=rows(),T=sum(all);if(!S.accounts.length)return emptyCard;
  const al=breaches(),cadN=sum(all.filter(x=>x.h.cur=='CAD')),usdV=sum(all.filter(x=>x.h.cur=='USD'));
  const sr=filt(U.scope),st=sum(sr),g=group(sr,U.by),gc=group(sr,'cur');
@@ -142,9 +159,9 @@ function vOver(){const all=rows(),T=sum(all);if(!S.accounts.length)return emptyC
  `<div class="grid" style="margin-top:12px"><div class="card"><div class="k">Total value</div><div class="v">${fmt(T)}</div><div class="k">1 USD = ${R().toFixed(4)} CAD</div></div>
  <div class="card"><div class="k">Held in CAD</div><div class="v">${fmtN(cadN,'CAD')}</div><div class="k">${pc(T?cadN/T:0)} of portfolio</div></div>
  <div class="card"><div class="k">Held in USD</div><div class="v">${fmtN(usdV/R(),'USD')}</div><div class="k">${pc(T?usdV/T:0)} of portfolio · ≈ ${fmt(usdV)}</div></div></div>
- <div class="card"><div class="sel"><label>View<select data-chg="scope">${O(scopeOpts(),U.scope)}</select></label>
+ <div class="card"><div class="sel"><label>View<select data-chg="scope">${scopeSel(U.scope)}</select></label>
  <label>Group by<select data-chg="by">${O([['cls','Investment type'],['acc','Account'],['type','Account type'],['cur','Currency']],U.by)}</select></label></div>
- ${st?`<div class="charts"><div>${donut(g,st)}${legend(g,st)}</div><div><div class="k" style="text-align:center;margin-bottom:6px">CAD vs USD</div>${donut(gc,st)}${legend(gc,st)}</div></div>`:'<p class="k">Nothing held in this selection yet.</p>'}</div>`}
+ ${st?`<div class="charts"><div>${donut(g,st,U.by)}${legend(g,st,U.by)}</div><div><div class="k" style="text-align:center;margin-bottom:6px">CAD vs USD</div>${donut(gc,st,'cur')}${legend(gc,st,'cur')}</div></div>`:'<p class="k">Nothing held in this selection yet.</p>'}</div>`+vDD(sr)}
 function vAcc(){const T=sum(rows());let h=`<div class="row" style="margin:16px 0 0"><h2 class="sp">Accounts</h2><button class="b" data-act="manage">Manage categories</button><button class="b p" data-act="addAcc">Add account</button></div>`;if(!S.accounts.length)return h+emptyCard;
  h+=`<div class="row" style="margin:10px 0 0;justify-content:flex-end"><button class="b" data-act="expA">Expand all</button><button class="b" data-act="colA">Collapse all</button></div>`;
  types().forEach(t=>{h+=`<div class="th"><span>${esc(t)}</span><span>${fmt(sum(filt('t:'+t)))}</span></div>`;
@@ -155,24 +172,25 @@ function vAcc(){const T=sum(rows());let h=`<div class="row" style="margin:16px 0
    <table>${a.h.map(x=>`<tr><td><span class="dot" style="background:${col(x.cls)}"></span>${esc(x.cls)}</td><td class="n">${fmtN(x.amt,x.cur)}</td><td class="n">${fmt(toCAD(x.amt,x.cur))}</td><td class="n">${pc(at?toCAD(x.amt,x.cur)/at:0)}</td>
    <td class="n"><button class="ib" data-act="editH" data-id="${esc(a.id)}" data-h="${esc(x.id)}">Edit</button><button class="ib" data-act="delH" data-id="${esc(a.id)}" data-h="${esc(x.id)}">Remove</button></td></tr>`).join('')}</table>
    <button class="b" style="margin-top:8px" data-act="addH" data-id="${esc(a.id)}">Add holding</button>`:''}</div>`})});return h}
+const fdt=d=>d.length==4?d:d.length==7?MN[+d.slice(5)-1]+' '+d.slice(0,4):d;
 const MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],fd=v=>HID?MASK:nf(S.cur).format(v),fc=v=>HID?MASK:new Intl.NumberFormat('en-CA',{style:'currency',currency:S.cur,notation:'compact',maximumFractionDigits:1}).format(v);
 function roomTiles(y){const ts=catT().filter(t=>roomOf(t)>0);if(!ts.length)return '';
  const d=ts.map(t=>{const all=S.contribs.filter(c=>acc(c.acc)?.type==t),p=sum(all.map(c=>({v:c.cad}))),py=sum(all.filter(c=>c.date.startsWith(y)).map(c=>({v:c.cad}))),rm=roomOf(t),al=alertOf(t);return{t,p,py,rm,al,left:rm-p,hit:al!=null&&(rm-p)/rm*100<=al+1e-9}}),tl=d.reduce((s,x)=>s+Math.max(0,x.left),0),ov=d.filter(x=>x.left<0).length;
  return `<div class="grid" style="margin-top:12px">${d.length>1?`<div class="card"><div class="k">Total room left</div><div class="v">${fmt(tl)}</div><div class="k">across ${d.map(x=>esc(x.t)).join(', ')}${ov?` · <b style="color:var(--r)">${ov} over limit</b>`:''}</div></div>`:''}${d.map(x=>{const o=x.left<0;return `<div class="card"${x.hit?' style="border-color:var(--r)"':''}><div class="k">${esc(x.t)} room left${x.hit?' <span class="tag bad">Alert</span>':''}</div><div class="v"${o?' style="color:var(--r)"':''}>${o?fmt(-x.left)+' over':fmt(x.left)}</div><div class="bar"><i style="width:${Math.min(100,x.p/x.rm*100)}%;background:${o||x.hit?'var(--r)':'var(--g)'}"></i></div><div class="k">${fmt(x.p)} of ${fmt(x.rm)} used · ${pc(x.p/x.rm)}<br>${fmt(x.py)} contributed in ${y}${x.al!=null?`<br>Alert at ${x.al}% room left`:''}</div></div>`}).join('')}</div>`}
 function cgCard(y){const cs=S.contribs.filter(c=>acc(c.acc));if(!cs.length)return '';
- const kx=S.cur=='CAD'?1:1/R(),tp=c=>acc(c.acc).type,cum=U.cg=='c',W=480,H=240,L=48,T=12,pw=W-L-18,ph=H-T-28,pad=n=>String(n).padStart(2,'0');
+ const kx=S.cur=='CAD'?1:1/R(),tp=c=>acc(c.acc).type,cum=U.cg=='c',W=480,H=240,L=48,T=12,pw=W-L-18,ph=H-T-28,pad=n=>String(n).padStart(2,'0'),yo=cs.some(c=>c.date.length==4),mk=c=>cum&&c.date.length==4?c.date+'-01':c.date.slice(0,7);
  let keys=[];
- if(cum){const ms=cs.map(c=>c.date.slice(0,7)).sort(),z=[ms[ms.length-1],today().slice(0,7)].sort().pop();let[a,b]=ms[0].split('-').map(Number);const[ye,me]=z.split('-').map(Number);while(a<ye||(a==ye&&b<=me)){keys.push(a+'-'+pad(b));if(++b>12){b=1;a++}}}
- else keys=MN.map((_,i)=>y+'-'+pad(i+1));
+ if(cum){const ms=cs.map(mk).sort(),z=[ms[ms.length-1],today().slice(0,7)].sort().pop();let[a,b]=ms[0].split('-').map(Number);const[ye,me]=z.split('-').map(Number);while(a<ye||(a==ye&&b<=me)){keys.push(a+'-'+pad(b));if(++b>12){b=1;a++}}}
+ else{keys=MN.map((_,i)=>y+'-'+pad(i+1));if(cs.some(c=>c.date==String(y)))keys.push(String(y))}
  const ty=catT().filter(t=>cs.some(c=>tp(c)==t&&(cum||c.date.startsWith(y))));
- const mv=(t,k)=>cs.filter(c=>c.date.startsWith(k)&&tp(c)==t).reduce((s,c)=>s+c.cad*kx,0);
+ const mv=(t,k)=>cs.filter(c=>mk(c)==k&&tp(c)==t).reduce((s,c)=>s+c.cad*kx,0);
  const ser=ty.map(t=>{let run=0;return{t,v:keys.map(k=>{const m=mv(t,k);return cum?(run+=m):m})}});
  const tot=keys.map((_,i)=>ser.reduce((s,x)=>s+x.v[i],0)),mx=Math.max(0,...tot);
- const head=`<div class="row"><div class="sp"><b>Contributions over time</b><div class="k">${cum?'Running total, all years':'Monthly, '+y}</div></div><div class="seg"><button class="${cum?'':'on'}" data-act="cg" data-v="m">Monthly</button><button class="${cum?'on':''}" data-act="cg" data-v="c">Cumulative</button></div></div>`;
+ const head=`<div class="row"><div class="sp"><b>Contributions over time</b><div class="k">${cum?'Running total, all years'+(yo?' · entries with no month count from January':''):'Monthly, '+y+(keys.length>12?' · “Year” = no month given':'')}</div></div><div class="seg"><button class="${cum?'':'on'}" data-act="cg" data-v="m">Monthly</button><button class="${cum?'on':''}" data-act="cg" data-v="c">Cumulative</button></div></div>`;
  if(!mx)return `<div class="card">${head}<p class="k" style="margin:12px 0 0">No contributions in ${y}.</p></div>`;
  const raw=mx/4,e=10**Math.floor(Math.log10(raw)),f=raw/e,st=(f<=1?1:f<=2?2:f<=5?5:10)*e,top=st*Math.ceil(mx/st-1e-9),Y=v=>T+ph-v/top*ph,ticks=[];for(let v=0;v<=top+st/1e6;v+=st)ticks.push(v);
  let g=ticks.map(v=>`<line class="gl" x1="${L}" x2="${W-18}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${L-6}" y="${Y(v)+4}" text-anchor="end">${fc(v)}</text>`).join('');
- if(!cum){const sl=pw/12;keys.forEach((k,i)=>{let base=0;ser.forEach(x=>{const v=x.v[i];if(!v)return;g+=`<rect x="${(L+i*sl+sl*.19).toFixed(1)}" y="${Y(base+v).toFixed(1)}" width="${(sl*.62).toFixed(1)}" height="${(v/top*ph).toFixed(1)}" rx="2" fill="${col(x.t)}"><title>${MN[i]} ${y} · ${esc(x.t)}: ${fd(v)}</title></rect>`;base+=v});g+=`<text x="${(L+i*sl+sl/2).toFixed(1)}" y="${H-10}" text-anchor="middle">${MN[i]}</text>`})}
+ if(!cum){const sl=pw/keys.length,ML=i=>i<12?MN[i]:'Year';keys.forEach((k,i)=>{let base=0;ser.forEach(x=>{const v=x.v[i];if(!v)return;g+=`<rect x="${(L+i*sl+sl*.19).toFixed(1)}" y="${Y(base+v).toFixed(1)}" width="${(sl*.62).toFixed(1)}" height="${(v/top*ph).toFixed(1)}" rx="2" fill="${col(x.t)}"><title>${i<12?MN[i]+' '+y:y+', no month given'} · ${esc(x.t)}: ${fd(v)}</title></rect>`;base+=v});g+=`<text x="${(L+i*sl+sl/2).toFixed(1)}" y="${H-10}" text-anchor="middle">${ML(i)}</text>`})}
  else{const n=keys.length,X=i=>n>1?L+i*pw/(n-1):L+pw/2,stp=Math.ceil(n/6);
   keys.forEach((k,i)=>{if(i%stp==0)g+=`<text x="${X(i).toFixed(1)}" y="${H-10}" text-anchor="middle">${MN[+k.slice(5)-1]} ${k.slice(2,4)}</text>`});
   const ln=(v,c,w)=>`<polyline fill="none" stroke-linejoin="round" stroke-linecap="round" stroke-width="${w}" style="stroke:${c}" points="${v.map((a,i)=>X(i).toFixed(1)+','+Y(a).toFixed(1)).join(' ')}"/>`;
@@ -188,7 +206,7 @@ function vCon(){const ys=[...new Set([YR,U.year,...S.contribs.map(c=>+c.date.sli
   const by=S.accounts.filter(a=>a.type==t).map(a=>[a.name,sum(S.contribs.filter(c=>c.acc==a.id).map(c=>({v:c.cad})))]).filter(x=>x[1]>0),brk=by.length>1?`<div class="k">All years by account: ${by.map(([nm,v])=>esc(nm)+' '+fmt(v)).join(' · ')}</div>`:'';
   return `<div class="card"><div class="row"><button class="tg" data-act="togA" data-id="${esc(id)}" aria-expanded="${op}" aria-label="${op?'Collapse':'Expand'} ${esc(t)}">${op?'▾':'▸'}</button><div class="sp" data-act="togA" data-id="${esc(id)}" style="cursor:pointer"><b>${esc(t)}</b> <span class="k">${n} account${n==1?'':'s'}</span><div class="k">${rm>0?`${fmt(p)} of ${fmt(rm)} room · ${o?`<b style="color:var(--r)">${fmt(p-rm)} over</b>`:fmt(rm-p)+' left'}`:`${fmt(p)} contributed in total · no room set`} · ${fmt(py)} in ${y}</div></div>
   ${rm>0?`<span class="tag ${o||lo?'bad':'ok'}">${o?'Over limit':lo?'Low room':pc(p/rm)}</span>`:''}</div>
-  ${op?`${rm>0?`<div class="bar"><i style="width:${Math.min(100,p/rm*100)}%;background:${o?'var(--r)':'var(--g)'}"></i></div>`:''}${brk}${yr.length?`<table>${yr.map(c=>`<tr><td>${esc(c.date)}</td><td>${esc(acc(c.acc)?.name||'Deleted account')}</td><td class="n">${fmtN(c.amt,c.cur)}</td><td class="n"><button class="ib" data-act="delC" data-id="${esc(c.id)}">Delete</button></td></tr>`).join('')}</table>`:`<div class="k" style="margin-top:8px">No contributions in ${y}.</div>`}`:''}</div>`}).join(''):`<div class="card empty"><p>Set contribution room for an account type under “Account types”, then log a contribution to begin.</p></div>`)}
+  ${op?`${rm>0?`<div class="bar"><i style="width:${Math.min(100,p/rm*100)}%;background:${o?'var(--r)':'var(--g)'}"></i></div>`:''}${brk}${yr.length?`<table>${yr.map(c=>`<tr><td>${esc(fdt(c.date))}</td><td>${esc(acc(c.acc)?.name||'Deleted account')}</td><td class="n">${fmtN(c.amt,c.cur)}</td><td class="n"><button class="ib" data-act="delC" data-id="${esc(c.id)}">Delete</button></td></tr>`).join('')}</table>`:`<div class="k" style="margin-top:8px">No contributions in ${y}.</div>`}`:''}</div>`}).join(''):`<div class="card empty"><p>Set contribution room for an account type under “Account types”, then log a contribution to begin.</p></div>`)}
 function vLim(){const al=breaches().length;return `<div class="row" style="margin:16px 0"><h2 class="sp">Limits &amp; alerts</h2><button class="b p" data-act="addL">Add limit</button></div>`+
  (S.limits.length?S.limits.map(L=>{const x=lim(L),o=x.p*100>L.max+1e-9;return `<div class="card"><div class="row"><div class="sp"><b>${esc(lname(L))}</b> ≤ ${L.max}% of ${esc(scopeName(L.sc))}<div class="k">Now ${pc(x.p)} (${fmt(x.m)} of ${fmt(x.t)})</div></div><span class="tag ${o?'bad':'ok'}">${o?'Over limit':'OK'}</span><button class="ib" data-act="delL" data-id="${esc(L.id)}">Delete</button></div>
  <div class="bar"><i style="width:${Math.min(100,x.p*100)}%;background:${o?'var(--r)':'var(--g)'}"></i><u style="left:${Math.min(99.5,L.max)}%"></u></div></div>`}).join(''):`<div class="card empty"><p>Cap any investment type or currency, for example Gold at 10% of your portfolio. You'll get an alert when it's exceeded.</p></div>`)}
@@ -266,12 +284,13 @@ function hModal(aid,hid){const a=acc(aid),h=hid?a.h.find(x=>x.id==hid):{cls:allC
  const cls=canon(pv('c','cn'),allCls()),amt=num('#m');if(!cls)return bad('Choose an investment type');if(!(amt>=0))return bad('Enter a valid amount');
  const o={id:hid||uid(),cls,amt,cur:$('#u').value};if(hid)Object.assign(h,o);else a.h.push(o);save();render()})}
 function cModal(){if(!S.accounts.length)return toast('Add an account first');
- modal('Add contribution',`<label>Account<select id="a">${O(S.accounts.map(a=>[a.id,a.name+' ('+a.type+')']))}</select></label><label>Date<input id="d" type="date" value="${today()}"></label>
+ modal('Add contribution',`<label>Account<select id="a">${O(S.accounts.map(a=>[a.id,a.name+' ('+a.type+')']))}</select></label><div class="thr"><label>Year<input id="dy" type="number" min="1900" max="2100" step="1" value="${today().slice(0,4)}"></label><label>Month (optional)<select id="dmo"><option value="">Not specified</option>${MN.map((n,i)=>`<option value="${i+1}"${i+1==+today().slice(5,7)?' selected':''}>${n}</option>`).join('')}</select></label><label>Day (optional)<select id="dda"><option value="">Not specified</option>${Array.from({length:31},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join('')}</select></label></div><span class="k">Only the year is required. Enter just a year, a month and year, or a full date, whichever you know.</span>
  <div class="two"><label>Amount<input id="m" type="number" min="0" step="any"></label><label>Currency<select id="u">${O(['CAD','USD'])}</select></label></div><span class="k">USD amounts are converted to CAD at today's rate.</span>`,'Save',()=>{
- const amt=num('#m'),d=$('#d').value;if(!(amt>0))return bad('Enter an amount above zero');if(!d)return bad('Choose a date');
- S.contribs.push({id:uid(),acc:$('#a').value,date:d,amt,cur:$('#u').value,cad:toCAD(amt,$('#u').value)});U.year=+d.slice(0,4);save();U.tab='contrib';render()})}
+ const amt=num('#m'),y=+$('#dy').value,mo=+$('#dmo').value,da=+$('#dda').value;if(!(amt>0))return bad('Enter an amount above zero');if(!Number.isInteger(y)||y<1900||y>2100)return bad('Enter a valid year');
+ let d=String(y);if(mo){d+='-'+String(mo).padStart(2,'0');if(da){if(new Date(Date.UTC(y,mo-1,da)).getUTCMonth()!=mo-1)return bad('That day does not exist in '+MN[mo-1]+' '+y);d+='-'+String(da).padStart(2,'0')}}
+ S.contribs.push({id:uid(),acc:$('#a').value,date:d,amt,cur:$('#u').value,cad:toCAD(amt,$('#u').value)});U.year=+d.slice(0,4);save();U.tab='contrib';render()});const dm=$('#dmo'),dv=$('#dda');dm.onchange=()=>{dv.disabled=!dm.value;if(!dm.value)dv.value=''}}
 function lModal(){if(!S.accounts.length)return toast('Add an account first');
- modal('New limit',`<label>Applies to<select id="s">${O(scopeOpts())}</select></label><label>Investment type or currency<select id="g"><optgroup label="Investment type">${O(allCls().map(c=>['cls:'+c,c]))}</optgroup><optgroup label="Currency">${O([['cur:CAD','CAD holdings'],['cur:USD','USD holdings']])}</optgroup></select></label>
+ modal('New limit',`<label>Applies to<select id="s">${scopeSel('all')}</select></label><label>Investment type or currency<select id="g"><optgroup label="Investment type">${O(allCls().map(c=>['cls:'+c,c]))}</optgroup><optgroup label="Currency">${O([['cur:CAD','CAD holdings'],['cur:USD','USD holdings']])}</optgroup></select></label>
  <label>Maximum share (%)<input id="x" type="number" min="0" max="100" step="any" placeholder="10"></label>`,'Save',()=>{
  const m=num('#x');if(!(m>=0&&m<=100))return bad('Enter a percentage from 0 to 100');const[k,...v]=$('#g').value.split(':');
  S.limits.push({id:uid(),sc:$('#s').value,k,val:v.join(':'),max:m});save();U.tab='limits';render()})}
@@ -353,16 +372,17 @@ const usage=(k,n)=>k=='types'?S.accounts.filter(a=>a.type==n).length:k=='inst'?S
 let CD;
 const catFinal=r=>{let n=0;while(r.mg&&n++<9)r=r.mg;return r.n};
 function catBody(){
- const rch=r=>r.del||r.mg||r.o==null||r.n!=r.o||r.rm!=r.orm||r.al!=r.oal,sec=(k,t,hint)=>{const op=CD.open.has(k),live=CD[k].filter(r=>!r.del&&!r.mg).length;return `<div style="margin-top:10px"><div class="row"><button class="tg" data-act="catTog" data-k="${k}" aria-expanded="${op}" aria-label="${op?'Collapse':'Expand'} ${t}">${op?'▾':'▸'}</button><b class="sp" data-act="catTog" data-k="${k}" style="cursor:pointer">${t} <span class="k">· ${live}${CD[k].some(rch)?' · edited':''}</span></b></div>${op?CD[k].map((r,i)=>{
-  const ed=CD.ed&&CD.ed.k==k&&CD.ed.i==i,dead=r.del||r.mg,at=`data-k="${k}" data-i="${i}"`;
-  const nm=ed?`<input id="cn-${k}-${i}" value="${esc(r.n)}" style="flex:1;min-width:120px">`:`<div style="flex:1;min-width:120px;padding:9px 4px${dead?';text-decoration:line-through;opacity:.6':''}">${esc(r.n)}${!dead&&r.o!=null&&r.n!=r.o?` <span class="k">(was ${esc(r.o)})</span>`:''}${r.o==null?' <span class="k">(new)</span>':''}</div>`;
-  const note=r.del?`<span class="k">will be deleted${k=='inst'&&r.o!=null&&usage(k,r.o)?' · cleared from '+usage(k,r.o)+(usage(k,r.o)>1?' accounts':' account'):''}</span>`:r.mg?`<span class="k">merges into ${esc(catFinal(r))}</span>`:`<span class="k">${r.o==null?'':usage(k,r.o)+' in use'}</span>`;
-  const btn=dead?`<button class="ib" data-act="catUndo" ${at}>Undo</button>`:ed?`<button class="ib" data-act="catDone" ${at}>Done</button>`:`<button class="ib" data-act="catRen" ${at}>Rename</button><button class="ib" data-act="catDel" ${at}>Delete</button>`;
-  const rr=k=='types'&&!dead?`<div class="row" style="margin:2px 0 0 4px"><span class="k sp">Contribution room, CAD</span><input data-rm="${i}" type="number" min="0" step="any" placeholder="None" value="${r.rm||''}" style="width:140px" aria-label="Contribution room for ${esc(r.n)}"></div><div class="row" style="margin:2px 0 0 4px"><span class="k sp">Alert when % of room left is at or below</span><input data-al="${i}" type="number" min="0" max="100" step="any" placeholder="Off" value="${r.al==null?'':r.al}" style="width:140px" aria-label="Alert level for ${esc(r.n)}, percent of room left"></div>`:'';
-  return `<div style="margin-top:6px"><div class="row">${nm}${note}${btn}</div>${rr}</div>`}).join('')+`<div class="row" style="margin-top:8px"><input id="cn-${k}-new" placeholder="${hint}" style="flex:1;min-width:120px">${k=='types'?'<input id="cn-types-room" type="number" min="0" step="any" placeholder="Room" style="width:100px">':''}<button class="b" data-act="catAdd" data-k="${k}">Add</button></div>`:''}</div>`};
- return `<div class="row" style="justify-content:flex-end"><button class="b" data-act="catExp">Expand all</button><button class="b" data-act="catCol">Collapse all</button></div>`+sec('types','Account types','New type, e.g. LIRA')+sec('cls','Investment types','New type, e.g. REITs')+sec('inst','Institutions','New institution, e.g. Wealthsimple')+`<div class="k" style="margin-top:10px" id="cnote">${catNoteHtml()}</div>`}
+ const ICO={ren:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',del:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>'};
+ const rch=r=>r.del||r.mg||r.o==null||r.n!=r.o||r.rm!=r.orm||r.al!=r.oal,sec=(k,t,hint)=>{const op=CD.open.has(k),live=CD[k].filter(r=>!r.del&&!r.mg).length;return `<div style="margin-top:10px"><div class="row"><button class="tg" data-act="catTog" data-k="${k}" aria-expanded="${op}" aria-label="${op?'Collapse':'Expand'} ${t}">${op?'▾':'▸'}</button><b class="sp" data-act="catTog" data-k="${k}" style="cursor:pointer">${t} <span class="k">· ${live}${CD[k].some(rch)?' · edited':''}</span></b></div>${op?(k=='types'?`<div class="k" style="margin:4px 0 2px">Room = yearly contribution room in CAD. Alert = warn when the % of room left drops to that level. Both are shared by every account of the type.</div>`:'')+CD[k].map((r,i)=>{
+  const ed=CD.ed&&CD.ed.k==k&&CD.ed.i==i,dead=r.del||r.mg,at=`data-k="${k}" data-i="${i}"`,use=r.o==null?0:usage(k,r.o);
+  const sub=r.del?`will be deleted${k=='inst'&&use?' · cleared from '+use+(use>1?' accounts':' account'):''}`:r.mg?`merges into ${esc(catFinal(r))}`:[r.o!=null&&r.n!=r.o?'was '+esc(r.o):'',r.o==null?'new':'',use?use+' in use':''].filter(Boolean).join(' · ');
+  const nm=ed?`<input id="cn-${k}-${i}" value="${esc(r.n)}" style="flex:1;min-width:110px">`:`<div class="cn${dead?' dead':''}">${esc(r.n)}${sub?`<span class="k">${sub}</span>`:''}</div>`;
+  const btn=dead?`<button class="ib" data-act="catUndo" ${at}>Undo</button>`:ed?`<button class="ib" data-act="catDone" ${at}>Done</button>`:`<button class="ib ic" data-act="catRen" ${at} aria-label="Rename ${esc(r.n)}" title="Rename">${ICO.ren}</button><button class="ib ic" data-act="catDel" ${at} aria-label="Delete ${esc(r.n)}" title="Delete">${ICO.del}</button>`;
+  const rr=k=='types'&&!dead?`<input data-rm="${i}" type="number" min="0" step="any" placeholder="Room (CAD)" value="${r.rm||''}" aria-label="Contribution room in CAD for ${esc(r.n)}"><input data-al="${i}" type="number" min="0" max="100" step="any" placeholder="Alert %" value="${r.al==null?'':r.al}" aria-label="Alert level for ${esc(r.n)}, percent of room left">`:'';
+  return `<div class="cr">${nm}${rr}${btn}</div>`}).join('')+`<div class="row" style="margin-top:8px"><input id="cn-${k}-new" placeholder="${hint}" style="flex:1;min-width:120px">${k=='types'?'<input id="cn-types-room" type="number" min="0" step="any" placeholder="Room" style="width:100px">':''}<button class="b" data-act="catAdd" data-k="${k}">Add</button></div>`:''}</div>`};
+ return `<div class="row" style="justify-content:flex-end;gap:6px"><button class="ib" data-act="catExp">Expand all</button><button class="ib" data-act="catCol">Collapse all</button></div>`+sec('types','Account types','New type, e.g. LIRA')+sec('cls','Investment types','New type, e.g. REITs')+sec('inst','Institutions','New institution, e.g. Wealthsimple')+`<div class="k" style="margin-top:10px" id="cnote">${catNoteHtml()}</div>`}
 const catChg=()=>['types','cls','inst'].reduce((s,k)=>s+CD[k].filter(r=>r.del||r.mg||r.o==null||r.n!=r.o||r.rm!=r.orm||r.al!=r.oal).length,0);
-const catNoteHtml=()=>{const chg=catChg();return `${chg?`<b>${chg} unsaved change${chg>1?'s':''}</b>. Click “Save changes” to apply ${chg>1?'them':'it'}.`:'No changes yet.'} Contribution room and its alert level are set once per account type and shared by every account of that type. Use Rename, then Done. Renaming to an existing name merges the two. Types that are in use can't be deleted; deleting an institution just clears it from its accounts.`};
+const catNoteHtml=()=>{const chg=catChg();return `${chg?`<b>${chg} unsaved change${chg>1?'s':''}</b>. Click “Save changes” to apply ${chg>1?'them':'it'}.`:'No changes yet.'} Renaming to an existing name merges the two. Types in use can't be deleted.`};
 const catNote=()=>{const e=$('#cnote');if(e)e.innerHTML=catNoteHtml()};
 document.addEventListener('input',e=>{const t=e.target;if(t.dataset.al!=null&&CD&&CD.types[+t.dataset.al]){const v=parseFloat(t.value);CD.types[+t.dataset.al].al=t.value!==''&&v>=0?Math.min(100,v):null;catNote()}if(t.dataset.rm!=null&&CD&&CD.types[+t.dataset.rm]){const v=parseFloat(t.value);CD.types[+t.dataset.rm].rm=v>0?v:0;catNote()}});
 function catPaint(){const a=CD.nw=CD.nw||{};['types','cls','inst'].forEach(k=>{const e=$('#cn-'+k+'-new');if(e)a[k]=e.value});const rv0=$('#cn-types-room');if(rv0)a.room=rv0.value;$('#cb').innerHTML=catBody();['types','cls','inst'].forEach(k=>{const e=$('#cn-'+k+'-new');if(e)e.value=a[k]||''});const re=$('#cn-types-room');if(re)re.value=a.room||''}
@@ -388,7 +408,7 @@ function catSave(){if(!catCommit())return false;let c=0;const RM={},AL={};
 function catModal(){S.cats.types=catT();S.cats.cls=allCls();S.cats.inst=catI();
  const mk=k=>S.cats[k].map(n=>({o:n,n,del:0,mg:null,rm:k=='types'?roomOf(n):0,orm:k=='types'?roomOf(n):0,al:k=='types'?alertOf(n):null,oal:k=='types'?alertOf(n):null}));
  CD={types:mk('types'),cls:mk('cls'),inst:mk('inst'),ed:null,open:new Set()};
- modal('Manage categories','<div id="cb"></div>','Save changes',catSave);catPaint()}
+ modal('Manage categories','<div id="cb"></div>','Save changes',catSave,'wide');catPaint()}
 /* ---------- first run: create passphrase or restore from GitHub ---------- */
 let boot;
 function welcome(done){boot=done;
@@ -411,7 +431,7 @@ function restoreModal(){
  if(rv){resetPass(boot);return false}
  await persist();boot()},'lk')}
 /* ---------- events ---------- */
-const ACT={eye:()=>{HID=!HID;render()},tab:d=>{U.tab=d.v;render()},cur:d=>{S.cur=d.v;save();render()},fx:fxModal,menu:menuModal,x:()=>$('#dlg').close(),
+const ACT={dd:d=>{const P=U.dd,same=P.length==1&&P[0].by==d.by&&P[0].n==d.n;U.dd=same?[]:[{by:d.by,n:d.n}];U.ddb=null;render();if(U.dd.length)$('#dd')?.scrollIntoView({block:'start',behavior:'smooth'})},dd2:d=>{U.dd.push({by:d.by,n:d.n});U.ddb=null;render();$('#dd')?.scrollIntoView({block:'start',behavior:'smooth'})},ddt:d=>{U.dd=U.dd.slice(0,+d.i+1);U.ddb=null;render()},ddx:()=>{U.dd=[];render()},eye:()=>{HID=!HID;render()},tab:d=>{U.tab=d.v;render()},cur:d=>{S.cur=d.v;save();render()},fx:fxModal,menu:menuModal,x:()=>$('#dlg').close(),
  addAcc:()=>accModal(),editAcc:d=>accModal(d.id),addH:d=>hModal(d.id),editH:d=>hModal(d.id,d.h),addC:cModal,addL:lModal,setPass:passModal,
  delAcc:d=>{if(!confirm('Delete this account and all its holdings, contributions and limits?'))return;S.accounts=S.accounts.filter(a=>a.id!=d.id);S.contribs=S.contribs.filter(c=>c.acc!=d.id);S.limits=S.limits.filter(l=>l.sc!='a:'+d.id);if(U.scope=='a:'+d.id)U.scope='all';save();render()},
  delH:d=>{if(!confirm('Remove this holding?'))return;const a=acc(d.id);a.h=a.h.filter(x=>x.id!=d.h);save();render()},
@@ -431,8 +451,9 @@ const ACT={eye:()=>{HID=!HID;render()},tab:d=>{U.tab=d.v;render()},cur:d=>{S.cur
  rkSave:()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([`Portfolio tracker recovery key\n${curRK}\n\nCreated ${today()}. Anyone with this key can unlock your portfolio data. Keep it private and apart from your backups.\n`],{type:'text/plain'}));a.download='portfolio-recovery-key.txt';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1e3)},
  lockNow:()=>location.reload(),
  wipe:()=>{if((prompt('Erase ALL saved data in this browser? Your GitHub copy, if any, is not touched. This cannot be undone.\n\nType ERASE to confirm.')||'').trim()=='ERASE'){localStorage.removeItem(K);location.reload()}else toast('Nothing was erased')}};
+document.addEventListener('keydown',e=>{if((e.key=='Enter'||e.key==' ')&&e.target.classList?.contains('dd')){e.preventDefault();e.target.dispatchEvent(new MouseEvent('click',{bubbles:true}))}});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(b)ACT[b.dataset.act]?.(b.dataset)});
-document.addEventListener('change',e=>{const t=e.target,k=t.dataset.chg;if(t.dataset.new){const n=$('#'+t.dataset.new);n.hidden=t.value!='__new';if(!n.hidden)n.focus()}if(k){U[k]=k=='year'?+t.value:t.value;render()}});
+document.addEventListener('change',e=>{const t=e.target,k=t.dataset.chg;if(t.dataset.new){const n=$('#'+t.dataset.new);n.hidden=t.value!='__new';if(!n.hidden)n.focus()}if(k){U[k]=k=='year'?+t.value:t.value;if(k=='scope'||k=='by')U.dd=[];render()}});
 $('#file').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
  try{const o=JSON.parse(await f.text()),sy=S.sync;if(o.enc){unlock(o,()=>{S.sync=sy;save();render();toast('Backup restored')},true);$('#dlg').querySelector('.cx').style.display='';$('#dlg').className='';}else{if(!confirm('Replace current data with this backup?'))return;S=norm(o);S.sync=sy;await save();render();toast('Backup restored')}}catch(err){toast('That file isn\'t a valid backup')}};
 /* ---------- start ---------- */
