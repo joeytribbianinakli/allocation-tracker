@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-OeDuXFtsBWA8vvYqQHPxTymHK1SEMr3/VrM10lFMWak='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-OvIXN3KRmKDelVC0h7t64/X2eFMq0aeMEX7BI0DBkzc='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
 <link rel="icon" href="data:,">
 <title>Portfolio tracker</title>
 <style>
@@ -172,7 +172,7 @@ function vGuide(){return `<div class="g"><div class="row" style="margin:16px 0 0
 <li>Click <b>Generate token</b> and copy it right away. GitHub shows it once. Store it in your password manager.</li></ol></div>
 <div class="card"><h2>Part 4: Connect the app</h2><ol>
 <li>Click <b>Backup &amp; privacy → Git Repo setup</b>.</li>
-<li>Enter the repository as <code>YOURNAME/portfolio-data</code>, paste the token, leave the file path as is, and click <b>Save &amp; sync</b>. If the data repo already has a saved portfolio, it replaces whatever is in this browser.</li>
+<li>Enter the repository as <code>YOURNAME/portfolio-data</code>, paste the token, and click <b>Save &amp; sync</b>. If the data repo already has a saved portfolio, it replaces whatever is in this browser.</li>
 <li>Check your data repo. It should now contain <code>portfolio-data.enc.json</code> with unreadable text. That's the encrypted copy.</li>
 <li>The footer shows <b>Synced at …</b> after each change.</li></ol></div>
 <div class="card"><h2>Part 5: Add another device, or recover after clearing your browser</h2><ol>
@@ -296,7 +296,7 @@ function syncModal(){const s=S.sync||{};
  modal('Git Repo setup',`<div class="k">Data is encrypted with your passphrase before it leaves this device, so GitHub only stores unreadable text. Use a <b>private</b> repo and a fine-grained token limited to that one repo with “Contents: Read and write”. Use the same repo, token and passphrase on each device. If the repo already holds data, it replaces the data in this browser.</div>
  <label>Repository (owner/name)<input id="gr" value="${esc(s.repo||'')}" placeholder="yourname/portfolio-data"></label>
  <label>Access token<input id="gt" type="password" autocomplete="off" value="${esc(s.token||'')}"></label>
- <label>File path<input id="gp" value="${esc(s.path||'portfolio-data.enc.json')}"></label>${s.token?'<button class="b" data-act="unsync">Turn off sync on this device</button>':''}`,'Save & sync',async()=>{
+ <input id="gp" type="hidden" value="${esc(s.path||'portfolio-data.enc.json')}">${s.token?'<button class="b" data-act="unsync">Turn off sync on this device</button>':''}`,'Save & sync',async()=>{
  const repo=$('#gr').value.trim(),token=$('#gt').value.trim(),path=$('#gp').value.trim().replace(/^\/+/,'');
  if(!/^[\w.-]+\/[\w.-]+$/.test(repo))return bad('Use the form owner/name');if(!token)return bad('Paste your access token');if(!path)return bad('Enter a file path');
  const same=s.repo==repo&&s.path==path;S.sync={...s,repo,token,path,sha:same?s.sha:null,dirty:true,n:(s.n||0)+1};await persist();doSync(true)})}
@@ -318,7 +318,7 @@ function welcome(done){boot=done;
 function restoreModal(){
  modal('Restore from GitHub',`<div class="k">Enter the same repository, token and passphrase you use on your other device. If you forgot the passphrase, enter your recovery key instead.</div>
  <label>Repository (owner/name)<input id="gr" placeholder="yourname/portfolio-data"></label><label>Access token<input id="gt" type="password" autocomplete="off"></label>
- <label>File path<input id="gp" value="portfolio-data.enc.json"></label><label>Passphrase or recovery key<input id="pp" type="password" autocomplete="current-password"></label><button class="b" data-act="welcomeBack">Back</button>`,'Restore',async()=>{
+ <input id="gp" type="hidden" value="portfolio-data.enc.json"><label>Passphrase or recovery key<input id="pp" type="password" autocomplete="current-password"></label><button class="b" data-act="welcomeBack">Back</button>`,'Restore',async()=>{
  const repo=$('#gr').value.trim(),token=$('#gt').value.trim(),path=$('#gp').value.trim().replace(/^\/+/,''),p=$('#pp').value;
  if(!/^[\w.-]+\/[\w.-]+$/.test(repo))return bad('Use the form owner/name');if(!token||!path||!p)return bad('Fill in every field');
  S.sync={repo,token,path};let rm;try{rm=await remote()}finally{S.sync={}}
