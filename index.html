@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-OvIXN3KRmKDelVC0h7t64/X2eFMq0aeMEX7BI0DBkzc='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-/mrSHNg9ZSX4qlqaW0sFFyVK/430vcrOREs5ksQ5WLM='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
 <link rel="icon" href="data:,">
 <title>Portfolio tracker</title>
 <style>
@@ -63,9 +63,13 @@ const TYPES=['TFSA','RRSP','FHSA','Non-registered','RESP','Other'],CLS=['ETFs','
 const COL=['#2f6fed','#17a58a','#f2a30f','#e5484d','#8e6bf2','#3bb5e8','#7bb83d','#e5609f','#8a97a8'];
 const uid=()=>Math.random().toString(36).slice(2,9),esc=s=>String(s??'').replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 const today=()=>new Date().toLocaleDateString('en-CA'),YR=new Date().getFullYear();
-const dflt=()=>({accounts:[],limits:[],contribs:[],fx:{r:1.37,d:null,manual:false},cur:'CAD',sync:{},cats:{types:[...TYPES],cls:[...CLS]}});
+const dflt=()=>({accounts:[],limits:[],contribs:[],fx:{r:1.37,d:null,manual:false},cur:'CAD',sync:{},cats:{types:[...TYPES],cls:[...CLS],inst:[],rooms:{}}});
 let S=dflt(),lock=null,U={tab:'overview',scope:'all',by:'cls',year:YR};
-const norm=o=>{const d=dflt();for(const k in d)if(o&&o[k]!=null&&typeof o[k]==typeof d[k])d[k]=o[k];const nu=v=>Number.isFinite(+v)?+v:0;d.accounts.forEach(a=>{a.h=Array.isArray(a.h)?a.h:[];a.h.forEach(h=>h.amt=nu(h.amt));a.room=nu(a.room);if(a.rooms&&typeof a.rooms=='object')for(const y in a.rooms)a.rooms[y]=nu(a.rooms[y])});d.contribs.forEach(c=>{c.amt=nu(c.amt);c.cad=nu(c.cad);c.date=String(c.date||'')});d.limits.forEach(l=>l.max=nu(l.max));if(!(d.fx.r>0))d.fx.r=1.37;if(!Array.isArray(d.cats.types)||!Array.isArray(d.cats.cls))d.cats=dflt().cats;return d};
+const norm=o=>{const d=dflt();for(const k in d)if(o&&o[k]!=null&&typeof o[k]==typeof d[k])d[k]=o[k];const nu=v=>Number.isFinite(+v)?+v:0;d.accounts.forEach(a=>{a.h=Array.isArray(a.h)?a.h:[];a.h.forEach(h=>h.amt=nu(h.amt));a.inst=typeof a.inst=='string'?a.inst:'';if(a.rooms&&typeof a.rooms=='object')for(const y in a.rooms)a.rooms[y]=nu(a.rooms[y])});d.contribs.forEach(c=>{c.amt=nu(c.amt);c.cad=nu(c.cad);c.date=String(c.date||'')});d.limits.forEach(l=>l.max=nu(l.max));if(!(d.fx.r>0))d.fx.r=1.37;if(!Array.isArray(d.cats.types)||!Array.isArray(d.cats.cls))d.cats=dflt().cats;d.cats.inst=Array.isArray(d.cats.inst)?d.cats.inst.filter(x=>typeof x=='string'):[];
+ const r0=d.cats.rooms;d.cats.rooms={};if(r0&&typeof r0=='object'&&!Array.isArray(r0))for(const t in r0){const v=nu(r0[t]);if(v>0)d.cats.rooms[t]=v}
+ /* one-time carry-over: room once typed on individual accounts moves to their account type (largest value wins) */
+ const lg={};d.accounts.forEach(a=>{const v=nu(a.room);if(v>0)lg[a.type]=Math.max(lg[a.type]||0,v);delete a.room});for(const t in lg)if(!(d.cats.rooms[t]>0))d.cats.rooms[t]=lg[t];
+ return d};
 /* ---------- money ---------- */
 const R=()=>S.fx.r,toCAD=(a,c)=>c=='USD'?a*R():a,pc=x=>(x*100).toFixed(1)+'%';
 const nf=(c,d=0)=>new Intl.NumberFormat('en-CA',{style:'currency',currency:c,maximumFractionDigits:d,minimumFractionDigits:d});
@@ -79,6 +83,7 @@ const filt=(sc,r=rows())=>sc=='all'?r:sc[0]=='a'?r.filter(x=>x.a.id==sc.slice(2)
 const KEY={cls:x=>x.h.cls,acc:x=>x.a.name,type:x=>x.a.type,cur:x=>x.h.cur};
 const group=(r,by)=>{const m={};r.forEach(x=>{const k=KEY[by](x);m[k]=(m[k]||0)+x.v});return Object.entries(m).filter(e=>e[1]>0).sort((a,b)=>b[1]-a[1])};
 const catT=()=>[...new Set([...S.cats.types,...S.accounts.map(a=>a.type)])];
+const catI=()=>[...new Set([...(S.cats.inst||[]),...S.accounts.map(a=>a.inst).filter(Boolean)])];
 const types=()=>{const c=catT();return[...new Set(S.accounts.map(a=>a.type))].sort((a,b)=>c.indexOf(a)-c.indexOf(b))};
 const allCls=()=>[...new Set([...S.cats.cls,...rows().map(x=>x.h.cls)])];
 const canon=(v,l)=>l.find(x=>x.toLowerCase()==v.toLowerCase())||v;
@@ -88,7 +93,7 @@ const O=(l,sel)=>l.map(x=>{const[v,t]=Array.isArray(x)?x:[x,x];return `<option v
 const lim=L=>{const r=filt(L.sc),t=sum(r),m=sum(r.filter(x=>L.k=='cur'?x.h.cur==L.val:x.h.cls==L.val));return{t,m,p:t?m/t:0}};
 const breaches=()=>S.limits.map(L=>({L,...lim(L)})).filter(x=>x.p*100>x.L.max+1e-9);
 const lname=L=>L.k=='cur'?L.val+' holdings':L.val;
-const roomOf=(a,y)=>a.rooms?.[y]??a.room??0;
+const roomOf=t=>{const v=S.cats.rooms?.[t];return v>0?v:0};
 /* ---------- persistence & privacy (AES-GCM, key derived from your passphrase) ---------- */
 const b64=b=>btoa(String.fromCharCode(...new Uint8Array(b))),ub=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 const IT=600000,itOf=o=>{const n=+o.it;return Number.isInteger(n)&&n>=250000&&n<=2e6?n:250000};
@@ -107,7 +112,7 @@ async function openAny(o,x){try{const[d,l]=await dec(o,x);return[d,l,0]}catch(e)
 const pack=async(exp)=>{let o=S;if(exp){const{sync,...r}=S;o=r}return lock?await enc(o):o};
 const persist=()=>pack().then(o=>localStorage.setItem(K,JSON.stringify(o)));
 let tm;
-const save=()=>{if(S.sync?.token){S.sync.dirty=true;S.sync.n=(S.sync.n||0)+1;clearTimeout(tm);tm=setTimeout(doSync,2500)}return persist().catch(e=>toast('Could not save: '+e.message))};
+const save=()=>{if(S.sync?.token){S.sync.dirty=true;S.sync.n=(S.sync.n||0)+1;clearTimeout(tm);tm=setTimeout(doSync,300)}return persist().catch(e=>toast('Could not save: '+e.message))};
 const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('show'),2800)};
 /* ---------- forex (free, no key; only the rate is requested, never your data) ---------- */
 async function fetchFx(){const src=[['https://api.frankfurter.dev/v1/latest?base=USD&symbols=CAD',j=>[j.rates.CAD,j.date]],['https://open.er-api.com/v6/latest/USD',j=>[j.rates.CAD,today()]]];
@@ -128,22 +133,23 @@ function vOver(){const all=rows(),T=sum(all);if(!S.accounts.length)return emptyC
  <div class="card"><div class="sel"><label>View<select data-chg="scope">${O(scopeOpts(),U.scope)}</select></label>
  <label>Group by<select data-chg="by">${O([['cls','Investment type'],['acc','Account'],['type','Account type'],['cur','Currency']],U.by)}</select></label></div>
  ${st?`<div class="charts"><div>${donut(g,st)}${legend(g,st)}</div><div><div class="k" style="text-align:center;margin-bottom:6px">CAD vs USD</div>${donut(gc,st)}${legend(gc,st)}</div></div>`:'<p class="k">Nothing held in this selection yet.</p>'}</div>`}
-function vAcc(){const T=sum(rows());let h=`<div class="row" style="margin:16px 0 0"><h2 class="sp">Accounts</h2><button class="b" data-act="manage">Manage types</button><button class="b p" data-act="addAcc">Add account</button></div>`;if(!S.accounts.length)return h+emptyCard;
+function vAcc(){const T=sum(rows());let h=`<div class="row" style="margin:16px 0 0"><h2 class="sp">Accounts</h2><button class="b" data-act="manage">Manage categories</button><button class="b p" data-act="addAcc">Add account</button></div>`;if(!S.accounts.length)return h+emptyCard;
  types().forEach(t=>{h+=`<div class="th"><span>${esc(t)}</span><span>${fmt(sum(filt('t:'+t)))}</span></div>`;
   S.accounts.filter(a=>a.type==t).forEach(a=>{const r=filt('a:'+a.id),at=sum(r),g=group(r,'cls'),cn=sum(r.filter(x=>x.h.cur=='CAD')),us=sum(r.filter(x=>x.h.cur=='USD'));
-   h+=`<div class="card"><div class="row"><div class="sp"><b>${esc(a.name)}</b><div class="k">${pc(T?at/T:0)} of portfolio · CAD ${pc(at?cn/at:0)} / USD ${pc(at?us/at:0)}</div></div><div class="v" style="font-size:18px">${fmt(at)}</div>
+   h+=`<div class="card"><div class="row"><div class="sp"><b>${esc(a.name)}</b>${a.inst?` <span class="k">· ${esc(a.inst)}</span>`:''}<div class="k">${pc(T?at/T:0)} of portfolio · CAD ${pc(at?cn/at:0)} / USD ${pc(at?us/at:0)}</div></div><div class="v" style="font-size:18px">${fmt(at)}</div>
    <button class="ib" data-act="editAcc" data-id="${esc(a.id)}">Edit</button><button class="ib" data-act="delAcc" data-id="${esc(a.id)}">Delete</button></div>
    <div class="bar">${g.map(([n,v])=>`<i title="${esc(n)}" style="width:${v/at*100}%;background:${col(n)}"></i>`).join('')}</div>
    <table>${a.h.map(x=>`<tr><td><span class="dot" style="background:${col(x.cls)}"></span>${esc(x.cls)}</td><td class="n">${fmtN(x.amt,x.cur)}</td><td class="n">${fmt(toCAD(x.amt,x.cur))}</td><td class="n">${pc(at?toCAD(x.amt,x.cur)/at:0)}</td>
    <td class="n"><button class="ib" data-act="editH" data-id="${esc(a.id)}" data-h="${esc(x.id)}">Edit</button><button class="ib" data-act="delH" data-id="${esc(a.id)}" data-h="${esc(x.id)}">Remove</button></td></tr>`).join('')}</table>
    <button class="b" style="margin-top:8px" data-act="addH" data-id="${esc(a.id)}">Add holding</button></div>`})});return h}
 function vCon(){const ys=[...new Set([YR,U.year,...S.contribs.map(c=>+c.date.slice(0,4))])].sort((a,b)=>b-a),y=U.year,cs=S.contribs.filter(c=>c.date.startsWith(y)).sort((a,b)=>b.date.localeCompare(a.date));
- const as=S.accounts.filter(a=>roomOf(a,y)>0||cs.some(c=>c.acc==a.id));
- return `<div class="row" style="margin:16px 0"><h2 class="sp">Contributions</h2><select data-chg="year" style="width:auto">${O(ys.map(String),String(y))}</select><button class="b p" data-act="addC">Add contribution</button></div>`+
- (as.length?as.map(a=>{const p=sum(cs.filter(c=>c.acc==a.id).map(c=>({v:c.cad}))),rm=roomOf(a,y),o=rm>0&&p>rm;
-  return `<div class="card"><div class="row"><div class="sp"><b>${esc(a.name)}</b> <span class="k">${esc(a.type)}</span><div class="k">${rm>0?`${fmt(p)} of ${fmt(rm)} room · ${o?`<b style="color:var(--r)">${fmt(p-rm)} over</b>`:fmt(rm-p)+' left'}`:`${fmt(p)} contributed · no room set`}</div></div>
-  ${rm>0?`<span class="tag ${o?'bad':'ok'}">${o?'Over limit':pc(p/rm)}</span>`:''}<button class="ib" data-act="editRoom" data-id="${esc(a.id)}">Set ${y} room</button></div>
-  ${rm>0?`<div class="bar"><i style="width:${Math.min(100,p/rm*100)}%;background:${o?'var(--r)':'var(--g)'}"></i></div>`:''}</div>`}).join(''):`<div class="card empty"><p>Set yearly contribution room on an account (Edit account), or log a contribution to begin.</p></div>`)+
+ const tc=t=>S.contribs.filter(c=>acc(c.acc)?.type==t),ts=catT().filter(t=>roomOf(t)>0||tc(t).length);
+ return `<div class="row" style="margin:16px 0"><h2 class="sp">Contributions</h2><select data-chg="year" style="width:auto">${O(ys.map(String),String(y))}</select><button class="b" data-act="manage">Account types</button><button class="b p" data-act="addC">Add contribution</button></div>`+
+ (ts.length?ts.map(t=>{const all=tc(t),p=sum(all.map(c=>({v:c.cad}))),py=sum(all.filter(c=>c.date.startsWith(y)).map(c=>({v:c.cad}))),rm=roomOf(t),o=rm>0&&p>rm,n=S.accounts.filter(a=>a.type==t).length;
+  const by=S.accounts.filter(a=>a.type==t).map(a=>[a.name,sum(S.contribs.filter(c=>c.acc==a.id).map(c=>({v:c.cad})))]).filter(x=>x[1]>0),brk=by.length>1?`<div class="k">${by.map(([nm,v])=>esc(nm)+' '+fmt(v)).join(' · ')}</div>`:'';
+  return `<div class="card"><div class="row"><div class="sp"><b>${esc(t)}</b> <span class="k">${n} account${n==1?'':'s'}</span><div class="k">${rm>0?`${fmt(p)} of ${fmt(rm)} room · ${o?`<b style="color:var(--r)">${fmt(p-rm)} over</b>`:fmt(rm-p)+' left'}`:`${fmt(p)} contributed in total · no room set`} · ${fmt(py)} in ${y}</div>${brk}</div>
+  ${rm>0?`<span class="tag ${o?'bad':'ok'}">${o?'Over limit':pc(p/rm)}</span>`:''}</div>
+  ${rm>0?`<div class="bar"><i style="width:${Math.min(100,p/rm*100)}%;background:${o?'var(--r)':'var(--g)'}"></i></div>`:''}</div>`}).join(''):`<div class="card empty"><p>Set contribution room for an account type under “Account types”, then log a contribution to begin.</p></div>`)+
  (cs.length?`<div class="card"><table>${cs.map(c=>`<tr><td>${esc(c.date)}</td><td>${esc(acc(c.acc)?.name||'Deleted account')}</td><td class="n">${fmtN(c.amt,c.cur)}</td><td class="n"><button class="ib" data-act="delC" data-id="${esc(c.id)}">Delete</button></td></tr>`).join('')}</table></div>`:'')}
 function vLim(){const al=breaches().length;return `<div class="row" style="margin:16px 0"><h2 class="sp">Limits &amp; alerts</h2><button class="b p" data-act="addL">Add limit</button></div>`+
  (S.limits.length?S.limits.map(L=>{const x=lim(L),o=x.p*100>L.max+1e-9;return `<div class="card"><div class="row"><div class="sp"><b>${esc(lname(L))}</b> ≤ ${L.max}% of ${esc(scopeName(L.sc))}<div class="k">Now ${pc(x.p)} (${fmt(x.m)} of ${fmt(x.t)})</div></div><span class="tag ${o?'bad':'ok'}">${o?'Over limit':'OK'}</span><button class="ib" data-act="delL" data-id="${esc(L.id)}">Delete</button></div>
@@ -192,7 +198,7 @@ function render(){const n=breaches().length;
  $('#tabs').innerHTML=[['overview','Overview'],['accounts','Accounts'],['contrib','Contributions'],['limits','Limits & alerts'+(n?`<span class="cnt">${n}</span>`:'')],['guide','Setup guide']].map(([k,l])=>`<button class="${U.tab==k?'on':''}" data-act="tab" data-v="${k}">${l}</button>`).join('');
  document.querySelectorAll('.seg button').forEach(b=>b.classList.toggle('on',b.dataset.v==S.cur));
  $('#fxb').textContent=`USD/CAD ${R().toFixed(4)}${S.fx.manual?' (manual)':S.fx.d?' · '+S.fx.d:''}`;
- $('#app').innerHTML=({overview:vOver,accounts:vAcc,contrib:vCon,limits:vLim,guide:vGuide})[U.tab]()+`<p class="foot">${S.sync?.token?(S.sync.dirty?'Sync pending':'Synced'+(S.sync.at?' at '+new Date(S.sync.at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):''))+' · encrypted before upload':'Your data stays in this browser. Back it up or turn on encrypted sync in “Backup &amp; privacy”.'}</p>`}
+ $('#app').innerHTML=({overview:vOver,accounts:vAcc,contrib:vCon,limits:vLim,guide:vGuide})[U.tab]()+`<p class="foot">${S.sync?.token?(S.sync.dirty?(syncErr?'Sync failed: '+esc(syncErr)+' · retrying':'Sync pending'):'Synced'+(S.sync.at?' at '+new Date(S.sync.at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):''))+' · encrypted before upload':'Your data stays in this browser. Back it up or turn on encrypted sync in “Backup &amp; privacy”.'}</p>`}
 /* ---------- modals ---------- */
 const bad=m=>{$('#er').textContent=m;return false};
 function modal(title,body,ok,fn,cls=''){const d=$('#dlg');d.className=cls;d.innerHTML=`<h3>${title}</h3><div class="f">${body}</div><p class="er" id="er"></p><div class="ar"><button class="b cx" data-act="x">${ok?'Cancel':'Close'}</button>${ok?`<button class="b p" id="ok">${ok}</button>`:''}</div>`;
@@ -203,13 +209,15 @@ $('#dlg').oncancel=e=>{if($('#dlg').classList.contains('lk'))e.preventDefault()}
 const num=id=>parseFloat($(id).value);
 const pick=(id,nid,list,cur,ph)=>`<select id="${id}" data-new="${nid}">${O(list,cur)}<option value="__new">+ New…</option></select><input id="${nid}" placeholder="${ph}" ${list.length?'hidden':''}>`;
 const pv=(id,nid)=>$('#'+id).value=='__new'?$('#'+nid).value.trim():$('#'+id).value;
-function accModal(id){const a=id?acc(id):{name:'',type:catT()[0]||'',room:''};
+function accModal(id){const a=id?acc(id):{name:'',type:catT()[0]||'',inst:''};
  modal(id?'Edit account':'New account',`<label>Name<input id="n" value="${esc(a.name)}" placeholder="e.g. Wealthsimple TFSA"></label>
  <label>Account type${pick('t','tn',catT(),a.type,'New account type')}</label>
- <label>Yearly contribution room, CAD (optional)<input id="r" type="number" min="0" step="any" value="${a.room||''}"></label><span class="k">Your personal room is in CRA My Account. You can change it per year later.</span>`,'Save',()=>{
- const n=$('#n').value.trim(),t=canon(pv('t','tn'),catT()),r=$('#r').value===''?0:num('#r');
- if(!n||!t)return bad('Enter a name and an account type');if(!(r>=0))return bad('Room must be zero or more');
- if(id)Object.assign(a,{name:n,type:t,room:r});else S.accounts.push({id:uid(),name:n,type:t,room:r,h:[]});save();render()})}
+ <label>Institution (optional)<select id="ins" data-new="insn"><option value="">None</option>${O(catI(),a.inst||'')}<option value="__new">+ New…</option></select><input id="insn" placeholder="New institution" hidden></label>
+ <span class="k" id="rinfo"></span>`,'Save',()=>{
+ const n=$('#n').value.trim(),t=canon(pv('t','tn'),catT()),ins=$('#ins').value=='__new'?canon($('#insn').value.trim(),catI()):$('#ins').value;
+ if(!n||!t)return bad('Enter a name and an account type');
+ if(id)Object.assign(a,{name:n,type:t,inst:ins});else S.accounts.push({id:uid(),name:n,type:t,inst:ins,h:[]});save();render()});
+ const up=()=>{const v=$('#t').value;$('#rinfo').textContent=v=='__new'?'A new account type has no contribution room until you set it under Account types.':roomOf(v)>0?`Contribution room: ${fmt(roomOf(v))}, shared by all ${v} accounts. Change it under Account types.`:`No contribution room set for ${v}. Set it under Account types.`};up();$('#t').addEventListener('change',up)}
 function hModal(aid,hid){const a=acc(aid),h=hid?a.h.find(x=>x.id==hid):{cls:allCls()[0]||'',amt:'',cur:'CAD'};
  modal(hid?'Edit holding':'Add holding to '+esc(a.name),`<label>Investment type${pick('c','cn',allCls(),h.cls,'New investment type')}</label>
  <div class="two"><label>Amount invested<input id="m" type="number" min="0" step="any" value="${h.amt}"></label><label>Currency<select id="u">${O(['CAD','USD'],h.cur)}</select></label></div>`,'Save',()=>{
@@ -220,8 +228,6 @@ function cModal(){if(!S.accounts.length)return toast('Add an account first');
  <div class="two"><label>Amount<input id="m" type="number" min="0" step="any"></label><label>Currency<select id="u">${O(['CAD','USD'])}</select></label></div><span class="k">USD amounts are converted to CAD at today's rate.</span>`,'Save',()=>{
  const amt=num('#m'),d=$('#d').value;if(!(amt>0))return bad('Enter an amount above zero');if(!d)return bad('Choose a date');
  S.contribs.push({id:uid(),acc:$('#a').value,date:d,amt,cur:$('#u').value,cad:toCAD(amt,$('#u').value)});U.year=+d.slice(0,4);save();U.tab='contrib';render()})}
-function roomModal(id){const a=acc(id);modal(`${U.year} room for ${esc(a.name)}`,`<label>Contribution room, CAD<input id="r" type="number" min="0" step="any" value="${roomOf(a,U.year)||''}"></label>`,'Save',()=>{
- const r=$('#r').value===''?0:num('#r');if(!(r>=0))return bad('Enter zero or more');(a.rooms??={})[U.year]=r;save();render()})}
 function lModal(){if(!S.accounts.length)return toast('Add an account first');
  modal('New limit',`<label>Applies to<select id="s">${O(scopeOpts())}</select></label><label>Investment type or currency<select id="g"><optgroup label="Investment type">${O(allCls().map(c=>['cls:'+c,c]))}</optgroup><optgroup label="Currency">${O([['cur:CAD','CAD holdings'],['cur:USD','USD holdings']])}</optgroup></select></label>
  <label>Maximum share (%)<input id="x" type="number" min="0" max="100" step="any" placeholder="10"></label>`,'Save',()=>{
@@ -270,28 +276,28 @@ function recUnlock(){const{o,done,keep}=UL;
  let r;try{r=await recDec(o,$('#rk1').value)}catch{return bad('That recovery key doesn\'t match this data')}
  S=norm(r[0]);if(keep){done();return}lock=r[1];resetPass(done);return false},keep?'':'lk')}
 /* ---------- encrypted sync via a private GitHub repo ---------- */
-let busy=false;
+let busy=false,syncErr='',syncWait=0;
 const gh=(m,b)=>fetch(`https://api.github.com/repos/${S.sync.repo}/contents/${S.sync.path}`,{method:m,cache:'no-store',referrerPolicy:'no-referrer',headers:{Authorization:'Bearer '+S.sync.token,Accept:'application/vnd.github+json'},body:b&&JSON.stringify(b)});
 const ghErr=r=>new Error(r.status==401?'GitHub rejected the token':r.status==403?'Token lacks permission, or rate-limited':r.status==404?'Repo not found, or the token has no access to it':'GitHub error '+r.status);
 async function remote(){const r=await gh('GET');if(r.status==404)return null;if(!r.ok)throw ghErr(r);const j=await r.json();return{sha:j.sha,o:JSON.parse(atob(j.content.replace(/\s/g,'')))}}
 async function push(sha){const n0=S.sync.n||0,{sync,...rest}=S,body={message:'Update portfolio data',content:btoa(JSON.stringify(await enc(rest)))};if(sha)body.sha=sha;
  const r=await gh('PUT',body);if(!r.ok)throw ghErr(r);S.sync.sha=(await r.json()).content.sha;S.sync.dirty=(S.sync.n||0)!=n0;S.sync.at=Date.now();
- if(S.sync.dirty){clearTimeout(tm);tm=setTimeout(doSync,2500)}}
+ if(S.sync.dirty){clearTimeout(tm);tm=setTimeout(doSync,300)}}
 async function pullDec(o){
  if(lock?.hdr&&o.enc==2){try{const[d]=await opn(o,lock.mb);return[d,{...lock,hdr:hdrOf(o)}]}catch{}}
  else if(lock?.legacy&&o.enc!=2&&o.s==b64(lock.s)){const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:ub(o.i)},lock.k,ub(o.d));return[JSON.parse(new TextDecoder().decode(pt)),lock]}
  return new Promise((res,rej)=>{modal('Passphrase from your other device','<div class="k">The synced data was locked with a different passphrase than this device uses. Enter that passphrase, or its recovery key.</div><label>Passphrase or recovery key<input id="p" type="password"></label>','Unlock',async()=>{try{const[d,l]=await openAny(o,$('#p').value);res([d,l])}catch{return bad('Wrong passphrase or recovery key')}});
   $('#dlg').addEventListener('close',()=>rej(new Error('cancelled')),{once:true})})}
 async function doSync(manual){
- if(!S.sync?.token||busy||(manual!==true&&$('#dlg').open))return;busy=true;
+ if(!S.sync?.token||busy)return;if(manual!==true&&$('#dlg').open){if(S.sync.dirty){clearTimeout(tm);tm=setTimeout(doSync,2000)}return}busy=true;
  try{if(!lock)throw new Error('Set a passphrase first');
   const rm=await remote();
   if(rm&&rm.sha!=S.sync.sha){const[d,l]=await pullDec(rm.o);
    const first=!S.sync.sha,had=first&&S.accounts.length>0;
    if(first||!(S.sync.dirty&&S.accounts.length)||confirm('Newer data from another device was found.\n\nOK: load it (replaces this device\'s data)\nCancel: keep this device\'s data and overwrite the other copy')){
-    const sy={...S.sync,sha:rm.sha,dirty:false,at:Date.now()};S=norm(d);S.sync=sy;lock=l;await persist();toast(had?'Replaced local data with your GitHub copy':'Loaded your latest synced data');return}}
-  if(S.sync.dirty||!rm||manual===true){await push(rm?.sha);await persist();if(manual===true)toast('Synced')}else S.sync.at=Date.now();
- }catch(e){if(e.message!='cancelled')toast('Sync failed: '+e.message)}finally{busy=false;render()}}
+    const sy={...S.sync,sha:rm.sha,dirty:false,at:Date.now()};S=norm(d);S.sync=sy;lock=l;await persist();syncErr='';syncWait=0;toast(had?'Replaced local data with your GitHub copy':'Loaded your latest synced data');return}}
+  if(S.sync.dirty||!rm||manual===true){await push(rm?.sha);await persist();syncErr='';syncWait=0;if(manual===true)toast('Synced')}else{S.sync.at=Date.now();syncErr='';syncWait=0}
+ }catch(e){if(e.message!='cancelled'){syncErr=e.message;toast('Sync failed: '+e.message);if(S.sync?.dirty){syncWait=syncWait?Math.min(syncWait*3,60000):5000;clearTimeout(tm);tm=setTimeout(doSync,syncWait)}}}finally{busy=false;render()}}
 function syncModal(){const s=S.sync||{};
  modal('Git Repo setup',`<div class="k">Data is encrypted with your passphrase before it leaves this device, so GitHub only stores unreadable text. Use a <b>private</b> repo and a fine-grained token limited to that one repo with “Contents: Read and write”. Use the same repo, token and passphrase on each device. If the repo already holds data, it replaces the data in this browser.</div>
  <label>Repository (owner/name)<input id="gr" value="${esc(s.repo||'')}" placeholder="yourname/portfolio-data"></label>
@@ -301,11 +307,47 @@ function syncModal(){const s=S.sync||{};
  if(!/^[\w.-]+\/[\w.-]+$/.test(repo))return bad('Use the form owner/name');if(!token)return bad('Paste your access token');if(!path)return bad('Enter a file path');
  const same=s.repo==repo&&s.path==path;S.sync={...s,repo,token,path,sha:same?s.sha:null,dirty:true,n:(s.n||0)+1};await persist();doSync(true)})}
 /* ---------- manage account types & investment types ---------- */
-const usage=(k,n)=>k=='types'?S.accounts.filter(a=>a.type==n).length:rows().filter(x=>x.h.cls==n).length;
-function catModal(){S.cats.types=catT();S.cats.cls=allCls();
- const sec=(k,t,hint)=>`<div><b>${t}</b>${S.cats[k].map((n,i)=>`<div class="row" style="margin-top:6px"><input id="cn-${k}-${i}" value="${esc(n)}" style="flex:1;min-width:120px"><span class="k">${usage(k,n)} in use</span><button class="ib" data-act="catRen" data-k="${k}" data-i="${i}">Rename</button><button class="ib" data-act="catDel" data-k="${k}" data-i="${i}">Delete</button></div>`).join('')}
- <div class="row" style="margin-top:8px"><input id="cn-${k}-new" placeholder="${hint}" style="flex:1;min-width:120px"><button class="b" data-act="catAdd" data-k="${k}">Add</button></div></div>`;
- modal('Manage categories',sec('types','Account types','New type, e.g. LIRA')+sec('cls','Investment types','New type, e.g. REITs')+'<div class="k">Renaming updates everything that uses the name. Renaming to an existing name merges the two. Types that are in use can\'t be deleted.</div>')}
+const usage=(k,n)=>k=='types'?S.accounts.filter(a=>a.type==n).length:k=='inst'?S.accounts.filter(a=>a.inst==n).length:rows().filter(x=>x.h.cls==n).length;
+let CD;
+const catFinal=r=>{let n=0;while(r.mg&&n++<9)r=r.mg;return r.n};
+function catBody(){
+ const sec=(k,t,hint)=>`<div><b>${t}</b>${CD[k].map((r,i)=>{
+  const ed=CD.ed&&CD.ed.k==k&&CD.ed.i==i,dead=r.del||r.mg,at=`data-k="${k}" data-i="${i}"`;
+  const nm=ed?`<input id="cn-${k}-${i}" value="${esc(r.n)}" style="flex:1;min-width:120px">`:`<div style="flex:1;min-width:120px;padding:9px 4px${dead?';text-decoration:line-through;opacity:.6':''}">${esc(r.n)}${!dead&&r.o!=null&&r.n!=r.o?` <span class="k">(was ${esc(r.o)})</span>`:''}${r.o==null?' <span class="k">(new)</span>':''}</div>`;
+  const note=r.del?`<span class="k">will be deleted${k=='inst'&&r.o!=null&&usage(k,r.o)?' · cleared from '+usage(k,r.o)+(usage(k,r.o)>1?' accounts':' account'):''}</span>`:r.mg?`<span class="k">merges into ${esc(catFinal(r))}</span>`:`<span class="k">${r.o==null?'':usage(k,r.o)+' in use'}</span>`;
+  const btn=dead?`<button class="ib" data-act="catUndo" ${at}>Undo</button>`:ed?`<button class="ib" data-act="catDone" ${at}>Done</button>`:`<button class="ib" data-act="catRen" ${at}>Rename</button><button class="ib" data-act="catDel" ${at}>Delete</button>`;
+  const rr=k=='types'&&!dead?`<div class="row" style="margin:2px 0 0 4px"><span class="k sp">Contribution room, CAD</span><input data-rm="${i}" type="number" min="0" step="any" placeholder="None" value="${r.rm||''}" style="width:140px" aria-label="Contribution room for ${esc(r.n)}"></div>`:'';
+  return `<div style="margin-top:6px"><div class="row">${nm}${note}${btn}</div>${rr}</div>`}).join('')}
+ <div class="row" style="margin-top:8px"><input id="cn-${k}-new" placeholder="${hint}" style="flex:1;min-width:120px">${k=='types'?'<input id="cn-types-room" type="number" min="0" step="any" placeholder="Room" style="width:100px">':''}<button class="b" data-act="catAdd" data-k="${k}">Add</button></div></div>`;
+ return sec('types','Account types','New type, e.g. LIRA')+sec('cls','Investment types','New type, e.g. REITs')+sec('inst','Institutions','New institution, e.g. Wealthsimple')+`<div class="k" style="margin-top:10px" id="cnote">${catNoteHtml()}</div>`}
+const catChg=()=>['types','cls','inst'].reduce((s,k)=>s+CD[k].filter(r=>r.del||r.mg||r.o==null||r.n!=r.o||r.rm!=r.orm).length,0);
+const catNoteHtml=()=>{const chg=catChg();return `${chg?`<b>${chg} unsaved change${chg>1?'s':''}</b>. Click “Save changes” to apply ${chg>1?'them':'it'}.`:'No changes yet.'} Contribution room is set once per account type and is shared by every account of that type. Use Rename, then Done. Renaming to an existing name merges the two. Types that are in use can't be deleted; deleting an institution just clears it from its accounts.`};
+const catNote=()=>{const e=$('#cnote');if(e)e.innerHTML=catNoteHtml()};
+document.addEventListener('input',e=>{const t=e.target;if(t.dataset.rm!=null&&CD&&CD.types[+t.dataset.rm]){const v=parseFloat(t.value);CD.types[+t.dataset.rm].rm=v>0?v:0;catNote()}});
+function catPaint(){const a={},rv=$('#cn-types-room')?.value||'';['types','cls','inst'].forEach(k=>{const e=$('#cn-'+k+'-new');a[k]=e?e.value:''});$('#cb').innerHTML=catBody();['types','cls','inst'].forEach(k=>{$('#cn-'+k+'-new').value=a[k]});$('#cn-types-room').value=rv}
+function catCommit(){const e=CD.ed;if(!e)return true;const r=CD[e.k][e.i],n=$(`#cn-${e.k}-${e.i}`).value.trim();
+ if(n&&n!=r.n){const t=CD[e.k].find((x,i)=>i!=e.i&&!x.del&&!x.mg&&x.n.toLowerCase()==n.toLowerCase());
+  if(t){if(r.o==null){toast('That name already exists');return false}
+   if(!confirm(`“${t.n}” already exists. Merge “${r.n}” into it?`))return false;r.mg=t}else r.n=n}
+ CD.ed=null;catPaint();return true}
+function catSave(){if(!catCommit())return false;let c=0;const RM={};
+ ['types','cls','inst'].forEach(k=>{const ren=new Map(),L=[],clr=new Set();
+  CD[k].forEach(r=>{if(r.del){c++;if(k=='inst'&&r.o!=null)clr.add(r.o);return}
+   if(r.mg){c++;if(r.o!=null){const f=catFinal(r);if(f!=r.o)ren.set(r.o,f)}return}
+   if(r.o==null||r.n!=r.o||r.rm!=r.orm)c++;
+   if(k=='types'&&r.rm>0)RM[r.n]=r.rm;
+   L.push(r.n);if(r.o!=null&&r.n!=r.o)ren.set(r.o,r.n)});
+  if(ren.size||clr.size){
+   if(k=='inst'){S.accounts.forEach(a=>{if(ren.has(a.inst))a.inst=ren.get(a.inst);else if(clr.has(a.inst))a.inst=''})}
+   else if(k=='types'){S.accounts.forEach(a=>{if(ren.has(a.type))a.type=ren.get(a.type)});S.limits.forEach(l=>{if(typeof l.sc=='string'&&l.sc.startsWith('t:')&&ren.has(l.sc.slice(2)))l.sc='t:'+ren.get(l.sc.slice(2))});if(typeof U.scope=='string'&&U.scope.startsWith('t:')&&ren.has(U.scope.slice(2)))U.scope='t:'+ren.get(U.scope.slice(2))}
+   else{rows().forEach(x=>{if(ren.has(x.h.cls))x.h.cls=ren.get(x.h.cls)});S.limits.forEach(l=>{if(l.k=='cls'&&ren.has(l.val))l.val=ren.get(l.val)})}}
+  S.cats[k]=L});
+ S.cats.rooms=RM;
+ if(c){save();render();toast('Categories saved')}}
+function catModal(){S.cats.types=catT();S.cats.cls=allCls();S.cats.inst=catI();
+ const mk=k=>S.cats[k].map(n=>({o:n,n,del:0,mg:null,rm:k=='types'?roomOf(n):0,orm:k=='types'?roomOf(n):0}));
+ CD={types:mk('types'),cls:mk('cls'),inst:mk('inst'),ed:null};
+ modal('Manage categories','<div id="cb"></div>','Save changes',catSave);catPaint()}
 /* ---------- first run: create passphrase or restore from GitHub ---------- */
 let boot;
 function welcome(done){boot=done;
@@ -329,20 +371,18 @@ function restoreModal(){
  await persist();boot()},'lk')}
 /* ---------- events ---------- */
 const ACT={tab:d=>{U.tab=d.v;render()},cur:d=>{S.cur=d.v;save();render()},fx:fxModal,menu:menuModal,x:()=>$('#dlg').close(),
- addAcc:()=>accModal(),editAcc:d=>accModal(d.id),addH:d=>hModal(d.id),editH:d=>hModal(d.id,d.h),addC:cModal,addL:lModal,editRoom:d=>roomModal(d.id),setPass:passModal,
+ addAcc:()=>accModal(),editAcc:d=>accModal(d.id),addH:d=>hModal(d.id),editH:d=>hModal(d.id,d.h),addC:cModal,addL:lModal,setPass:passModal,
  delAcc:d=>{if(!confirm('Delete this account and all its holdings, contributions and limits?'))return;S.accounts=S.accounts.filter(a=>a.id!=d.id);S.contribs=S.contribs.filter(c=>c.acc!=d.id);S.limits=S.limits.filter(l=>l.sc!='a:'+d.id);if(U.scope=='a:'+d.id)U.scope='all';save();render()},
  delH:d=>{if(!confirm('Remove this holding?'))return;const a=acc(d.id);a.h=a.h.filter(x=>x.id!=d.h);save();render()},
  delC:d=>{S.contribs=S.contribs.filter(c=>c.id!=d.id);save();render()},delL:d=>{S.limits=S.limits.filter(l=>l.id!=d.id);save();render()},
  live:async()=>{toast('Fetching…');const ok=await fetchFx();toast(ok?'Rate updated':'Could not reach the rate service');if(ok)fxModal()},
  exp:async()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(await pack(true),null,1)],{type:'application/json'}));a.download=`portfolio-backup-${today()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1e3);toast(lock?'Encrypted backup saved':'Backup saved (unencrypted)')},
  imp:()=>$('#file').click(),manage:catModal,
- catAdd:d=>{const n=$(`#cn-${d.k}-new`).value.trim();if(!n)return;if(S.cats[d.k].some(x=>x.toLowerCase()==n.toLowerCase()))return toast('That name already exists');S.cats[d.k].push(n);save();catModal()},
- catDel:d=>{const n=S.cats[d.k][d.i],u=usage(d.k,n);if(u)return toast(`“${n}” is in use (${u}). Rename it to merge, or remove those items first.`);S.cats[d.k].splice(d.i,1);save();catModal()},
- catRen:d=>{const L=S.cats[d.k],old=L[d.i],n=$(`#cn-${d.k}-${d.i}`).value.trim();if(!n||n==old)return;
-  const j=L.findIndex((x,i)=>i!=d.i&&x.toLowerCase()==n.toLowerCase());if(j>=0&&!confirm(`“${L[j]}” already exists. Merge “${old}” into it?`))return;const nn=j>=0?L[j]:n;
-  if(d.k=='types'){S.accounts.forEach(a=>{if(a.type==old)a.type=nn});S.limits.forEach(l=>{if(l.sc=='t:'+old)l.sc='t:'+nn});if(U.scope=='t:'+old)U.scope='t:'+nn}
-  else{rows().forEach(x=>{if(x.h.cls==old)x.h.cls=nn});S.limits.forEach(l=>{if(l.k=='cls'&&l.val==old)l.val=nn})}
-  if(j>=0)L.splice(d.i,1);else L[d.i]=nn;save();render();catModal()},sync:()=>lock?syncModal():(toast('Set a passphrase first. Sync only uploads encrypted data.'),passModal()),syncNow:()=>doSync(true),
+ catAdd:d=>{if(!catCommit())return;const el=$(`#cn-${d.k}-new`),n=el.value.trim();if(!n)return;if(CD[d.k].some(x=>!x.del&&!x.mg&&x.n.toLowerCase()==n.toLowerCase()))return toast('That name already exists');const rv=d.k=='types'?parseFloat($('#cn-types-room').value):0;CD[d.k].push({o:null,n,del:0,mg:null,rm:rv>0?rv:0,orm:0});el.value='';if(d.k=='types')$('#cn-types-room').value='';catPaint()},
+  catDel:d=>{if(!catCommit())return;const L=CD[d.k],r=L[d.i];if(r.o==null){L.splice(d.i,1);return catPaint()}const u=usage(d.k,r.o);if(u&&d.k!='inst')return toast(`“${r.o}” is in use (${u}). Rename it to merge, or remove those items first.`);if(L.some(x=>x.mg===r))return toast('Undo the merge into it first');r.del=1;catPaint()},
+  catRen:d=>{if(!catCommit())return;CD.ed={k:d.k,i:+d.i};catPaint();const e=$(`#cn-${d.k}-${d.i}`);e.focus();e.select()},
+  catDone:()=>{catCommit()},
+  catUndo:d=>{if(!catCommit())return;const r=CD[d.k][d.i];r.del=0;r.mg=null;catPaint()},sync:()=>lock?syncModal():(toast('Set a passphrase first. Sync only uploads encrypted data.'),passModal()),syncNow:()=>doSync(true),
  unsync:()=>{if(!confirm('Stop syncing on this device? Your local data and the GitHub copy are kept.'))return;S.sync={};persist();render();$('#dlg').close()},
  restoreGH:()=>restoreModal(),welcomeBack:()=>welcome(boot),
  useRK:recUnlock,backUL:()=>unlock(UL.o,UL.done,UL.keep),recKey:recModal,
