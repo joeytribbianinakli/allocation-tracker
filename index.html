@@ -2,12 +2,13 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-nJqZaGq5pJ5XRbC8p0dWSJ1ANMhrK1WHxRdS1+LBlio='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-msZ39YBSHPG0vW5VQ8Gd52OrKY/fzc6fJqMTTfIKV/c='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
 <link rel="icon" href="data:,">
 <title>Portfolio tracker</title>
 <style>
-:root{--bg:#f4f6f8;--c:#fff;--t:#0f1b2d;--m:#5f6c80;--b:#e2e7ee;--a:#1f6feb;--r:#d92d20;--g:#12805c}
-@media(prefers-color-scheme:dark){:root{--bg:#0d1218;--c:#151c26;--t:#e6ebf2;--m:#8d99ab;--b:#263040;--a:#5b9bff;--r:#ff6b60;--g:#3ccf9b}}
+:root{--bg:#f4f6f8;--c:#fff;--t:#0f1b2d;--m:#5f6c80;--b:#e2e7ee;--a:#1f6feb;--r:#d92d20;--g:#12805c;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0d1218;--c:#151c26;--t:#e6ebf2;--m:#8d99ab;--b:#263040;--a:#5b9bff;--r:#ff6b60;--g:#3ccf9b;color-scheme:dark}}
+:root[data-theme=dark]{--bg:#0d1218;--c:#151c26;--t:#e6ebf2;--m:#8d99ab;--b:#263040;--a:#5b9bff;--r:#ff6b60;--g:#3ccf9b;color-scheme:dark}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 .wrap{max-width:1040px;margin:0 auto;padding:0 16px}
 header{background:var(--c);border-bottom:1px solid var(--b);position:sticky;top:0;z-index:5}
@@ -35,6 +36,7 @@ table{width:100%;border-collapse:collapse}td{padding:8px 4px;border-bottom:1px s
 .tag{border-radius:99px;padding:2px 10px;font-size:12px;font-weight:600}.tag.ok{color:var(--g);background:color-mix(in srgb,var(--g) 14%,transparent)}.tag.bad{color:var(--r);background:color-mix(in srgb,var(--r) 14%,transparent)}
 .th{display:flex;justify-content:space-between;margin:22px 4px 0;font-weight:650;font-size:15px}
 .charts{display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}.donut{width:100%;max-width:210px;display:block;margin:0 auto 12px}
+.charts.three{grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}.ct{text-align:center;font-weight:600;margin-bottom:8px}.charts.three .donut{max-width:190px}
 .sel{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}.sel label{flex:1;min-width:160px;display:grid;gap:4px;color:var(--m);font-size:12px}
 .empty{text-align:center;padding:40px 16px}.empty p{color:var(--m)}
 dialog{border:1px solid var(--b);border-radius:14px;background:var(--c);color:var(--t);padding:20px;width:min(440px,92vw)}dialog::backdrop{background:#0009}
@@ -61,6 +63,7 @@ dialog.wide{width:min(600px,94vw)}#cb{max-height:58vh;overflow-y:auto;padding-ri
 <header>
  <div class="wrap top"><h1>Portfolio</h1>
   <button class="b eye" id="eye" data-act="eye" aria-label="Show amounts" title="Show amounts" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 19c-7 0-11-7-11-7a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 5c7 0 11 7 11 7a18.5 18.5 0 0 1-2.16 3.19M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button>
+  <button class="b eye" id="thm" data-act="theme" aria-label="Switch to dark mode" title="Switch to dark mode"></button>
   <div class="seg"><button data-act="cur" data-v="CAD">CAD</button><button data-act="cur" data-v="USD">USD</button></div>
   <button class="chip" id="fxb" data-act="fx" title="Exchange rate"></button>
   <button class="b" data-act="menu" aria-label="Backup and privacy">Backup &amp; privacy</button></div>
@@ -71,6 +74,12 @@ dialog.wide{width:min(600px,94vw)}#cb{max-height:58vh;overflow-y:auto;padding-ri
 <input type="file" id="file" accept=".json,application/json" hidden>
 <script>
 const $=s=>document.querySelector(s),K='portfolio.v1';
+/* theme: follows the device until you pick one with the header toggle; the choice is remembered on this device (it is not part of your portfolio data) */
+const TK='portfolio.theme',MQ=typeof matchMedia=='function'?matchMedia('(prefers-color-scheme: dark)'):null;
+let TH=null;try{TH=localStorage.getItem(TK)}catch{}if(TH!='light'&&TH!='dark')TH=null;
+const effTheme=()=>TH||(MQ&&MQ.matches?'dark':'light'),applyTheme=()=>{document.documentElement.dataset.theme=effTheme()};
+applyTheme();if(MQ&&MQ.addEventListener)MQ.addEventListener('change',()=>{if(!TH){applyTheme();render()}});
+const SUN='<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>',MOON='<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
 const TYPES=['TFSA','RRSP','FHSA','Non-registered','RESP','Other'],CLS=['ETFs','Stocks','Bonds','Gold','Cash','Crypto','Real estate','Other'];
 const COL=['#2f6fed','#17a58a','#f2a30f','#e5484d','#8e6bf2','#3bb5e8','#7bb83d','#e5609f','#8a97a8'];
 const PH='Unassigned';
@@ -162,18 +171,15 @@ function vDD(sr){const P=U.dd;if(!P.length)return '';const r=sr.filter(x=>P.ever
  <table style="margin-top:14px">${r.map(x=>`<tr><td><span class="dot" style="background:${col(x.h.cls)}"></span>${esc(x.a.name)} <span class="k">· ${esc(x.a.holder||'No holder')} · ${esc(x.h.cls)}</span></td><td class="n">${fmtN(x.h.amt,x.h.cur)}</td>${x.h.cur!=S.cur?`<td class="n">${fmt(x.v)}</td>`:'<td></td>'}<td class="n">${pc(x.v/t)}</td></tr>`).join('')}</table></div>`}
 function vOver(){const all=rows(),T=sum(all);if(!S.accounts.length)return emptyCard;
  const al=breaches(),cadN=sum(all.filter(x=>x.h.cur=='CAD')),usdV=sum(all.filter(x=>x.h.cur=='USD'));
- const hs=holders();if(U.scope!='all'&&!(U.scope.startsWith('h:')&&hs.includes(U.scope.slice(2))))U.scope='all';
+ const hs=holders();if(U.by!='cls'&&U.by!='acc')U.by='cls';if(U.scope!='all'&&!(U.scope.startsWith('h:')&&hs.includes(U.scope.slice(2))))U.scope='all';
  const sr=filt(U.scope),st=sum(sr),g=group(sr,U.by),gc=group(sr,'cur'),gt=group(sr,'type'),who=U.scope=='all'?'All holders':U.scope.slice(2);
  return roomBanner()+(al.length?`<div class="alert"><b>${al.length} limit${al.length>1?'s':''} exceeded</b>${al.map(b=>`<div>${esc(lname(b.L))} is ${pc(b.p)} of ${esc(scopeName(b.L.sc))} (limit ${b.L.max}%)</div>`).join('')}</div>`:'')+
  `<div class="grid" style="margin-top:12px"><div class="card"><div class="k">Total value</div><div class="v">${fmt(T)}</div><div class="k">1 USD = ${R().toFixed(4)} CAD</div></div>
  <div class="card"><div class="k">Held in CAD</div><div class="v">${fmtN(cadN,'CAD')}</div><div class="k">${pc(T?cadN/T:0)} of portfolio</div></div>
  <div class="card"><div class="k">Held in USD</div><div class="v">${fmtN(usdV/R(),'USD')}</div><div class="k">${pc(T?usdV/T:0)} of portfolio · ≈ ${fmt(usdV)}</div></div></div>
- <div class="card"><div class="sel"><label>Holder<select data-chg="scope">${O([['all','All holders'],...hs.map(h=>['h:'+h,h])],U.scope)}</select></label></div>
- <div class="row"><b class="sp">Account types</b><span class="k">${esc(who)}${st?' · '+fmt(st):''}</span></div>
- ${st?`<div style="max-width:340px;margin:0 auto">${donut(gt,st,'type')}${legend(gt,st,'type')}</div><div class="k" style="text-align:center;margin-top:6px">Click a slice or row to drill down.</div>`:'<p class="k">Nothing held in this selection yet.</p>'}</div>
- <div class="card"><div class="sel"><label>Group by<select data-chg="by">${O([['cls','Investment type'],['acc','Account'],['type','Account type'],['holder','Holder'],['cur','Currency']],U.by)}</select></label></div>
- <div class="row"><b class="sp">${esc(BYN[U.by])}</b><span class="k">${esc(who)}</span></div>
- ${st?`<div class="charts"><div>${donut(g,st,U.by)}${legend(g,st,U.by)}</div><div><div class="k" style="text-align:center;margin-bottom:6px">CAD vs USD</div>${donut(gc,st,'cur')}${legend(gc,st,'cur')}</div></div>`:'<p class="k">Nothing held in this selection yet.</p>'}</div>`+vDD(sr)}
+ <div class="card"><div class="sel"><label>Holder<select data-chg="scope">${O([['all','All holders'],...hs.map(h=>['h:'+h,h])],U.scope)}</select></label>
+ <label>Group by<select data-chg="by">${O([['cls','Investment type'],['acc','Account']],U.by)}</select></label></div>
+ ${st?`<div class="charts three"><div><div class="k ct">Account types</div>${donut(gt,st,'type')}${legend(gt,st,'type')}</div><div><div class="k ct">${esc(BYN[U.by])}</div>${donut(g,st,U.by)}${legend(g,st,U.by)}</div><div><div class="k ct">CAD vs USD</div>${donut(gc,st,'cur')}${legend(gc,st,'cur')}</div></div><div class="k" style="text-align:center;margin-top:10px">${esc(who)} · click a slice or row to drill down.</div>`:'<p class="k">Nothing held in this selection yet.</p>'}</div>`+vDD(sr)}
 function vAcc(){const T=sum(rows()),gh=U.accBy=='h';let h=`<div class="row" style="margin:16px 0 0"><h2 class="sp">Accounts</h2><div class="seg"><button class="${gh?'':'on'}" data-act="accBy" data-v="t">By type</button><button class="${gh?'on':''}" data-act="accBy" data-v="h">By holder</button></div><button class="b" data-act="manage">Manage categories</button><button class="b p" data-act="addAcc">Add account</button></div>`;if(!S.accounts.length)return h+emptyCard;
  const nh=S.accounts.filter(a=>a.holder==PH).length;if(nh)h+=`<div class="alert"><b>${nh} account${nh>1?'s are':' is'} on the placeholder holder “${PH}”.</b> Edit ${nh>1?'each account':'the account'} to choose its real holder, or rename “${PH}” under Manage categories → Holders.</div>`;
  h+=`<div class="row" style="margin:10px 0 0;justify-content:flex-end"><button class="b" data-act="expA">Expand all</button><button class="b" data-act="colA">Collapse all</button></div>`;
@@ -268,6 +274,7 @@ function vGuideRaw(){return `<div class="g"><div class="row" style="margin:16px 
 <li><b>Stop syncing:</b> Backup &amp; privacy → Git Repo setup → Turn off sync on this device.</li></ul></div></div>`}
 function render(){const n=breaches().length,ra=roomAlerts().length;
  const eb=$('#eye');eb.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true">${HID?EYEOFF:EYE}</svg>`;eb.setAttribute('aria-pressed',String(!HID));eb.setAttribute('aria-label',HID?'Show amounts':'Hide amounts');eb.title=HID?'Show amounts':'Hide amounts';
+ const tb=$('#thm'),dk=effTheme()=='dark',tl=dk?'Switch to light mode':'Switch to dark mode';tb.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true">${dk?SUN:MOON}</svg>`;tb.setAttribute('aria-label',tl);tb.title=tl;
  $('#tabs').innerHTML=[['overview','Overview'],['accounts','Accounts'],['contrib','Contributions'+(ra?`<span class="cnt">${ra}</span>`:'')],['limits','Limits & alerts'+(n?`<span class="cnt">${n}</span>`:'')],['guide','Setup guide']].map(([k,l])=>`<button class="${U.tab==k?'on':''}" data-act="tab" data-v="${k}">${l}</button>`).join('');
  document.querySelectorAll('.seg button').forEach(b=>b.classList.toggle('on',b.dataset.v==S.cur));
  $('#fxb').textContent=`USD/CAD ${R().toFixed(4)}${S.fx.manual?' (manual)':S.fx.d?' · '+S.fx.d:''}`;
@@ -449,7 +456,7 @@ function restoreModal(){
  if(rv){resetPass(boot);return false}
  await persist();boot()},'lk')}
 /* ---------- events ---------- */
-const ACT={accBy:d=>{U.accBy=d.v;render()},dd:d=>{const P=U.dd,same=P.length==1&&P[0].by==d.by&&P[0].n==d.n;U.dd=same?[]:[{by:d.by,n:d.n}];U.ddb=null;render();if(U.dd.length)$('#dd')?.scrollIntoView({block:'start',behavior:'smooth'})},dd2:d=>{U.dd.push({by:d.by,n:d.n});U.ddb=null;render();$('#dd')?.scrollIntoView({block:'start',behavior:'smooth'})},ddt:d=>{U.dd=U.dd.slice(0,+d.i+1);U.ddb=null;render()},ddx:()=>{U.dd=[];render()},eye:()=>{HID=!HID;render()},tab:d=>{U.tab=d.v;render()},cur:d=>{S.cur=d.v;save();render()},fx:fxModal,menu:menuModal,x:()=>$('#dlg').close(),
+const ACT={accBy:d=>{U.accBy=d.v;render()},dd:d=>{const P=U.dd,same=P.length==1&&P[0].by==d.by&&P[0].n==d.n;U.dd=same?[]:[{by:d.by,n:d.n}];U.ddb=null;render();if(U.dd.length)$('#dd')?.scrollIntoView({block:'start',behavior:'smooth'})},dd2:d=>{U.dd.push({by:d.by,n:d.n});U.ddb=null;render();$('#dd')?.scrollIntoView({block:'start',behavior:'smooth'})},ddt:d=>{U.dd=U.dd.slice(0,+d.i+1);U.ddb=null;render()},ddx:()=>{U.dd=[];render()},eye:()=>{HID=!HID;render()},theme:()=>{TH=effTheme()=='dark'?'light':'dark';try{localStorage.setItem(TK,TH)}catch{}applyTheme();render()},tab:d=>{U.tab=d.v;render()},cur:d=>{S.cur=d.v;save();render()},fx:fxModal,menu:menuModal,x:()=>$('#dlg').close(),
  addAcc:()=>accModal(),editAcc:d=>accModal(d.id),addH:d=>hModal(d.id),editH:d=>hModal(d.id,d.h),addC:()=>cModal('d'),addW:()=>cModal('w'),addL:lModal,setPass:passModal,
  delAcc:d=>{if(!confirm('Delete this account and all its holdings, contributions and limits?'))return;S.accounts=S.accounts.filter(a=>a.id!=d.id);S.contribs=S.contribs.filter(c=>c.acc!=d.id);S.limits=S.limits.filter(l=>l.sc!='a:'+d.id);if(U.scope=='a:'+d.id)U.scope='all';save();render()},
  delH:d=>{if(!confirm('Remove this holding?'))return;const a=acc(d.id);a.h=a.h.filter(x=>x.id!=d.h);save();render()},
