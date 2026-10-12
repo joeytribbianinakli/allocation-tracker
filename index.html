@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-msZ39YBSHPG0vW5VQ8Gd52OrKY/fzc6fJqMTTfIKV/c='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-ym3slvFCyWlWgUIzjz+L9C8Nc4MMTN1X/41WEDDTnFY='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
 <link rel="icon" href="data:,">
 <title>Portfolio tracker</title>
 <style>
@@ -37,6 +37,7 @@ table{width:100%;border-collapse:collapse}td{padding:8px 4px;border-bottom:1px s
 .th{display:flex;justify-content:space-between;margin:22px 4px 0;font-weight:650;font-size:15px}
 .charts{display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}.donut{width:100%;max-width:210px;display:block;margin:0 auto 12px}
 .charts.three{grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}.ct{text-align:center;font-weight:600;margin-bottom:8px}.charts.three .donut{max-width:190px}
+.dd2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;margin-top:14px;align-items:start}
 .sel{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}.sel label{flex:1;min-width:160px;display:grid;gap:4px;color:var(--m);font-size:12px}
 .empty{text-align:center;padding:40px 16px}.empty p{color:var(--m)}
 dialog{border:1px solid var(--b);border-radius:14px;background:var(--c);color:var(--t);padding:20px;width:min(440px,92vw)}dialog::backdrop{background:#0009}
@@ -86,7 +87,7 @@ const PH='Unassigned';
 const uid=()=>Math.random().toString(36).slice(2,9),esc=s=>String(s??'').replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 const today=()=>new Date().toLocaleDateString('en-CA'),YR=new Date().getFullYear();
 const dflt=()=>({accounts:[],limits:[],contribs:[],fx:{r:1.37,d:null,manual:false},cur:'CAD',sync:{},cats:{types:[...TYPES],cls:[...CLS],inst:[],holders:[]}});
-let S=dflt(),lock=null,U={tab:'overview',scope:'all',by:'cls',dd:[],ddb:null,accBy:'t',cgb:'type',year:YR,open:new Set(),cg:'m'};
+let S=dflt(),lock=null,U={tab:'overview',scope:'all',by:'cls',dd:[],ddsel:null,ddb:null,accBy:'t',cgb:'type',year:YR,open:new Set(),cg:'m'};
 const norm=o=>{const d=dflt();for(const k in d)if(o&&o[k]!=null&&typeof o[k]==typeof d[k])d[k]=o[k];const nu=v=>Number.isFinite(+v)?+v:0;d.accounts.forEach(a=>{a.h=Array.isArray(a.h)?a.h:[];a.h.forEach(h=>h.amt=nu(h.amt));a.inst=typeof a.inst=='string'?a.inst:'';a.holder=typeof a.holder=='string'?a.holder.trim():'';a.room=nu(a.room);a.lim=a.lim===true||(a.lim==null&&a.room>0);a.al=typeof a.al=='number'&&a.al>=0&&a.al<=100?a.al:null;if(a.rooms&&typeof a.rooms=='object')for(const y in a.rooms)a.rooms[y]=nu(a.rooms[y])});d.contribs.forEach(c=>{c.amt=nu(c.amt);c.cad=nu(c.cad);c.date=String(c.date||'');c.k=c.k=='w'?'w':''});d.limits.forEach(l=>l.max=nu(l.max));if(!(d.fx.r>0))d.fx.r=1.37;if(!Array.isArray(d.cats.types)||!Array.isArray(d.cats.cls))d.cats=dflt().cats;d.cats.inst=Array.isArray(d.cats.inst)?d.cats.inst.filter(x=>typeof x=='string'):[];d.cats.holders=Array.isArray(d.cats.holders)?d.cats.holders.filter(x=>typeof x=='string'):[];
  const r0=d.cats.rooms;d.cats.rooms={};if(r0&&typeof r0=='object'&&!Array.isArray(r0))for(const t in r0){const v=nu(r0[t]);if(v>0)d.cats.rooms[t]=v}
  const a0=d.cats.alerts;d.cats.alerts={};if(a0&&typeof a0=='object'&&!Array.isArray(a0))for(const t in a0){const v=a0[t];if(typeof v=='number'&&v>=0&&v<=100)d.cats.alerts[t]=v}
@@ -156,19 +157,26 @@ const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('show');clea
 async function fetchFx(){const src=[['https://api.frankfurter.dev/v1/latest?base=USD&symbols=CAD',j=>[j.rates.CAD,j.date]],['https://open.er-api.com/v6/latest/USD',j=>[j.rates.CAD,today()]]];
  for(const[u,f]of src){try{const r=await fetch(u,{cache:'no-store',referrerPolicy:'no-referrer'});if(!r.ok)continue;const[x,d]=f(await r.json());if(x>0){S.fx={r:x,d,manual:false};persist().catch(()=>{});render();return true}}catch(e){}}return false}
 /* ---------- charts ---------- */
-function donut(g,t,by,act='dd'){const sel=act=='dd'&&U.dd[0]&&U.dd[0].by==by?U.dd[0].n:null;let o=25,s='';g.forEach(([n,v])=>{const p=v/t*100;s+=`<circle class="dd" role="button" tabindex="0" aria-label="${esc(n)}, ${pc(v/t)}. Show breakdown" data-act="${act}" data-by="${by}" data-n="${esc(n)}" r="15.9155" cx="21" cy="21" fill="none" stroke="${col(n)}" stroke-width="6"${sel!=null&&sel!=n?' opacity=".3"':''} stroke-dasharray="${p} ${100-p}" stroke-dashoffset="${o}"><title>${esc(n)}: ${pc(v/t)}</title></circle>`;o-=p});
+/* highlighted slice: 'dd' = the drill-down opened from the top charts, 'dd2' = the slice picked inside the drill-down card (filters its accounts list) */
+const selOf=(act,by)=>{const f=act=='dd'?U.dd[0]:act=='dd2'?U.ddsel:null;return f&&f.by==by?f.n:null};
+function donut(g,t,by,act='dd'){const sel=selOf(act,by);let o=25,s='';g.forEach(([n,v])=>{const p=v/t*100;s+=`<circle class="dd" role="button" tabindex="0" aria-label="${esc(n)}, ${pc(v/t)}. ${act=='dd2'?'Filter accounts':'Show breakdown'}" data-act="${act}" data-by="${by}" data-n="${esc(n)}" r="15.9155" cx="21" cy="21" fill="none" stroke="${col(n)}" stroke-width="6"${sel!=null&&sel!=n?' opacity=".3"':''} stroke-dasharray="${p} ${100-p}" stroke-dashoffset="${o}"><title>${esc(n)}: ${pc(v/t)}</title></circle>`;o-=p});
  return `<svg viewBox="0 0 42 42" class="donut" role="group" aria-label="Allocation chart">${s}<text x="21" y="22.3" text-anchor="middle" font-size="3.1" font-weight="700" fill="currentColor">${fmt(t)}</text></svg>`}
-const legend=(g,t,by,act='dd')=>`<table>${g.map(([n,v])=>`<tr class="dd${act=='dd'&&U.dd[0]&&U.dd[0].by==by&&U.dd[0].n==n?' sl':''}" tabindex="0" data-act="${act}" data-by="${by}" data-n="${esc(n)}"><td><span class="dot" style="background:${col(n)}"></span>${esc(n)}</td><td class="n">${fmt(v)}</td><td class="n">${pc(v/t)}</td></tr>`).join('')}</table>`;
+const legend=(g,t,by,act='dd')=>`<table>${g.map(([n,v])=>`<tr class="dd${selOf(act,by)===n?' sl':''}" tabindex="0" data-act="${act}" data-by="${by}" data-n="${esc(n)}"><td><span class="dot" style="background:${col(n)}"></span>${esc(n)}</td><td class="n">${fmt(v)}</td><td class="n">${pc(v/t)}</td></tr>`).join('')}</table>`;
 /* ---------- views ---------- */
 const emptyCard=`<div class="card empty"><h2>No accounts yet</h2><p>Add an account (TFSA, RRSP, FHSA, non-registered…), then add what you hold in it.</p><button class="b p" data-act="addAcc">Add account</button></div>`;
 const BYN={cls:'Investment type',acc:'Account',type:'Account type',holder:'Holder',cur:'Currency'},SUB={cls:'acc',acc:'cls',type:'cls',holder:'acc',cur:'cls'};
 function vDD(sr){const P=U.dd;if(!P.length)return '';const r=sr.filter(x=>P.every(f=>KEY[f.by](x)==f.n)).sort((a,b)=>b.v-a.v),t=sum(r);if(!(t>0)){U.dd=[];return ''}
  const L=P[P.length-1],av=['cls','acc','type','holder','cur'].filter(k=>!P.some(f=>f.by==k)),dim=av.includes(U.ddb)?U.ddb:av.includes(SUB[L.by])?SUB[L.by]:av[0],g=dim?group(r,dim):[],st=sum(sr);
+ /* a slice picked in this card filters the accounts list on the right; it never opens another level */
+ const sel=U.ddsel&&U.ddsel.by==dim&&g.some(e=>e[0]==U.ddsel.n)?U.ddsel:null;U.ddsel=sel;
+ const r2=sel?r.filter(x=>KEY[dim](x)==sel.n):r,t2=sum(r2),am=new Map();r2.forEach(x=>{const e=am.get(x.a.id)||{a:x.a,v:0,c:new Set()};e.v+=x.v;e.c.add(x.h.cls);am.set(x.a.id,e)});const al=[...am.values()].sort((a,b)=>b.v-a.v);
  const cr=`<button class="chip" data-act="ddt" data-i="-1">Overview</button>`+P.map((f,i)=>' › '+(i==P.length-1?`<b>${esc(f.n)}</b>`:`<button class="chip" data-act="ddt" data-i="${i}">${esc(f.n)}</button>`)).join('');
  return `<div class="card" id="dd"><div class="row" style="gap:6px">${cr}<span class="sp"></span><button class="ib" data-act="ddx">Close</button></div>
  <div class="row" style="margin-top:10px"><div class="sp"><b>${esc(L.n)}</b> <span class="k">· ${BYN[L.by]}</span><div class="k">${pc(st?t/st:0)} of ${esc(scopeName(U.scope))} · ${r.length} holding${r.length==1?'':'s'}</div></div><div class="v" style="font-size:18px">${fmt(t)}</div></div>
- ${dim?`<div class="sel" style="margin-top:12px"><label>Break down by<select data-chg="ddb">${O(av.map(k=>[k,BYN[k]]),dim)}</select></label></div><div style="max-width:340px;margin:0 auto">${donut(g,t,dim,'dd2')}${legend(g,t,dim,'dd2')}</div><div class="k" style="text-align:center;margin-top:6px">Click a slice or row to drill further.</div>`:''}
- <table style="margin-top:14px">${r.map(x=>`<tr><td><span class="dot" style="background:${col(x.h.cls)}"></span>${esc(x.a.name)} <span class="k">· ${esc(x.a.holder||'No holder')} · ${esc(x.h.cls)}</span></td><td class="n">${fmtN(x.h.amt,x.h.cur)}</td>${x.h.cur!=S.cur?`<td class="n">${fmt(x.v)}</td>`:'<td></td>'}<td class="n">${pc(x.v/t)}</td></tr>`).join('')}</table></div>`}
+ ${dim?`<div class="sel" style="margin-top:12px"><label>Break down by<select data-chg="ddb">${O(av.map(k=>[k,BYN[k]]),dim)}</select></label></div>`:''}
+ <div class="dd2"><div>${dim?`${donut(g,t,dim,'dd2')}${legend(g,t,dim,'dd2')}<div class="k" style="text-align:center;margin-top:6px">Click a slice or row to filter the accounts list.</div>`:''}</div>
+ <div><div class="row"><b class="sp">Accounts</b><span class="k">${sel?esc(sel.n)+' · ':''}${al.length} account${al.length==1?'':'s'} · ${fmt(t2)}</span>${sel?'<button class="ib" data-act="ddsx">Clear</button>':''}</div>
+ <table style="margin-top:6px">${al.map(e=>`<tr><td><span class="dot" style="background:${col(e.a.type)}"></span>${esc(e.a.name)}<div class="k">${esc(e.a.holder||'No holder')} · ${esc(e.a.type)} · ${esc([...e.c].join(', '))}</div></td><td class="n">${fmt(e.v)}</td><td class="n">${pc(t2?e.v/t2:0)}</td></tr>`).join('')}</table></div></div></div>`}
 function vOver(){const all=rows(),T=sum(all);if(!S.accounts.length)return emptyCard;
  const al=breaches(),cadN=sum(all.filter(x=>x.h.cur=='CAD')),usdV=sum(all.filter(x=>x.h.cur=='USD'));
  const hs=holders();if(U.by!='cls'&&U.by!='acc')U.by='cls';if(U.scope!='all'&&!(U.scope.startsWith('h:')&&hs.includes(U.scope.slice(2))))U.scope='all';
@@ -456,7 +464,7 @@ function restoreModal(){
  if(rv){resetPass(boot);return false}
  await persist();boot()},'lk')}
 /* ---------- events ---------- */
-const ACT={accBy:d=>{U.accBy=d.v;render()},dd:d=>{const P=U.dd,same=P.length==1&&P[0].by==d.by&&P[0].n==d.n;U.dd=same?[]:[{by:d.by,n:d.n}];U.ddb=null;render();if(U.dd.length)$('#dd')?.scrollIntoView({block:'start',behavior:'smooth'})},dd2:d=>{U.dd.push({by:d.by,n:d.n});U.ddb=null;render();$('#dd')?.scrollIntoView({block:'start',behavior:'smooth'})},ddt:d=>{U.dd=U.dd.slice(0,+d.i+1);U.ddb=null;render()},ddx:()=>{U.dd=[];render()},eye:()=>{HID=!HID;render()},theme:()=>{TH=effTheme()=='dark'?'light':'dark';try{localStorage.setItem(TK,TH)}catch{}applyTheme();render()},tab:d=>{U.tab=d.v;render()},cur:d=>{S.cur=d.v;save();render()},fx:fxModal,menu:menuModal,x:()=>$('#dlg').close(),
+const ACT={accBy:d=>{U.accBy=d.v;render()},dd:d=>{const P=U.dd,same=P.length==1&&P[0].by==d.by&&P[0].n==d.n;U.dd=same?[]:[{by:d.by,n:d.n}];U.ddb=null;U.ddsel=null;render();if(U.dd.length)$('#dd')?.scrollIntoView({block:'start',behavior:'smooth'})},dd2:d=>{const s=U.ddsel;U.ddsel=s&&s.by==d.by&&s.n==d.n?null:{by:d.by,n:d.n};render()},ddsx:()=>{U.ddsel=null;render()},ddt:d=>{U.dd=U.dd.slice(0,+d.i+1);U.ddb=null;U.ddsel=null;render()},ddx:()=>{U.dd=[];U.ddsel=null;render()},eye:()=>{HID=!HID;render()},theme:()=>{TH=effTheme()=='dark'?'light':'dark';try{localStorage.setItem(TK,TH)}catch{}applyTheme();render()},tab:d=>{U.tab=d.v;render()},cur:d=>{S.cur=d.v;save();render()},fx:fxModal,menu:menuModal,x:()=>$('#dlg').close(),
  addAcc:()=>accModal(),editAcc:d=>accModal(d.id),addH:d=>hModal(d.id),editH:d=>hModal(d.id,d.h),addC:()=>cModal('d'),addW:()=>cModal('w'),addL:lModal,setPass:passModal,
  delAcc:d=>{if(!confirm('Delete this account and all its holdings, contributions and limits?'))return;S.accounts=S.accounts.filter(a=>a.id!=d.id);S.contribs=S.contribs.filter(c=>c.acc!=d.id);S.limits=S.limits.filter(l=>l.sc!='a:'+d.id);if(U.scope=='a:'+d.id)U.scope='all';save();render()},
  delH:d=>{if(!confirm('Remove this holding?'))return;const a=acc(d.id);a.h=a.h.filter(x=>x.id!=d.h);save();render()},
@@ -478,7 +486,7 @@ const ACT={accBy:d=>{U.accBy=d.v;render()},dd:d=>{const P=U.dd,same=P.length==1&
  wipe:()=>{if((prompt('Erase ALL saved data in this browser? Your GitHub copy, if any, is not touched. This cannot be undone.\n\nType ERASE to confirm.')||'').trim()=='ERASE'){localStorage.removeItem(K);location.reload()}else toast('Nothing was erased')}};
 document.addEventListener('keydown',e=>{if((e.key=='Enter'||e.key==' ')&&e.target.classList?.contains('dd')){e.preventDefault();e.target.dispatchEvent(new MouseEvent('click',{bubbles:true}))}});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(b)ACT[b.dataset.act]?.(b.dataset)});
-document.addEventListener('change',e=>{const t=e.target,k=t.dataset.chg;if(t.dataset.new){const n=$('#'+t.dataset.new);n.hidden=t.value!='__new';if(!n.hidden)n.focus()}if(k){U[k]=k=='year'?+t.value:t.value;if(k=='scope'||k=='by')U.dd=[];render()}});
+document.addEventListener('change',e=>{const t=e.target,k=t.dataset.chg;if(t.dataset.new){const n=$('#'+t.dataset.new);n.hidden=t.value!='__new';if(!n.hidden)n.focus()}if(k){U[k]=k=='year'?+t.value:t.value;if(k=='scope'||k=='by')U.dd=[];if(k=='ddb'||k=='scope'||k=='by')U.ddsel=null;render()}});
 $('#file').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
  try{const o=JSON.parse(await f.text()),sy=S.sync;if(o.enc){unlock(o,()=>{S.sync=sy;save();render();toast('Backup restored')},true);$('#dlg').querySelector('.cx').style.display='';$('#dlg').className='';}else{if(!confirm('Replace current data with this backup?'))return;S=norm(o);S.sync=sy;await save();render();toast('Backup restored')}}catch(err){toast('That file isn\'t a valid backup')}};
 /* ---------- start ---------- */
