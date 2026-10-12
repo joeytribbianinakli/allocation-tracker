@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-ym3slvFCyWlWgUIzjz+L9C8Nc4MMTN1X/41WEDDTnFY='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-wQILiIU3EVw+H7T5gkyZ0gvXaHy3oJKJ0mVVPokY3gQ='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
 <link rel="icon" href="data:,">
 <title>Portfolio tracker</title>
 <style>
@@ -180,14 +180,15 @@ function vDD(sr){const P=U.dd;if(!P.length)return '';const r=sr.filter(x=>P.ever
 function vOver(){const all=rows(),T=sum(all);if(!S.accounts.length)return emptyCard;
  const al=breaches(),cadN=sum(all.filter(x=>x.h.cur=='CAD')),usdV=sum(all.filter(x=>x.h.cur=='USD'));
  const hs=holders();if(U.by!='cls'&&U.by!='acc')U.by='cls';if(U.scope!='all'&&!(U.scope.startsWith('h:')&&hs.includes(U.scope.slice(2))))U.scope='all';
- const sr=filt(U.scope),st=sum(sr),g=group(sr,U.by),gc=group(sr,'cur'),gt=group(sr,'type'),who=U.scope=='all'?'All holders':U.scope.slice(2);
+ const sr=filt(U.scope),st=sum(sr),g=group(sr,U.by),gc=group(sr,'cur'),gt=group(sr,'type'),gh=group(sr,'holder'),who=U.scope=='all'?'All holders':U.scope.slice(2);
  return roomBanner()+(al.length?`<div class="alert"><b>${al.length} limit${al.length>1?'s':''} exceeded</b>${al.map(b=>`<div>${esc(lname(b.L))} is ${pc(b.p)} of ${esc(scopeName(b.L.sc))} (limit ${b.L.max}%)</div>`).join('')}</div>`:'')+
  `<div class="grid" style="margin-top:12px"><div class="card"><div class="k">Total value</div><div class="v">${fmt(T)}</div><div class="k">1 USD = ${R().toFixed(4)} CAD</div></div>
  <div class="card"><div class="k">Held in CAD</div><div class="v">${fmtN(cadN,'CAD')}</div><div class="k">${pc(T?cadN/T:0)} of portfolio</div></div>
  <div class="card"><div class="k">Held in USD</div><div class="v">${fmtN(usdV/R(),'USD')}</div><div class="k">${pc(T?usdV/T:0)} of portfolio · ≈ ${fmt(usdV)}</div></div></div>
  <div class="card"><div class="sel"><label>Holder<select data-chg="scope">${O([['all','All holders'],...hs.map(h=>['h:'+h,h])],U.scope)}</select></label>
  <label>Group by<select data-chg="by">${O([['cls','Investment type'],['acc','Account']],U.by)}</select></label></div>
- ${st?`<div class="charts three"><div><div class="k ct">Account types</div>${donut(gt,st,'type')}${legend(gt,st,'type')}</div><div><div class="k ct">${esc(BYN[U.by])}</div>${donut(g,st,U.by)}${legend(g,st,U.by)}</div><div><div class="k ct">CAD vs USD</div>${donut(gc,st,'cur')}${legend(gc,st,'cur')}</div></div><div class="k" style="text-align:center;margin-top:10px">${esc(who)} · click a slice or row to drill down.</div>`:'<p class="k">Nothing held in this selection yet.</p>'}</div>`+vDD(sr)}
+ ${st?`<div class="charts three"><div><div class="k ct">Holders</div>${donut(gh,st,'holder')}${legend(gh,st,'holder')}</div><div><div class="k ct">Account types</div>${donut(gt,st,'type')}${legend(gt,st,'type')}</div><div><div class="k ct">${esc(BYN[U.by])}</div>${donut(g,st,U.by)}${legend(g,st,U.by)}</div></div>
+ <div style="margin-top:16px"><div class="row" style="gap:6px 10px"><b>Currency</b>${gc.map(([n,v])=>`<button class="chip" data-act="dd" data-by="cur" data-n="${esc(n)}"><span class="dot" style="background:${col(n)}"></span>${esc(n)} ${fmt(v)} · ${pc(v/st)}</button>`).join('')}</div><div class="bar">${gc.map(([n,v])=>`<i title="${esc(n)}: ${pc(v/st)}" style="width:${v/st*100}%;background:${col(n)}"></i>`).join('')}</div></div><div class="k" style="text-align:center;margin-top:10px">${esc(who)} · click a slice or row to drill down.</div>`:'<p class="k">Nothing held in this selection yet.</p>'}</div>`+vDD(sr)}
 function vAcc(){const T=sum(rows()),gh=U.accBy=='h';let h=`<div class="row" style="margin:16px 0 0"><h2 class="sp">Accounts</h2><div class="seg"><button class="${gh?'':'on'}" data-act="accBy" data-v="t">By type</button><button class="${gh?'on':''}" data-act="accBy" data-v="h">By holder</button></div><button class="b" data-act="manage">Manage categories</button><button class="b p" data-act="addAcc">Add account</button></div>`;if(!S.accounts.length)return h+emptyCard;
  const nh=S.accounts.filter(a=>a.holder==PH).length;if(nh)h+=`<div class="alert"><b>${nh} account${nh>1?'s are':' is'} on the placeholder holder “${PH}”.</b> Edit ${nh>1?'each account':'the account'} to choose its real holder, or rename “${PH}” under Manage categories → Holders.</div>`;
  h+=`<div class="row" style="margin:10px 0 0;justify-content:flex-end"><button class="b" data-act="expA">Expand all</button><button class="b" data-act="colA">Collapse all</button></div>`;
