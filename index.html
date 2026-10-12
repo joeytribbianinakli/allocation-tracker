@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-yr3kkDmhYLr+3QNHaHenA18WwucB8wOP0y5lixj9v2A='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-nJqZaGq5pJ5XRbC8p0dWSJ1ANMhrK1WHxRdS1+LBlio='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
 <link rel="icon" href="data:,">
 <title>Portfolio tracker</title>
 <style>
@@ -73,6 +73,7 @@ dialog.wide{width:min(600px,94vw)}#cb{max-height:58vh;overflow-y:auto;padding-ri
 const $=s=>document.querySelector(s),K='portfolio.v1';
 const TYPES=['TFSA','RRSP','FHSA','Non-registered','RESP','Other'],CLS=['ETFs','Stocks','Bonds','Gold','Cash','Crypto','Real estate','Other'];
 const COL=['#2f6fed','#17a58a','#f2a30f','#e5484d','#8e6bf2','#3bb5e8','#7bb83d','#e5609f','#8a97a8'];
+const PH='Unassigned';
 const uid=()=>Math.random().toString(36).slice(2,9),esc=s=>String(s??'').replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 const today=()=>new Date().toLocaleDateString('en-CA'),YR=new Date().getFullYear();
 const dflt=()=>({accounts:[],limits:[],contribs:[],fx:{r:1.37,d:null,manual:false},cur:'CAD',sync:{},cats:{types:[...TYPES],cls:[...CLS],inst:[],holders:[]}});
@@ -82,6 +83,8 @@ const norm=o=>{const d=dflt();for(const k in d)if(o&&o[k]!=null&&typeof o[k]==ty
  const a0=d.cats.alerts;d.cats.alerts={};if(a0&&typeof a0=='object'&&!Array.isArray(a0))for(const t in a0){const v=a0[t];if(typeof v=='number'&&v>=0&&v<=100)d.cats.alerts[t]=v}
  /* one-time carry-over: contribution room that used to be shared per account type now lives on each account of that type */
  d.accounts.forEach(a=>{const v=d.cats.rooms[a.type];if(v>0&&!a.lim&&!(a.room>0)){a.lim=true;a.room=v;const al=d.cats.alerts[a.type];if(typeof al=='number')a.al=al}});d.cats.rooms={};d.cats.alerts={};
+ /* legacy data from before holders existed: park those accounts under a placeholder holder (rename it in Manage categories → Holders) */
+ if(d.accounts.some(a=>!a.holder)){d.accounts.forEach(a=>{if(!a.holder)a.holder=PH});if(!d.cats.holders.includes(PH))d.cats.holders.push(PH)}
  return d};
 /* ---------- money ---------- */
 const R=()=>S.fx.r,toCAD=(a,c)=>c=='USD'?a*R():a,pc=x=>(x*100).toFixed(1)+'%';
@@ -159,20 +162,24 @@ function vDD(sr){const P=U.dd;if(!P.length)return '';const r=sr.filter(x=>P.ever
  <table style="margin-top:14px">${r.map(x=>`<tr><td><span class="dot" style="background:${col(x.h.cls)}"></span>${esc(x.a.name)} <span class="k">· ${esc(x.a.holder||'No holder')} · ${esc(x.h.cls)}</span></td><td class="n">${fmtN(x.h.amt,x.h.cur)}</td>${x.h.cur!=S.cur?`<td class="n">${fmt(x.v)}</td>`:'<td></td>'}<td class="n">${pc(x.v/t)}</td></tr>`).join('')}</table></div>`}
 function vOver(){const all=rows(),T=sum(all);if(!S.accounts.length)return emptyCard;
  const al=breaches(),cadN=sum(all.filter(x=>x.h.cur=='CAD')),usdV=sum(all.filter(x=>x.h.cur=='USD'));
- const sr=filt(U.scope),st=sum(sr),g=group(sr,U.by),gc=group(sr,'cur');
+ const hs=holders();if(U.scope!='all'&&!(U.scope.startsWith('h:')&&hs.includes(U.scope.slice(2))))U.scope='all';
+ const sr=filt(U.scope),st=sum(sr),g=group(sr,U.by),gc=group(sr,'cur'),gt=group(sr,'type'),who=U.scope=='all'?'All holders':U.scope.slice(2);
  return roomBanner()+(al.length?`<div class="alert"><b>${al.length} limit${al.length>1?'s':''} exceeded</b>${al.map(b=>`<div>${esc(lname(b.L))} is ${pc(b.p)} of ${esc(scopeName(b.L.sc))} (limit ${b.L.max}%)</div>`).join('')}</div>`:'')+
  `<div class="grid" style="margin-top:12px"><div class="card"><div class="k">Total value</div><div class="v">${fmt(T)}</div><div class="k">1 USD = ${R().toFixed(4)} CAD</div></div>
  <div class="card"><div class="k">Held in CAD</div><div class="v">${fmtN(cadN,'CAD')}</div><div class="k">${pc(T?cadN/T:0)} of portfolio</div></div>
  <div class="card"><div class="k">Held in USD</div><div class="v">${fmtN(usdV/R(),'USD')}</div><div class="k">${pc(T?usdV/T:0)} of portfolio · ≈ ${fmt(usdV)}</div></div></div>
- <div class="card"><div class="sel"><label>View<select data-chg="scope">${scopeSel(U.scope)}</select></label>
- <label>Group by<select data-chg="by">${O([['cls','Investment type'],['acc','Account'],['type','Account type'],['holder','Holder'],['cur','Currency']],U.by)}</select></label></div>
+ <div class="card"><div class="sel"><label>Holder<select data-chg="scope">${O([['all','All holders'],...hs.map(h=>['h:'+h,h])],U.scope)}</select></label></div>
+ <div class="row"><b class="sp">Account types</b><span class="k">${esc(who)}${st?' · '+fmt(st):''}</span></div>
+ ${st?`<div style="max-width:340px;margin:0 auto">${donut(gt,st,'type')}${legend(gt,st,'type')}</div><div class="k" style="text-align:center;margin-top:6px">Click a slice or row to drill down.</div>`:'<p class="k">Nothing held in this selection yet.</p>'}</div>
+ <div class="card"><div class="sel"><label>Group by<select data-chg="by">${O([['cls','Investment type'],['acc','Account'],['type','Account type'],['holder','Holder'],['cur','Currency']],U.by)}</select></label></div>
+ <div class="row"><b class="sp">${esc(BYN[U.by])}</b><span class="k">${esc(who)}</span></div>
  ${st?`<div class="charts"><div>${donut(g,st,U.by)}${legend(g,st,U.by)}</div><div><div class="k" style="text-align:center;margin-bottom:6px">CAD vs USD</div>${donut(gc,st,'cur')}${legend(gc,st,'cur')}</div></div>`:'<p class="k">Nothing held in this selection yet.</p>'}</div>`+vDD(sr)}
 function vAcc(){const T=sum(rows()),gh=U.accBy=='h';let h=`<div class="row" style="margin:16px 0 0"><h2 class="sp">Accounts</h2><div class="seg"><button class="${gh?'':'on'}" data-act="accBy" data-v="t">By type</button><button class="${gh?'on':''}" data-act="accBy" data-v="h">By holder</button></div><button class="b" data-act="manage">Manage categories</button><button class="b p" data-act="addAcc">Add account</button></div>`;if(!S.accounts.length)return h+emptyCard;
- const nh=S.accounts.filter(a=>!a.holder).length;if(nh)h+=`<div class="alert"><b>${nh} account${nh>1?'s need':' needs'} a holder.</b> Edit ${nh>1?'them':'it'} to choose who holds ${nh>1?'them':'it'}.</div>`;
+ const nh=S.accounts.filter(a=>a.holder==PH).length;if(nh)h+=`<div class="alert"><b>${nh} account${nh>1?'s are':' is'} on the placeholder holder “${PH}”.</b> Edit ${nh>1?'each account':'the account'} to choose its real holder, or rename “${PH}” under Manage categories → Holders.</div>`;
  h+=`<div class="row" style="margin:10px 0 0;justify-content:flex-end"><button class="b" data-act="expA">Expand all</button><button class="b" data-act="colA">Collapse all</button></div>`;
  (gh?holders():types()).forEach(t=>{h+=`<div class="th"><span>${esc(t)}</span><span>${fmt(sum(filt((gh?'h:':'t:')+t)))}</span></div>`;
   S.accounts.filter(a=>gh?(a.holder||'No holder')==t:a.type==t).forEach(a=>{const op=U.open.has(a.id),r=filt('a:'+a.id),at=sum(r),g=group(r,'cls'),cn=sum(r.filter(x=>x.h.cur=='CAD')),us=sum(r.filter(x=>x.h.cur=='USD')),rm=roomOf(a),lf=rm-dsum(a);
-   h+=`<div class="card"><div class="row"><button class="tg" data-act="togA" data-id="${esc(a.id)}" aria-expanded="${op}" aria-label="${op?'Collapse':'Expand'} ${esc(a.name)}">${op?'▾':'▸'}</button><div class="sp" data-act="togA" data-id="${esc(a.id)}" style="cursor:pointer"><b>${esc(a.name)}</b> <span class="k">· ${esc(gh?a.type:(a.holder||'No holder'))}${a.inst?' · '+esc(a.inst):''}</span>${a.holder?'':' <span class="tag bad">Needs holder</span>'}<div class="k">${pc(T?at/T:0)} of portfolio · CAD ${pc(at?cn/at:0)} / USD ${pc(at?us/at:0)}</div>${rm>0?`<div class="k">${lf<0?`<b style="color:var(--r)">${fmt(-lf)} over</b>`:fmt(lf)+' room left'} of ${fmt(rm)}</div>`:''}</div><div class="v" style="font-size:18px">${fmt(at)}</div>
+   h+=`<div class="card"><div class="row"><button class="tg" data-act="togA" data-id="${esc(a.id)}" aria-expanded="${op}" aria-label="${op?'Collapse':'Expand'} ${esc(a.name)}">${op?'▾':'▸'}</button><div class="sp" data-act="togA" data-id="${esc(a.id)}" style="cursor:pointer"><b>${esc(a.name)}</b> <span class="k">· ${esc(gh?a.type:(a.holder||'No holder'))}${a.inst?' · '+esc(a.inst):''}</span>${a.holder==PH?' <span class="tag bad">Placeholder holder</span>':''}<div class="k">${pc(T?at/T:0)} of portfolio · CAD ${pc(at?cn/at:0)} / USD ${pc(at?us/at:0)}</div>${rm>0?`<div class="k">${lf<0?`<b style="color:var(--r)">${fmt(-lf)} over</b>`:fmt(lf)+' room left'} of ${fmt(rm)}</div>`:''}</div><div class="v" style="font-size:18px">${fmt(at)}</div>
    <button class="ib" data-act="editAcc" data-id="${esc(a.id)}">Edit</button><button class="ib" data-act="delAcc" data-id="${esc(a.id)}">Delete</button></div>
    ${op?`<div class="bar">${g.map(([n,v])=>`<i title="${esc(n)}" style="width:${v/at*100}%;background:${col(n)}"></i>`).join('')}</div>
    <table>${a.h.map(x=>`<tr><td><span class="dot" style="background:${col(x.cls)}"></span>${esc(x.cls)}</td><td class="n">${fmtN(x.amt,x.cur)}</td><td class="n">${fmt(toCAD(x.amt,x.cur))}</td><td class="n">${pc(at?toCAD(x.amt,x.cur)/at:0)}</td>
