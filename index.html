@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-EARD4APC1IL1GkFWrtYZVP9zR1kDnvfeT2eXcANUMwo='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-EC7mdSp4/hAuVUutJZgj0LGwgmuRIrxxIp5XVxhr6ew='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
 <link rel="icon" href="data:,">
 <title>Portfolio tracker</title>
 <style>
@@ -65,6 +65,7 @@ dialog.wide{width:min(600px,94vw)}#cb{max-height:58vh;overflow-y:auto;padding-ri
 .cs .sc.in{animation:czin .4s ease-out;transform-origin:50% 50%;transform-box:view-box}
 @keyframes tw{to{opacity:.12}}@keyframes pl{50%{opacity:.35}}@keyframes czin{from{opacity:0;transform:scale(.9)}}
 @media(prefers-reduced-motion:reduce){.cs .tw,.cs .al,.cs .sc.in{animation:none}}
+#ctip{position:fixed;z-index:60;pointer-events:none;max-width:min(340px,86vw);background:#0b1220;color:#e8eefb;border:1px solid #2b3a57;border-radius:8px;padding:6px 10px;font-size:12px;line-height:1.35;box-shadow:0 4px 14px rgba(0,0,0,.35)}
 </style></head><body>
 <header>
  <div class="wrap top"><h1>Portfolio</h1>
@@ -188,6 +189,13 @@ const allBtn=(by,label)=>`<div style="text-align:center;margin-bottom:8px"><butt
 /* ---------- constellation: stars are holders, accounts and holdings; click a star to go one level deeper ---------- */
 /* The view choice is remembered on this device only (like the theme); it is not part of your portfolio data. */
 const CVK='portfolio.view';try{U.view=localStorage.getItem(CVK)=='c'?'c':'d'}catch{U.view='d'}
+/* Constellation levels: which dimension each star size shows. Default = holder > account > investment type (the original view). Device-only setting, not part of your data. */
+const CKK='portfolio.levels',CKD=['holder','acc','cls'],CKO=['holder','type','acc','cls','cur'];U.ck=CKD.slice();U.cp=[];
+try{const v=JSON.parse(localStorage.getItem(CKK)||'null');if(Array.isArray(v)&&v.length==3&&new Set(v).size==3&&v.every(k=>CKO.includes(k)))U.ck=v}catch{}
+const cdef=()=>U.ck.join()==CKD.join(),LN={holder:'holder',type:'account type',acc:'account',cls:'investment type',cur:'currency'},LP={holder:'holders',type:'account types',acc:'accounts',cls:'investment types',cur:'currencies'};
+const cpOf=id=>{const p=id.split('/'),n=p.length;return n==1?[id]:n==2?[p[0],id]:[p[0],p[0]+'/'+p[1]]};
+const setCk=(i,v)=>{if(!CKO.includes(v))return;const c=U.ck.slice(),j=c.indexOf(v);if(j>=0&&j!=i)c[j]=c[i];c[i]=v;U.ck=c;U.cp=[];U.dd=[];U.ddo=false;U.ddb=null;U.czA=1;try{localStorage.setItem(CKK,JSON.stringify(c))}catch{}render()};
+const CKSEL=()=>['Big stars','Medium stars','Small stars'].map((t,i)=>`<label>${t}<select data-chg="ck${i}">${O(CKO.map(k=>[k,BYN[k]]),U.ck[i])}</select></label>`).join('');
 const mobile=()=>innerWidth<640,trunc=(s,n)=>s.length>n?s.slice(0,n-1)+'…':s,TAU=6.2832;
 const hsh=s=>{let h=2166136261;for(const c of String(s)){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}h^=h>>>16;h=Math.imul(h,2246822507);h^=h>>>13;h=Math.imul(h,3266489909);h^=h>>>16;return(h>>>0)/4294967296};
 const vp=(v,t)=>HID?pc(t?v/t:0):fmt(v)+' · '+pc(t?v/t:0);
@@ -198,6 +206,13 @@ function ctree(sr){const rs=new Set(roomAlerts().map(x=>x.a.id)),bh=new Set(),hm
   let A=H.am.get(x.a.id);if(!A)H.am.set(x.a.id,A={id:'a:'+x.a.id,name:x.a.name,sub:x.a.type,aid:x.a.id,v:0,flag:rs.has(x.a.id),kids:[]});
   const f=bh.has(x.h.id);A.v+=x.v;H.v+=x.v;if(f)A.flag=true;A.kids.push({id:'x:'+x.a.id+':'+x.h.id,name:x.h.cls,sub:x.h.cur,v:x.v,flag:f,kids:[]})});
  return[...hm.values()].map(h=>{const kids=[...h.am.values()].sort((a,b)=>b.v-a.v);kids.forEach(a=>a.kids.sort((p,q)=>q.v-p.v));return{id:'h:'+h.name,name:h.name,v:h.v,flag:kids.some(a=>a.flag),kids}}).sort((a,b)=>b.v-a.v)}
+/* same tree, but with the three levels you picked (any order of holder / account type / account / investment type / currency); ids are paths so every node is unique */
+function ctreeG(sr,ks){const rs=new Set(roomAlerts().map(x=>x.a.id)),bh=new Set();
+ breaches().forEach(b=>filt(b.L.sc).forEach(x=>{if(b.L.k=='cur'?x.h.cur==b.L.val:x.h.cls==b.L.val)bh.add(x.h.id)}));
+ const top=new Map();
+ sr.forEach(x=>{if(!(x.v>0))return;const f=rs.has(x.a.id)||bh.has(x.h.id);let m=top,pid='g:';
+  ks.forEach((k,i)=>{const nm=KEY[k](x),id=pid+(i?'/':'')+encodeURIComponent(nm);let n=m.get(nm);if(!n)m.set(nm,n={id,name:nm,sub:k=='acc'?x.a.type:'',ck:nm,v:0,flag:false,kids:[],m:new Map()});n.v+=x.v;if(f)n.flag=true;m=n.m;pid=id})});
+ const fin=m=>[...m.values()].map(n=>{n.kids=fin(n.m);delete n.m;return n}).sort((a,b)=>b.v-a.v);return fin(top)}
 /* one cluster: a centre star, its children on a ring, and (optionally) each child's own children as satellites. Fixed jitter, no randomness, so the sky looks the same every time. */
 function ringLay(c,o){const ks=c.kids.map(n=>{const r=o.rk(n.v),sa=o.rs?n.kids.map(x=>({n:x,r:o.rs(x.v)})):[],orb=sa.length?r+7+Math.max(0,sa.length-6)*.9:0;return{n,r,sa,orb,fp:sa.length?orb+Math.max(...sa.map(s=>s.r))+2:r+3}});
  const arc=ks.map(k=>2*k.fp+6),tot=arc.reduce((a,b)=>a+b,0)||1,mf=Math.max(0,...ks.map(k=>k.fp)),rho=Math.max(tot/TAU,o.rc+mf+(ks.length>1?10:16)),a0=hsh(c.id)*TAU;let cum=0;
@@ -212,47 +227,51 @@ function packC(rs,wide){const n=rs.length,mx=Math.max(...rs),p=rs.map((r,i)=>{co
 /* biggest scale at which every item (circle plus its label room in pixels) still sits inside the canvas */
 const fit=(its,W,H,pad,cap)=>{let s=cap;const hw=W/2-pad,hh=H/2-pad,f=(x,ex,h)=>{if(x>0)s=Math.min(s,Math.max(0,h-ex)/x)};
  its.forEach(i=>{const e=i.ex||{};f(i.x+i.r,e.r||0,hw);f(-(i.x-i.r),e.l||0,hw);f(i.y+i.r,e.b||0,hh);f(-(i.y-i.r),e.t||0,hh)});return Math.max(s,.12)};
-function vCons(sr,st){const T=sum(rows()),H=ctree(sr),mob=mobile(),CW=mob?420:800,CH=mob?560:520;
+function vCons(sr,st){const T=sum(rows()),H=cdef()?ctree(sr):ctreeG(sr,U.ck),mob=mobile(),CW=mob?420:800,CH=mob?560:520;
  if(!H.length)return '<p class="k">Nothing held in this selection yet.</p>';
- const hold=U.scope=='all'?null:(H.find(h=>h.id==U.scope)||H[0]),ac=hold&&U.ca?hold.kids.find(a=>a.aid==U.ca):null;if(U.ca&&!ac)U.ca=null;
+ const G=!cdef(),nn=n=>n.sub?n.name+' ('+n.sub+')':n.name,sj=(a,b)=>a?a+' · '+b:b;let hold,ac;
+ if(G){hold=U.cp[0]?H.find(h=>h.id==U.cp[0]):null;ac=hold&&U.cp[1]?hold.kids.find(a=>a.id==U.cp[1]):null;U.cp=hold?(ac?[hold.id,ac.id]:[hold.id]):[]}
+ else{hold=U.scope=='all'?null:(H.find(h=>h.id==U.scope)||H[0]);ac=hold&&U.ca?hold.kids.find(a=>a.aid==U.ca):null;if(U.ca&&!ac)U.ca=null}
+ const HV=G&&hold?[hold]:H;
  const lvl=ac?2:hold?1:0,focus=ac||hold,ft=ac?ac.v:hold?hold.v:st,mxOf=(a,f)=>Math.max(1e-9,...a.map(f));
- const labs=k=>{const l1=trunc(lvl==2?k.n.name+' · '+k.n.sub:k.n.name,mob?16:24),l2=trunc(lvl==2||mob?vp(k.n.v,ft):k.n.sub+' · '+vp(k.n.v,ft),36),w=6.2*Math.max(l1.length,l2.length)+8;return{l1,l2,ex:k.dx>.35?{r:w}:k.dx<-.35?{l:w}:k.dy>0?{b:34}:{t:36}}};
+ const labs=k=>{const l1=trunc(lvl==2?sj(k.n.name,k.n.sub):k.n.name,mob?16:24),l2=trunc(lvl==2||mob?vp(k.n.v,ft):sj(k.n.sub,vp(k.n.v,ft)),36),w=6.2*Math.max(l1.length,l2.length)+8;return{l1,l2,ex:k.dx>.35?{r:w}:k.dx<-.35?{l:w}:k.dy>0?{b:34}:{t:36}}};
  let cls;
  if(lvl==2){const xm=mxOf(ac.kids,x=>x.v);cls=[ringLay(ac,{rc:22,rk:v=>9+17*Math.sqrt(v/xm)})]}
- else{const hm=mxOf(H,h=>h.v),am=mxOf(H.flatMap(h=>h.kids),a=>a.v),xm=mxOf(H.flatMap(h=>h.kids.flatMap(a=>a.kids)),x=>x.v);
-  cls=H.map(h=>ringLay(h,{rc:13+11*Math.sqrt(h.v/hm),rk:v=>5+9*Math.sqrt(v/am),rs:v=>1.6+2.4*Math.sqrt(v/xm)}))}
+ else{const hm=mxOf(HV,h=>h.v),am=mxOf(HV.flatMap(h=>h.kids),a=>a.v),xm=mxOf(HV.flatMap(h=>h.kids.flatMap(a=>a.kids)),x=>x.v);
+  cls=HV.map(h=>ringLay(h,{rc:13+11*Math.sqrt(h.v/hm),rk:v=>5+9*Math.sqrt(v/am),rs:v=>1.6+2.4*Math.sqrt(v/xm)}))}
  const pos=cls.length>1?packC(cls.map(c=>c.R),!mob):[{x:0,y:0}];
  const bx=[Math.min(...cls.map((c,i)=>pos[i].x-c.R)),Math.max(...cls.map((c,i)=>pos[i].x+c.R))],by=[Math.min(...cls.map((c,i)=>pos[i].y-c.R)),Math.max(...cls.map((c,i)=>pos[i].y+c.R))];
  pos.forEach(p=>{p.x-=(bx[0]+bx[1])/2;p.y-=(by[0]+by[1])/2});
  const its=[];cls.forEach((c,i)=>{const p=pos[i];its.push({x:p.x,y:p.y,r:c.R,ex:lvl==0?{b:20}:null});c.ks.forEach(k=>{k.l=lvl?labs(k):null;its.push({x:p.x+k.x,y:p.y+k.y,r:k.fp,ex:k.l?k.l.ex:null})})});
  const s=fit(its,CW,CH,10,2.8),f1=v=>v.toFixed(1);
- const star=(x,y,r,c,n,o)=>`<g class="st${o.nav?' dd':''}"${o.nav?` data-act="cz" data-id="${esc(o.id||n.id)}"`:''}${o.tab?' tabindex="0" role="button"':''} aria-label="${esc(o.tip)}"><title>${esc(o.tip)}</title><circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(r*1.9)}" fill="${c}" opacity=".15"/><circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(r)}" fill="${c}"/><circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(r*.36)}" fill="#fff" opacity=".75"/>${n.flag?`<circle class="al" cx="${f1(x)}" cy="${f1(y)}" r="${f1(r+5)}"/>`:''}<circle class="fr" cx="${f1(x)}" cy="${f1(y)}" r="${f1(r+8)}"/></g>`;
+ const star=(x,y,r,c,n,o)=>`<g class="st${o.nav?' dd':''}"${o.nav?` data-act="cz" data-id="${esc(o.id||n.id)}"`:''}${o.tab?' tabindex="0" role="button"':''} aria-label="${esc(o.tip)}" data-tip="${esc(o.tip)}"><circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(r*1.9)}" fill="${c}" opacity=".15"/><circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(r)}" fill="${c}"/><circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(r*.36)}" fill="#fff" opacity=".75"/>${n.flag?`<circle class="al" cx="${f1(x)}" cy="${f1(y)}" r="${f1(r+5)}"/>`:''}<circle class="fr" cx="${f1(x)}" cy="${f1(y)}" r="${f1(r+8)}"/></g>`;
  const tx=(x,y,t,an,c)=>`<text x="${f1(x)}" y="${f1(y)}" text-anchor="${an}" class="${c}">${esc(t)}</text>`;
  let df='',nb='',lk='',sat='',mid='',ctr='',lb='';
- cls.forEach((c,i)=>{const p=pos[i],cx=CW/2+s*p.x,cy=CH/2+s*p.y,n=c.c,cc=lvl==2?col(n.sub):col(n.name),cr=Math.max(c.rc*s,5);
+ cls.forEach((c,i)=>{const p=pos[i],cx=CW/2+s*p.x,cy=CH/2+s*p.y,n=c.c,cc=col(n.ck??(lvl==2?n.sub:n.name)),cr=Math.max(c.rc*s,5);
   if(lvl<2){const g='gn'+i;df+=`<radialGradient id="${g}"><stop offset="0" stop-color="${cc}" stop-opacity=".3"/><stop offset="1" stop-color="${cc}" stop-opacity="0"/></radialGradient>`;
-   nb+=`<circle${lvl==0?` class="dd" data-act="cz" data-id="${esc(n.id)}"`:''} pointer-events="all" cx="${f1(cx)}" cy="${f1(cy)}" r="${f1(c.R*s)}" fill="url(#${g})"/>`}
-  c.ks.forEach(k=>{const kx=cx+s*k.x,ky=cy+s*k.y,kc=lvl==2?col(k.n.name):col(k.n.sub),kr=Math.max(k.r*s,2.6);
+   nb+=`<circle${lvl==0?` class="dd" data-act="cz" data-id="${esc(n.id)}" data-tip="${esc(n.name+' · '+vp(n.v,ft)+' · click to zoom in')}"`:''} pointer-events="all" cx="${f1(cx)}" cy="${f1(cy)}" r="${f1(c.R*s)}" fill="url(#${g})"/>`}
+  c.ks.forEach(k=>{const kx=cx+s*k.x,ky=cy+s*k.y,kc=col(k.n.ck??(lvl==2?k.n.name:k.n.sub)),kr=Math.max(k.r*s,2.6);
    lk+=`<line class="ln" x1="${f1(cx)}" y1="${f1(cy)}" x2="${f1(kx)}" y2="${f1(ky)}"/>`;
    k.sa.forEach(a=>{const ax=cx+s*a.x,ay=cy+s*a.y;lk+=`<line class="ln" x1="${f1(kx)}" y1="${f1(ky)}" x2="${f1(ax)}" y2="${f1(ay)}"/>`;
-    sat+=star(ax,ay,Math.max(a.r*s,1.4),col(a.n.name),a.n,{nav:1,tip:`${a.n.name} (${a.n.sub}) · ${vp(a.n.v,ft)}${a.n.flag?' · alert':''} · click to open its account`})});
-   mid+=lvl==2?star(kx,ky,kr,kc,k.n,{tip:`${k.n.name} (${k.n.sub}) · ${vp(k.n.v,ft)}${k.n.flag?' · alert':''}`}):star(kx,ky,kr,kc,k.n,{nav:1,tab:lvl==1,tip:`${k.n.name} (${k.n.sub}) · ${vp(k.n.v,ft)}${k.n.flag?' · alert':''} · click to zoom in`});
+    sat+=star(ax,ay,Math.max(a.r*s,1.4),col(a.n.name),a.n,{nav:1,tip:`${k.n.name} › ${nn(a.n)} · ${vp(a.n.v,ft)}${a.n.flag?' · alert':''} · click to open ${G?'its group':'its account'}`})});
+   mid+=lvl==2?star(kx,ky,kr,kc,k.n,{tip:`${nn(k.n)} · ${vp(k.n.v,ft)}${k.n.flag?' · alert':''}`}):star(kx,ky,kr,kc,k.n,{nav:1,tab:lvl==1,tip:`${lvl==0?n.name+' › ':''}${nn(k.n)} · ${vp(k.n.v,ft)}${k.n.flag?' · alert':''} · click to zoom in`});
    if(k.l){const d=k.fp*s+8,ax=kx+k.dx*d,ay=ky+k.dy*d,an=k.dx>.35?'start':k.dx<-.35?'end':'middle';let y1,y2;
     if(an=='middle'){if(k.dy>0){y1=ay+8;y2=y1+13}else{y2=ay-4;y1=y2-13}}else{y1=ay-1;y2=ay+12}
     lb+=tx(ax,y1,k.l.l1,an,'t1')+tx(ax,y2,k.l.l2,an,'t2')}});
-  ctr+=lvl==0?star(cx,cy,cr,cc,n,{nav:1,tab:1,tip:`${n.name} · ${vp(n.v,ft)}${n.flag?' · alert':''} · click to zoom in`}):star(cx,cy,cr,cc,n,{nav:1,tab:1,id:'up',tip:lvl==1?'Back to all holders':'Back to '+hold.name});
+  ctr+=lvl==0?star(cx,cy,cr,cc,n,{nav:1,tab:1,tip:`${n.name} · ${vp(n.v,ft)}${n.flag?' · alert':''} · click to zoom in`}):star(cx,cy,cr,cc,n,{nav:1,tab:1,id:'up',tip:lvl==1?(G?'Back to the top level':'Back to all holders'):'Back to '+hold.name});
   if(lvl==0)lb+=tx(cx,cy+c.R*s+13,trunc(n.name,18)+' · '+vp(n.v,ft),'middle','t1')});
  const sk=Array.from({length:70},(_,i)=>`<circle class="tw" cx="${(hsh('sx'+i)*CW).toFixed(0)}" cy="${(hsh('sy'+i)*CH).toFixed(0)}" r="${(.5+hsh('sr'+i)).toFixed(1)}" style="animation-delay:-${(hsh('sd'+i)*5).toFixed(1)}s"/>`).join('');
  const crumb=(id,t)=>`<button class="chip" data-act="cz" data-id="${esc(id)}">${esc(t)}</button>`,cur=t=>`<span class="fc"><b>${esc(t)}</b></span>`,sep='<span class="k">›</span>';
- const bc=lvl==0?cur('All holders'):crumb('all','All holders')+sep+(lvl==1?cur(hold.name):crumb(hold.id,hold.name)+sep+cur(ac.name));
+ const top=G&&U.scope!='all'?U.scope.slice(2):'All holders',bc=lvl==0?cur(top):crumb('all',top)+sep+(lvl==1?cur(hold.name):crumb(hold.id,hold.name)+sep+cur(ac.name));
  const na=H.reduce((a,h)=>a+h.kids.length,0),nh=H.reduce((a,h)=>a+h.kids.reduce((b,k)=>b+k.kids.length,0),0),pl=(n,w)=>n+' '+w+(n==1?'':'s');
- const cnt=lvl==0?`${pl(H.length,'holder')} · ${pl(na,'account')} · ${pl(nh,'holding')}`:lvl==1?`${pl(hold.kids.length,'account')} · ${pl(nh,'holding')}`:pl(ac.kids.length,'holding');
- const anyFlag=H.some(h=>h.flag),nm=ac?ac.name:hold?hold.name:'all holders';
- const lr=(lvl==0?H:focus.kids).map(n=>{const nav=lvl<2,c=lvl==1?col(n.sub):col(n.name);return `<tr${nav?` class="dd" tabindex="0" data-act="cz" data-id="${esc(n.id)}"`:''}><td><span class="dot" style="background:${c}"></span>${esc(lvl==2?n.name+' · '+n.sub:n.name)}${n.flag?' <span class="tag bad">alert</span>':''}${lvl==1?`<div class="k" style="margin-left:18px">${esc(n.sub)}</div>`:''}</td><td class="n">${fmt(n.v)}</td><td class="n">${pc(ft?n.v/ft:0)}</td></tr>`}).join('');
+ const p2=(n,k)=>n+' '+(n==1?LN[k]:LP[k]),n3=hold?hold.kids.reduce((b,k)=>b+k.kids.length,0):nh;
+ const cnt=G?(lvl==0?`${p2(H.length,U.ck[0])} · ${p2(na,U.ck[1])} · ${p2(nh,U.ck[2])}`:lvl==1?`${p2(hold.kids.length,U.ck[1])} · ${p2(n3,U.ck[2])}`:p2(ac.kids.length,U.ck[2])):lvl==0?`${pl(H.length,'holder')} · ${pl(na,'account')} · ${pl(nh,'holding')}`:lvl==1?`${pl(hold.kids.length,'account')} · ${pl(nh,'holding')}`:pl(ac.kids.length,'holding');
+ const anyFlag=HV.some(h=>h.flag),nm=ac?ac.name:hold?hold.name:'all holders';
+ const lr=(lvl==0?H:focus.kids).map(n=>{const nav=lvl<2,c=col(n.ck??(lvl==1?n.sub:n.name));return `<tr${nav?` class="dd" tabindex="0" data-act="cz" data-id="${esc(n.id)}"`:''}><td><span class="dot" style="background:${c}"></span>${esc(lvl==2&&n.sub?n.name+' · '+n.sub:n.name)}${n.flag?' <span class="tag bad">alert</span>':''}${lvl==1&&n.sub?`<div class="k" style="margin-left:18px">${esc(n.sub)}</div>`:''}</td><td class="n">${fmt(n.v)}</td><td class="n">${pc(ft?n.v/ft:0)}</td></tr>`}).join('');
  const out=`<div class="row" style="gap:6px 8px"><div class="fl sp">${bc}</div>${lvl?'<button class="ib" data-act="cz" data-id="up">← Back</button>':''}<button class="ib" data-act="cdd">Open in drill-down</button></div>
  <div class="row" style="margin:8px 0 10px"><div class="k sp">${cnt}</div><div class="k"><b>${fmt(ft)}</b> · ${pc(T?ft/T:0)} of portfolio</div></div>
- <div class="cs"><svg viewBox="0 0 ${CW} ${CH}" role="group" aria-label="Constellation view of ${esc(nm)}"><defs><radialGradient id="gSky" cx=".5" cy=".45" r=".8"><stop offset="0" stop-color="#16213f"/><stop offset="1" stop-color="#070b16"/></radialGradient>${df}</defs><rect width="${CW}" height="${CH}" fill="url(#gSky)"/>${sk}<g class="sc${U.czA?' in':''}">${nb}${lk}${sat}${mid}${ctr}${lb}</g></svg></div>
- <div class="k" style="margin-top:8px">${lvl<2?'Big star: holder · medium stars: accounts (colour = account type) · small stars: holdings (colour = investment type). Star size = value.':'Stars: holdings in this account (colour = investment type). Star size = value.'} ${lvl==0?'Click a star or a cluster to zoom in.':lvl==1?'Click a star to zoom in, or the centre star to go back.':'Click the centre star to go back.'}${anyFlag?' <span style="color:var(--r)">Pulsing red ring</span>: a limit is exceeded or contribution room is low.':''}</div>
+ <div class="cs"><svg viewBox="0 0 ${CW} ${CH}" data-lv="${lvl}" role="group" aria-label="Constellation view of ${esc(nm)}"><defs><radialGradient id="gSky" cx=".5" cy=".45" r=".8"><stop offset="0" stop-color="#16213f"/><stop offset="1" stop-color="#070b16"/></radialGradient>${df}</defs><rect width="${CW}" height="${CH}" fill="url(#gSky)"/>${sk}<g class="sc${U.czA?' in':''}">${nb}${lk}${sat}${mid}${ctr}${lb}</g></svg></div>
+ <div class="k" style="margin-top:8px">${G?(lvl<2?`Big star: ${LN[U.ck[0]]} · medium stars: ${LN[U.ck[1]]} · small stars: ${LN[U.ck[2]]}. Each item has its own colour. Star size = value.`:`Stars: ${LP[U.ck[2]]} in this group. Each item has its own colour. Star size = value.`):lvl<2?'Big star: holder · medium stars: accounts (colour = account type) · small stars: holdings (colour = investment type). Star size = value.':'Stars: holdings in this account (colour = investment type). Star size = value.'} ${lvl==0?'Click a star or a cluster to zoom in. Hover a star (tap it once on a touch screen) to see what it is.':lvl==1?'Click a star to zoom in, or the centre star to go back.':'Click the centre star to go back.'}${anyFlag?' <span style="color:var(--r)">Pulsing red ring</span>: a limit is exceeded or contribution room is low.':''}</div>
  <table style="margin-top:10px">${lr}</table>`;U.czA=0;return out}
 function vOver(){const all=rows(),T=sum(all);if(!S.accounts.length)return emptyCard;
  const al=breaches(),cadN=sum(all.filter(x=>x.h.cur=='CAD')),usdV=sum(all.filter(x=>x.h.cur=='USD'));
@@ -263,7 +282,7 @@ function vOver(){const all=rows(),T=sum(all);if(!S.accounts.length)return emptyC
  <div class="card"><div class="k">Held in CAD</div><div class="v">${fmtN(cadN,'CAD')}</div><div class="k">${pc(T?cadN/T:0)} of portfolio</div></div>
  <div class="card"><div class="k">Held in USD</div><div class="v">${fmtN(usdV/R(),'USD')}</div><div class="k">${pc(T?usdV/T:0)} of portfolio · ≈ ${fmt(usdV)}</div></div></div>
  <div class="card"><div class="row" style="margin-bottom:12px"><div class="seg" role="group" aria-label="Overview style"><button class="${cv?'':'on'}" data-act="vw" data-v="d">Charts</button><button class="${cv?'on':''}" data-act="vw" data-v="c">Constellation</button></div></div><div class="sel"><label>Holder<select data-chg="scope">${O([['all','All holders'],...hs.map(h=>['h:'+h,h])],U.scope)}</select></label>
- ${cv?'':`<label>Group by<select data-chg="by">${O([['cls','Investment type'],['acc','Account']],U.by)}</select></label>`}</div>
+ ${cv?CKSEL():`<label>Group by<select data-chg="by">${O([['cls','Investment type'],['acc','Account']],U.by)}</select></label>`}</div>
  ${cv?vCons(sr,st):st?`<div class="charts three"><div><div class="k ct">Holders</div>${allBtn('holder',who)}${donut(gh,st,'holder')}${legend(gh,st,'holder')}</div><div><div class="k ct">Account types</div>${allBtn('type','All account types')}${donut(gt,st,'type')}${legend(gt,st,'type')}</div><div><div class="k ct">${esc(BYN[U.by])}</div>${allBtn(U.by,U.by=='cls'?'All investment types':'All accounts')}${donut(g,st,U.by)}${legend(g,st,U.by)}</div></div>
  <div style="margin-top:16px"><div class="row" style="gap:6px 10px"><b>Currency</b>${gc.map(([n,v])=>`<button class="chip" data-act="dd" data-by="cur" data-n="${esc(n)}"><span class="dot" style="background:${col(n)}"></span>${esc(n)} ${fmt(v)} · ${pc(v/st)}</button>`).join('')}</div><div class="bar">${gc.map(([n,v])=>`<i title="${esc(n)}: ${pc(v/st)}" style="width:${v/st*100}%;background:${col(n)}"></i>`).join('')}</div></div><div class="k" style="text-align:center;margin-top:10px">${esc(who)} · click a slice or row to start a drill-down.</div>`:'<p class="k">Nothing held in this selection yet.</p>'}</div>`+vDD(sr)}
 function vAcc(){const T=sum(rows()),gh=U.accBy=='h';let h=`<div class="row" style="margin:16px 0 0"><h2 class="sp">Accounts</h2><div class="seg"><button class="${gh?'':'on'}" data-act="accBy" data-v="t">By type</button><button class="${gh?'on':''}" data-act="accBy" data-v="h">By holder</button></div><button class="b" data-act="manage">Manage categories</button><button class="b p" data-act="addAcc">Add account</button></div>`;if(!S.accounts.length)return h+emptyCard;
@@ -545,13 +564,14 @@ function restoreModal(){
 const ACT={accBy:d=>{U.accBy=d.v;render()},
  vw:d=>{U.view=d.v=='c'?'c':'d';try{localStorage.setItem(CVK,U.view)}catch{}U.czA=1;render()},
  cz:d=>{const id=d.id;
-  if(id=='up'){if(U.ca)U.ca=null;else U.scope='all'}
+  if(!cdef()&&(id=='up'||id=='all'||id.startsWith('g:'))){U.cp=id=='up'?U.cp.slice(0,-1):id=='all'?[]:cpOf(id)}
+  else if(id=='up'){if(U.ca)U.ca=null;else U.scope='all'}
   else if(id=='all'){U.scope='all';U.ca=null}
   else if(id.startsWith('h:')){U.scope=id;U.ca=null}
   else if(id.startsWith('a:')||id.startsWith('x:')){if(U.ca&&id.startsWith('x:'))return;const a=acc(id.split(':')[1]);if(!a)return;U.scope='h:'+(a.holder||'No holder');U.ca=a.id}
   else return;
   U.dd=[];U.ddo=false;U.ddb=null;U.czA=1;render()},
- cdd:()=>{const a=U.ca&&acc(U.ca);U.ddb=null;if(a){U.dd=[{by:'acc',n:alabel(a)}];U.dds=null}else{U.dd=[];U.dds=U.scope=='all'?'holder':'acc'}U.ddo=true;render();$('#dd')?.scrollIntoView({block:'start',behavior:'smooth'})},dd:d=>{const P=U.dd,same=U.ddo&&P.length==1&&P[0].by==d.by&&P[0].n==d.n;U.dd=same?[]:[{by:d.by,n:d.n}];U.ddo=!same;U.ddb=null;render();if(U.ddo)$('#dd')?.scrollIntoView({block:'start',behavior:'smooth'})},ddall:d=>{const by=d.by||'holder',same=U.ddo&&!U.dd.length&&(U.ddb||U.dds||'holder')==by;U.dd=[];U.ddo=!same;U.ddb=null;U.dds=same?null:by;render();if(U.ddo)$('#dd')?.scrollIntoView({block:'start',behavior:'smooth'})},ddp:d=>{if(!U.dd.some(f=>f.by==d.by))U.dd.push({by:d.by,n:d.n});U.ddb=null;render();$('#dd')?.scrollIntoView({block:'nearest',behavior:'smooth'})},ddr:d=>{U.dd.splice(+d.i,1);U.ddb=null;render()},ddb:d=>{U.ddb=d.v;render()},ddx:()=>{U.dd=[];U.ddo=false;render()},eye:()=>{HID=!HID;render()},theme:()=>{TH=effTheme()=='dark'?'light':'dark';try{localStorage.setItem(TK,TH)}catch{}applyTheme();render()},tab:d=>{U.tab=d.v;render()},cur:d=>{S.cur=d.v;save();render()},fx:fxModal,menu:menuModal,x:()=>$('#dlg').close(),
+ cdd:()=>{if(!cdef()){U.ddb=null;U.dd=U.cp.map((i,j)=>({by:U.ck[j],n:decodeURIComponent(i.replace(/^g:/,'').split('/').pop())}));U.dds=U.dd.length?null:U.ck[0];U.ddo=true;render();$('#dd')?.scrollIntoView({block:'start',behavior:'smooth'});return}const a=U.ca&&acc(U.ca);U.ddb=null;if(a){U.dd=[{by:'acc',n:alabel(a)}];U.dds=null}else{U.dd=[];U.dds=U.scope=='all'?'holder':'acc'}U.ddo=true;render();$('#dd')?.scrollIntoView({block:'start',behavior:'smooth'})},dd:d=>{const P=U.dd,same=U.ddo&&P.length==1&&P[0].by==d.by&&P[0].n==d.n;U.dd=same?[]:[{by:d.by,n:d.n}];U.ddo=!same;U.ddb=null;render();if(U.ddo)$('#dd')?.scrollIntoView({block:'start',behavior:'smooth'})},ddall:d=>{const by=d.by||'holder',same=U.ddo&&!U.dd.length&&(U.ddb||U.dds||'holder')==by;U.dd=[];U.ddo=!same;U.ddb=null;U.dds=same?null:by;render();if(U.ddo)$('#dd')?.scrollIntoView({block:'start',behavior:'smooth'})},ddp:d=>{if(!U.dd.some(f=>f.by==d.by))U.dd.push({by:d.by,n:d.n});U.ddb=null;render();$('#dd')?.scrollIntoView({block:'nearest',behavior:'smooth'})},ddr:d=>{U.dd.splice(+d.i,1);U.ddb=null;render()},ddb:d=>{U.ddb=d.v;render()},ddx:()=>{U.dd=[];U.ddo=false;render()},eye:()=>{HID=!HID;render()},theme:()=>{TH=effTheme()=='dark'?'light':'dark';try{localStorage.setItem(TK,TH)}catch{}applyTheme();render()},tab:d=>{U.tab=d.v;render()},cur:d=>{S.cur=d.v;save();render()},fx:fxModal,menu:menuModal,x:()=>$('#dlg').close(),
  addAcc:()=>accModal(),editAcc:d=>accModal(d.id),addH:d=>hModal(d.id),editH:d=>hModal(d.id,d.h),addC:()=>cModal('d'),addW:()=>cModal('w'),addL:lModal,setPass:passModal,
  delAcc:d=>{if(!confirm('Delete this account and all its holdings, contributions and limits?'))return;S.accounts=S.accounts.filter(a=>a.id!=d.id);S.contribs=S.contribs.filter(c=>c.acc!=d.id);S.limits=S.limits.filter(l=>l.sc!='a:'+d.id);if(U.scope=='a:'+d.id)U.scope='all';save();render()},
  delH:d=>{if(!confirm('Remove this holding?'))return;const a=acc(d.id);a.h=a.h.filter(x=>x.id!=d.h);save();render()},
@@ -573,7 +593,7 @@ const ACT={accBy:d=>{U.accBy=d.v;render()},
  wipe:()=>{if((prompt('Erase ALL saved data in this browser? Your GitHub copy, if any, is not touched. This cannot be undone.\n\nType ERASE to confirm.')||'').trim()=='ERASE'){localStorage.removeItem(K);location.reload()}else toast('Nothing was erased')}};
 document.addEventListener('keydown',e=>{if((e.key=='Enter'||e.key==' ')&&e.target.classList?.contains('dd')){e.preventDefault();e.target.dispatchEvent(new MouseEvent('click',{bubbles:true}))}});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(b)ACT[b.dataset.act]?.(b.dataset)});
-document.addEventListener('change',e=>{const t=e.target,k=t.dataset.chg;if(t.dataset.new){const n=$('#'+t.dataset.new);n.hidden=t.value!='__new';if(!n.hidden)n.focus()}if(k){U[k]=k=='year'?+t.value:t.value;if(k=='scope'||k=='by'){U.dd=[];U.ddo=false;if(k=='scope')U.ca=null;U.czA=1}render()}});
+document.addEventListener('change',e=>{const t=e.target,k=t.dataset.chg;if(t.dataset.new){const n=$('#'+t.dataset.new);n.hidden=t.value!='__new';if(!n.hidden)n.focus()}if(k&&/^ck[012]$/.test(k)){setCk(+k[2],t.value);return}if(k){U[k]=k=='year'?+t.value:t.value;if(k=='scope'||k=='by'){U.dd=[];U.ddo=false;if(k=='scope')U.ca=null;U.czA=1}render()}});
 $('#file').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
  try{const o=JSON.parse(await f.text()),sy=S.sync;if(o.enc){unlock(o,()=>{S.sync=sy;save();render();toast('Backup restored')},true);$('#dlg').querySelector('.cx').style.display='';$('#dlg').className='';}else{if(!confirm('Replace current data with this backup?'))return;S=norm(o);S.sync=sy;await save();render();toast('Backup restored')}}catch(err){toast('That file isn\'t a valid backup')}};
 /* ---------- start ---------- */
@@ -583,4 +603,19 @@ $('#file').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)doSync()});addEventListener('online',()=>doSync());
 let rz=mobile();addEventListener('resize',()=>{const m=mobile();if(m!=rz){rz=m;if(U.tab=='overview'&&U.view=='c'&&!$('#dlg').open)render()}});
 let idle;const bump=()=>{clearTimeout(idle);idle=setTimeout(()=>{if(lock)location.reload()},6e5)};['click','keydown','touchstart','mousemove'].forEach(ev=>addEventListener(ev,bump,{passive:true}));bump();
+
+/* constellation tooltip: instant on hover or keyboard focus; on a touch screen the first view needs one tap to preview a star and a second tap to open it */
+(()=>{const tip=document.createElement('div');tip.id='ctip';tip.setAttribute('role','tooltip');tip.hidden=true;document.body.appendChild(tip);let cur=null,pt='mouse';
+ const tgt=e=>e.target&&e.target.closest?e.target.closest('.cs [data-tip]'):null,hide=()=>{tip.hidden=true;cur=null};
+ const put=(x,y)=>{const w=tip.offsetWidth,h=tip.offsetHeight;let l=x+14,t=y+16;if(l+w>innerWidth-6)l=Math.max(6,x-w-14);if(t+h>innerHeight-6)t=Math.max(6,y-h-14);tip.style.left=l+'px';tip.style.top=t+'px'};
+ const show=(el,x,y)=>{cur=el;tip.textContent=el.getAttribute('data-tip');tip.hidden=false;if(x==null){const r=el.getBoundingClientRect();x=r.left+r.width/2;y=r.top+r.height/2}put(x,y)};
+ document.addEventListener('pointerover',e=>{pt=e.pointerType||pt;if(e.pointerType=='touch')return;const el=tgt(e);if(el)show(el,e.clientX,e.clientY);else if(cur)hide()});
+ document.addEventListener('pointermove',e=>{if(e.pointerType=='touch'||!cur)return;if(!cur.isConnected){hide();return}put(e.clientX,e.clientY)});
+ document.addEventListener('pointerout',e=>{if(e.pointerType!='touch'&&cur&&!e.relatedTarget)hide()});
+ document.addEventListener('pointerdown',e=>{pt=e.pointerType||pt;if(cur&&!tgt(e))hide()},true);
+ document.addEventListener('keydown',()=>{pt='key'},true);
+ document.addEventListener('focusin',e=>{const el=tgt(e);if(el&&el.matches(':focus-visible'))show(el);else if(cur&&!el)hide()});
+ document.addEventListener('focusout',hide);
+ document.addEventListener('click',e=>{const el=tgt(e);if(!el){hide();return}const sv=el.closest('svg');
+  if(pt=='touch'&&sv&&sv.getAttribute('data-lv')=='0'&&cur!==el){e.stopPropagation();e.preventDefault();show(el,e.clientX,e.clientY);return}hide()},true)})();
 </script></body></html>
