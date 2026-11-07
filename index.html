@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-YiIf0iezJXq1HSZj9zU2xVcFdYuRESWsviTClWQoQ6g='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-Rktbk18UJHK7Yji6Hf0rSU8Hbybf5EBwvi8TPhXWrso='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
 <link rel="icon" href="data:,">
 <title>Portfolio tracker</title>
 <style>
@@ -723,7 +723,7 @@ function xlsDownload(){const hs=catH().filter(h=>h!=PH),ty=catT(),ins=catI(),cl=
  help=['1. Fill in one row per holding on the Holdings sheet. Use the dropdowns for Holder, Account, Account type, Institution, Investment type and Currency.',
   '2. The dropdown choices come from the other sheets: Holders, Accounts, Account types, Institutions and Investment types. They are a snapshot of your tracker taken when you downloaded this file.',
   '3. To use a value that is not in a list, add it to that sheet or just type it in the Holdings sheet. Excel will warn you; choose Yes. It is created when you import.',
-  '4. Account: pick it from the dropdown. Account type and Institution fill in from the Accounts sheet for that holder and account, and Holder fills in too when the account name belongs to only one holder (you can type over any of them). If the same account name is used by several holders (for example Joint), choose the Holder yourself. The same holder cannot have two accounts with the same name: the Accounts sheet blocks it and turns pasted duplicates red. To set up a new account once, add it on the Accounts sheet. An account typed only in Holdings needs a Holder and an Account type there. Institution is optional and only fills in an account that has none yet.',
+  '4. Account: pick it from the dropdown. Account type and Institution fill in from the Accounts sheet for that holder and account, and Holder fills in too when the account name belongs to only one holder (you can type over any of them). If the same account name is used by several holders (for example Joint), choose the Holder yourself. The same holder cannot have two accounts with the same name: typing a duplicate account name is refused on the Accounts sheet, and any duplicate (for example after choosing a holder) turns red and is rejected on import. To set up a new account once, add it on the Accounts sheet. An account typed only in Holdings needs a Holder and an Account type there. Institution is optional and only fills in an account that has none yet.',
   '5. Ticker is optional. If Investment type is left blank, it is filled in from the ticker when the ticker is recognised. Use Name for things without a ticker (for example Gold bars).',
   '6. Amount is the amount invested, in the currency shown in the Currency column (CAD or USD).',
   '7. Required: Account and Amount on every row; Holder and Account type when the account is new; Investment type unless the Ticker is one the tracker recognises. A cell that still needs a value turns red. If anything required is missing, the tracker lists the missing values and imports nothing.',
@@ -733,7 +733,7 @@ function xlsDownload(){const hs=catH().filter(h=>h!=PH),ty=catT(),ins=catI(),cl=
   ['How to use',[['How to use this workbook'],...help.map(x=>[x])],{h:1,w:[130],st:[3]}],
   ['Holders',lst(hs,'Holder'),{h:1,w:[30]}],
   ['Account types',lst(ty,'Account type'),{h:1,w:[30]}],
-  ['Accounts',[['Account','Holder','Account type','Institution','Key (automatic)'],...Array.from({length:Math.max(999,ac.length)},(_,i)=>{const x=ac[i],n=i+2,k={f:`IF(OR($A${n}="",$B${n}=""),"",$A${n}&"|"&$B${n})`};return x?[x.name,x.holder==PH?'':(x.holder||''),x.type,x.inst||'',k]:['','','','',k]})],{h:1,w:[30,18,18,18,18],hid:[4],dv:[dv('B2:B1000',rg('Holders',hs.length)),dv('C2:C1000',rg('Account types',ty.length)),dv('D2:D1000',rg('Institutions',ins.length)),dup('A2:A1000'),dup('B2:B1000')],cf:[['A2:D1000','AND($A2<>"",$B2<>"",COUNTIFS($A$2:$A$1000,$A2,$B$2:$B$1000,$B2)>1)']]}],
+  ['Accounts',[['Account','Holder','Account type','Institution','Key (automatic)'],...Array.from({length:Math.max(999,ac.length)},(_,i)=>{const x=ac[i],n=i+2,k={f:`IF(OR($A${n}="",$B${n}=""),"",$A${n}&"|"&$B${n})`};return x?[x.name,x.holder==PH?'':(x.holder||''),x.type,x.inst||'',k]:['','','','',k]})],{h:1,w:[30,18,18,18,18],hid:[4],dv:[dv('B2:B1000',rg('Holders',hs.length)),dv('C2:C1000',rg('Account types',ty.length)),dv('D2:D1000',rg('Institutions',ins.length)),dup('A2:A1000')],cf:[['A2:D1000','AND($A2<>"",$B2<>"",COUNTIFS($A$2:$A$1000,$A2,$B$2:$B$1000,$B2)>1)']]}],
   ['Institutions',lst(ins,'Institution'),{h:1,w:[30]}],
   ['Investment types',lst(cl,'Investment type'),{h:1,w:[30]}]],
  H='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',RT='http://schemas.openxmlformats.org/officeDocument/2006/relationships',
