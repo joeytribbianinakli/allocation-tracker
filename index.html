@@ -18,7 +18,7 @@
   Do not loosen the policy (no 'unsafe-inline', no extra connect-src hosts): it is a deliberate privacy feature.
   To verify, open the file in a browser and check the console for "violates the following Content Security Policy".
 -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-IHlw+yVb4O9WdsDKY/VgnXHjLAAULtTmIYHfDzMzJOA='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-TgxUz5PJime9nTMrEgTy8lFbQhDDpd+d2+oY5om+B0c='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
 <link rel="icon" href="data:,">
 <title>Portfolio tracker</title>
 <style>
@@ -77,6 +77,7 @@ dialog.wide{width:min(600px,94vw)}#cb{max-height:58vh;overflow-y:auto;padding-ri
 .cr input{padding:5px 8px;width:auto}.cr input[data-rm]{width:112px}.cr input[data-al]{width:84px}
 .ic{display:inline-flex;align-items:center;padding:5px 7px}.ic svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 [hidden]{display:none!important}
+.xl{margin:2px 0 0;padding-left:18px;color:var(--m);font-size:12px}.xl li{margin:1px 0}.alert .xl{color:var(--t);opacity:.8}
 .cs svg{display:block;width:100%;height:auto;max-height:78vh;border-radius:12px}.cs text{paint-order:stroke;stroke:#070b16;stroke-width:3.5px;stroke-linejoin:round;font-family:inherit}.cs .t1{fill:#e8eefb;font-size:12px;font-weight:600}.cs .t2{fill:#9fb0c8;font-size:11px}
 .cs .ln{stroke:#9fb4e6;stroke-opacity:.3;stroke-width:1}.cs .tw{fill:#fff;opacity:.5;animation:tw 5s ease-in-out infinite alternate}.cs .st .fr{fill:none;stroke:#fff;stroke-width:2;opacity:0}.cs .st:hover .fr{opacity:.45}.cs .st:focus-visible{outline:none}.cs .st:focus-visible .fr{opacity:1}.cs .al{fill:none;stroke:#ff6b60;stroke-width:2;animation:pl 1.8s ease-in-out infinite}
 .cs .sc.in{animation:czin .4s ease-out;transform-origin:50% 50%;transform-box:view-box}
@@ -113,7 +114,7 @@ const uid=()=>Math.random().toString(36).slice(2,9),esc=s=>String(s??'').replace
 const today=()=>new Date().toLocaleDateString('en-CA'),YR=new Date().getFullYear();
 const dflt=()=>({accounts:[],limits:[],exc:[],contribs:[],fx:{r:1.37,d:null,manual:false},cur:'CAD',sync:{},cats:{types:[...TYPES],cls:[...CLS],inst:[],holders:[]}});
 let S=dflt(),lock=null,U={tab:'overview',scope:'all',by:'cls',dd:[],ddo:false,ddb:null,dds:null,accBy:'t',cgb:'type',year:YR,open:new Set(),cg:'m',incO:false,incX:new Set()};
-const norm=o=>{const d=dflt();for(const k in d)if(o&&o[k]!=null&&typeof o[k]==typeof d[k])d[k]=o[k];const nu=v=>Number.isFinite(+v)?+v:0;d.exc=Array.isArray(d.exc)?d.exc.filter(e=>typeof e=='string'&&/^[ta]:./.test(e)):[];d.accounts.forEach(a=>{a.h=Array.isArray(a.h)?a.h:[];a.h.forEach(h=>{h.amt=nu(h.amt);h.tkr=typeof h.tkr=='string'?h.tkr.trim().toUpperCase().slice(0,15):'';h.nm=typeof h.nm=='string'?h.nm.trim().slice(0,60):''});a.inst=typeof a.inst=='string'?a.inst:'';a.holder=typeof a.holder=='string'?a.holder.trim():'';a.room=nu(a.room);a.lim=a.lim===true||(a.lim==null&&a.room>0);if(a.off===true&&!d.exc.includes('a:'+a.id))d.exc.push('a:'+a.id);delete a.off;a.al=typeof a.al=='number'&&a.al>=0&&a.al<=100?a.al:null;if(a.rooms&&typeof a.rooms=='object')for(const y in a.rooms)a.rooms[y]=nu(a.rooms[y])});d.contribs.forEach(c=>{c.amt=nu(c.amt);c.cad=nu(c.cad);c.date=String(c.date||'');c.k=c.k=='w'?'w':''});d.limits.forEach(l=>{l.max=nu(l.max);if(Array.isArray(l.ex))l.ex=l.ex.filter(e=>typeof e=='string'&&/^[thack]:./.test(e));else delete l.ex});if(!(d.fx.r>0))d.fx.r=1.37;if(!Array.isArray(d.cats.types)||!Array.isArray(d.cats.cls))d.cats=dflt().cats;d.cats.inst=Array.isArray(d.cats.inst)?d.cats.inst.filter(x=>typeof x=='string'):[];d.cats.holders=Array.isArray(d.cats.holders)?d.cats.holders.filter(x=>typeof x=='string'):[];
+const norm=o=>{const d=dflt();for(const k in d)if(o&&o[k]!=null&&typeof o[k]==typeof d[k])d[k]=o[k];const nu=v=>Number.isFinite(+v)?+v:0;d.exc=Array.isArray(d.exc)?d.exc.filter(e=>typeof e=='string'&&/^[ta]:./.test(e)):[];d.accounts.forEach(a=>{a.h=Array.isArray(a.h)?a.h:[];a.h.forEach(h=>{h.amt=nu(h.amt);h.tkr=typeof h.tkr=='string'?h.tkr.trim().toUpperCase().slice(0,15):'';h.nm=typeof h.nm=='string'?h.nm.trim().slice(0,60):''});a.inst=typeof a.inst=='string'?a.inst:'';a.holder=typeof a.holder=='string'?a.holder.trim():'';a.room=nu(a.room);a.lim=a.lim===true||(a.lim==null&&a.room>0);if(a.off===true&&!d.exc.includes('a:'+a.id))d.exc.push('a:'+a.id);delete a.off;a.al=typeof a.al=='number'&&a.al>=0&&a.al<=100?a.al:null;if(a.rooms&&typeof a.rooms=='object')for(const y in a.rooms)a.rooms[y]=nu(a.rooms[y])});d.contribs.forEach(c=>{c.amt=nu(c.amt);c.cad=nu(c.cad);c.date=String(c.date||'');c.k=c.k=='w'?'w':''});d.limits.forEach(l=>{if(l.d=='min'){l.min=nu(l.min);delete l.max}else{delete l.d;delete l.min;l.max=nu(l.max)}if(typeof l.val!='string')l.val=String(l.val??'');if(Array.isArray(l.ex))l.ex=l.ex.filter(e=>typeof e=='string'&&/^[thack]:./.test(e));else delete l.ex});if(!(d.fx.r>0))d.fx.r=1.37;if(!Array.isArray(d.cats.types)||!Array.isArray(d.cats.cls))d.cats=dflt().cats;d.cats.inst=Array.isArray(d.cats.inst)?d.cats.inst.filter(x=>typeof x=='string'):[];d.cats.holders=Array.isArray(d.cats.holders)?d.cats.holders.filter(x=>typeof x=='string'):[];
  const r0=d.cats.rooms;d.cats.rooms={};if(r0&&typeof r0=='object'&&!Array.isArray(r0))for(const t in r0){const v=nu(r0[t]);if(v>0)d.cats.rooms[t]=v}
  const a0=d.cats.alerts;d.cats.alerts={};if(a0&&typeof a0=='object'&&!Array.isArray(a0))for(const t in a0){const v=a0[t];if(typeof v=='number'&&v>=0&&v<=100)d.cats.alerts[t]=v}
  /* one-time carry-over: contribution room that used to be shared per account type now lives on each account of that type */
@@ -175,9 +176,19 @@ const exHit=(e,x)=>{const v=e.slice(2);switch(e[0]){case 't':return x.a.type==v;
 const limRows=L=>{const ex=exOf(L),r=filt(L.sc);return ex.length?r.filter(x=>!ex.some(e=>exHit(e,x))):r};
 const exName=e=>{const v=e.slice(2);return e[0]=='t'||e[0]=='h'?v+' accounts':e[0]=='a'?(acc(v)?.name||'deleted account'):v};
 const exTxt=L=>{const n=exOf(L).map(exName);return n.length?' excluding '+(n.length>1?n.slice(0,-1).join(', ')+' and '+n[n.length-1]:n[0]):''};
-const lim=L=>{const r=limRows(L),t=sum(r),m=sum(r.filter(x=>L.k=='cur'?x.h.cur==L.val:x.h.cls==L.val));return{t,m,p:t?m/t:0}};
-const breaches=()=>S.limits.map(L=>({L,...lim(L)})).filter(x=>x.p*100>x.L.max+1e-9);
-const lname=L=>L.k=='cur'?L.val+' holdings':L.val;
+const exBul=L=>{const n=exOf(L).map(exName);return n.length?`<div class="k" style="margin-top:6px">Excluding</div><ul class="xl">${n.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''};
+/* LIMITS: L.k = what is measured ('cls' investment type, 'cur' currency, 'tkr' one holding by ticker). L.d=='min' = alert when the share falls BELOW L.min; otherwise alert when it goes OVER L.max. A limit has one threshold, so a range is two limits. */
+const lmatch=(L,x)=>L.k=='cur'?x.h.cur==L.val:L.k=='tkr'?!!x.h.tkr&&x.h.tkr==L.val:x.h.cls==L.val;
+const lim=L=>{const r=limRows(L),t=sum(r),m=sum(r.filter(x=>lmatch(L,x)));return{t,m,p:t?m/t:0}};
+const isLow=L=>L.d=='min',thr=L=>isLow(L)?L.min:L.max,lsym=L=>(isLow(L)?'≥ ':'≤ ')+thr(L)+'%';
+/* a minimum is only judged when something is held in scope (t>0); a holding you do not own at all counts as 0% */
+const lbad=(L,x)=>isLow(L)?x.t>0&&x.p*100<L.min-1e-9:x.p*100>L.max+1e-9;
+const breaches=()=>S.limits.map(L=>({L,...lim(L)})).filter(x=>lbad(x.L,x));
+const lname=L=>L.k=='cur'?L.val+' holdings':L.k=='tkr'?L.val+' (holding)':L.val;
+const limBanner=()=>{const al=breaches(),f=low=>al.filter(b=>isLow(b.L)==low),pl=a=>'limit'+(a.length>1?'s':''),
+ blk=(a,t,fn)=>a.length?`<div class="alert"><b>${a.length} ${pl(a)} ${t}</b>${a.map(fn).join('')}</div>`:'';
+ const it=b=>`<div style="margin-top:8px"><b>${esc(lname(b.L))}</b> ${lsym(b.L)} of ${esc(scopeName(b.L.sc))}<div class="k">Now ${pc(b.p)}</div>${exBul(b.L)}</div>`;
+ return blk(f(false),'exceeded',it)+blk(f(true),'below minimum',it)};
 let GN=0;const openIds=()=>U.tab=='accounts'?S.accounts.map(a=>a.id):U.tab=='contrib'?S.accounts.map(a=>'c:'+a.id):U.tab=='guide'?Array.from({length:GN},(_,i)=>'g'+i):[];
 const roomOf=a=>a&&a.lim&&a.room>0?a.room:0,alertOf=a=>roomOf(a)>0&&typeof a.al=='number'&&a.al>=0&&a.al<=100?a.al:null;
 /* deposits use up room; withdrawals are logged separately and do not give room back */
@@ -289,14 +300,14 @@ const hsh=s=>{let h=2166136261;for(const c of String(s)){h^=c.charCodeAt(0);h=Ma
 const vp=(v,t)=>HID?pc(t?v/t:0):fmt(v)+' · '+pc(t?v/t:0);
 /* holder > account > holding tree for the rows in scope; flag = limit exceeded below it, or a contribution room alert */
 function ctree(sr){const rs=new Set(roomAlerts().map(x=>x.a.id)),bh=new Set(),hm=new Map();
- breaches().forEach(b=>limRows(b.L).forEach(x=>{if(b.L.k=='cur'?x.h.cur==b.L.val:x.h.cls==b.L.val)bh.add(x.h.id)}));
+ breaches().forEach(b=>limRows(b.L).forEach(x=>{if(lmatch(b.L,x))bh.add(x.h.id)}));
  sr.forEach(x=>{if(!(x.v>0))return;const hn=x.a.holder||'No holder';let H=hm.get(hn);if(!H)hm.set(hn,H={name:hn,v:0,am:new Map()});
   let A=H.am.get(x.a.id);if(!A)H.am.set(x.a.id,A={id:'a:'+x.a.id,name:x.a.name,sub:x.a.type,aid:x.a.id,v:0,flag:rs.has(x.a.id),kids:[]});
   const f=bh.has(x.h.id);A.v+=x.v;H.v+=x.v;if(f)A.flag=true;A.kids.push({id:'x:'+x.a.id+':'+x.h.id,name:dn(x.h),ck:x.h.cls,sub:x.h.cur,v:x.v,flag:f,kids:[]})});
  return[...hm.values()].map(h=>{const kids=[...h.am.values()].sort((a,b)=>b.v-a.v);kids.forEach(a=>a.kids.sort((p,q)=>q.v-p.v));return{id:'h:'+h.name,name:h.name,v:h.v,flag:kids.some(a=>a.flag),kids}}).sort((a,b)=>b.v-a.v)}
 /* same tree, but with the three levels you picked (any order of holder / account type / account / investment type / currency); ids are paths so every node is unique */
 function ctreeG(sr,ks){const rs=new Set(roomAlerts().map(x=>x.a.id)),bh=new Set();
- breaches().forEach(b=>limRows(b.L).forEach(x=>{if(b.L.k=='cur'?x.h.cur==b.L.val:x.h.cls==b.L.val)bh.add(x.h.id)}));
+ breaches().forEach(b=>limRows(b.L).forEach(x=>{if(lmatch(b.L,x))bh.add(x.h.id)}));
  const top=new Map();
  sr.forEach(x=>{if(!(x.v>0))return;const f=rs.has(x.a.id)||bh.has(x.h.id);let m=top,pid='g:';
   ks.forEach((k,i)=>{const nm=KEY[k](x),id=pid+(i?'/':'')+encodeURIComponent(nm);let n=m.get(nm);if(!n)m.set(nm,n={id,name:nm,sub:k=='acc'?x.a.type:'',ck:nm,v:0,flag:false,kids:[],m:new Map()});n.v+=x.v;if(f)n.flag=true;m=n.m;pid=id})});
@@ -359,7 +370,7 @@ function vCons(sr,st){const T=sum(visRows()),H=cdef()?ctree(sr):ctreeG(sr,U.ck),
  const out=`<div class="row" style="gap:6px 8px"><div class="fl sp">${bc}</div>${lvl?'<button class="ib" data-act="cz" data-id="up">← Back</button>':''}<button class="ib" data-act="cdd">Open in drill-down</button></div>
  <div class="row" style="margin:8px 0 10px"><div class="k sp">${cnt}</div><div class="k"><b>${fmt(ft)}</b> · ${pc(T?ft/T:0)} of portfolio</div></div>
  <div class="cs"><svg viewBox="0 0 ${CW} ${CH}" data-lv="${lvl}" role="group" aria-label="Constellation view of ${esc(nm)}"><defs><radialGradient id="gSky" cx=".5" cy=".45" r=".8"><stop offset="0" stop-color="#16213f"/><stop offset="1" stop-color="#070b16"/></radialGradient>${df}</defs><rect width="${CW}" height="${CH}" fill="url(#gSky)"/>${sk}<g class="sc${U.czA?' in':''}">${nb}${lk}${sat}${mid}${ctr}${lb}</g></svg></div>
- <div class="k" style="margin-top:8px">${G?(lvl<2?`Big star: ${LN[U.ck[0]]} · medium stars: ${LN[U.ck[1]]} · small stars: ${LN[U.ck[2]]}. Each item has its own colour. Star size = value.`:`Stars: ${LP[U.ck[2]]} in this group. Each item has its own colour. Star size = value.`):lvl<2?'Big star: holder · medium stars: accounts (colour = account type) · small stars: holdings (colour = investment type). Star size = value.':'Stars: holdings in this account (colour = investment type). Star size = value.'} ${lvl==0?'Click a star or a cluster to zoom in. Hover a star (tap it once on a touch screen) to see what it is.':lvl==1?'Click a star to zoom in, or the centre star to go back.':'Click the centre star to go back.'}${anyFlag?' <span style="color:var(--r)">Pulsing red ring</span>: a limit is exceeded or contribution room is low.':''}</div>
+ <div class="k" style="margin-top:8px">${G?(lvl<2?`Big star: ${LN[U.ck[0]]} · medium stars: ${LN[U.ck[1]]} · small stars: ${LN[U.ck[2]]}. Each item has its own colour. Star size = value.`:`Stars: ${LP[U.ck[2]]} in this group. Each item has its own colour. Star size = value.`):lvl<2?'Big star: holder · medium stars: accounts (colour = account type) · small stars: holdings (colour = investment type). Star size = value.':'Stars: holdings in this account (colour = investment type). Star size = value.'} ${lvl==0?'Click a star or a cluster to zoom in. Hover a star (tap it once on a touch screen) to see what it is.':lvl==1?'Click a star to zoom in, or the centre star to go back.':'Click the centre star to go back.'}${anyFlag?' <span style="color:var(--r)">Pulsing red ring</span>: a limit is breached or contribution room is low.':''}</div>
  <table style="margin-top:10px">${lr}</table>`;U.czA=0;return out}
 function vInc(){const as=S.accounts,n=as.filter(a=>!incOn(a)).length,hs=holders().length>1,
  sm=!n?'everything':n==as.length?'nothing':(as.length-n)+' of '+as.length+' accounts';
@@ -379,7 +390,7 @@ function vOver(){const all=visRows(),T=sum(all);if(!S.accounts.length)return emp
  const al=breaches(),cadN=sum(all.filter(x=>x.h.cur=='CAD')),usdV=sum(all.filter(x=>x.h.cur=='USD'));
  const hs=holders();if(!['cls','acc','tkr'].includes(U.by))U.by='cls';if(U.scope!='all'&&!(U.scope.startsWith('h:')&&hs.includes(U.scope.slice(2))))U.scope='all';
  const cv=U.view=='c',sv=U.view=='s',sr=filt(U.scope,all),st=sum(sr),g=group(sr,U.by),gc=group(sr,'cur'),gt=group(sr,'type'),gh=group(sr,'holder'),who=U.scope=='all'?'All holders':U.scope.slice(2);
- return roomBanner()+(al.length?`<div class="alert"><b>${al.length} limit${al.length>1?'s':''} exceeded</b>${al.map(b=>`<div>${esc(lname(b.L))} is ${pc(b.p)} of ${esc(scopeName(b.L.sc)+exTxt(b.L))} (limit ${b.L.max}%)</div>`).join('')}</div>`:'')+
+ return roomBanner()+limBanner()+
  `${vInc()}<div class="grid" style="margin-top:12px"><div class="card"><div class="k">Total value</div><div class="v">${fmt(T)}</div><div class="k">1 USD = ${R().toFixed(4)} CAD</div></div>
  <div class="card"><div class="k">Held in CAD</div><div class="v">${fmtN(cadN,'CAD')}</div><div class="k">${pc(T?cadN/T:0)} of portfolio</div></div>
  <div class="card"><div class="k">Held in USD</div><div class="v">${fmtN(usdV/R(),'USD')}</div><div class="k">${pc(T?usdV/T:0)} of portfolio · ≈ ${fmt(usdV)}</div></div></div>
@@ -433,9 +444,13 @@ function vCon(){const ys=[...new Set([YR,U.year,...S.contribs.map(c=>+c.date.sli
   return `<div class="card"><div class="row"><button class="tg" data-act="togA" data-id="${esc(id)}" aria-expanded="${op}" aria-label="${op?'Collapse':'Expand'} ${esc(a.name)}">${op?'▾':'▸'}</button><div class="sp" data-act="togA" data-id="${esc(id)}" style="cursor:pointer"><b>${esc(a.name)}</b> <span class="k">· ${esc(a.type)}</span><div class="k">${rm>0?`${fmt(p)} of ${fmt(rm)} room · ${o?`<b style="color:var(--r)">${fmt(p-rm)} over</b>`:fmt(rm-p)+' left'}`:`${fmt(p)} contributed in total · no limit`}${w>0?' · '+fmt(w)+' withdrawn in total':''}</div><div class="k">${fmt(py)} in ${y}${pwd>0?' · '+fmt(pwd)+' withdrawn in '+y:''}</div></div>
   ${rm>0?`<span class="tag ${o||lo?'bad':'ok'}">${o?'Over limit':lo?'Low room':pc(p/rm)}</span>`:''}</div>
   ${op?`${rm>0?`<div class="bar"><i style="width:${Math.min(100,p/rm*100)}%;background:${o?'var(--r)':'var(--g)'}"></i></div>`:''}${yr.length?`<table>${yr.map(c=>`<tr><td>${esc(fdt(c.date))}</td><td>${c.k=='w'?'Withdrawal':'Deposit'}</td><td class="n">${c.k=='w'?'−':''}${fmtN(c.amt,c.cur)}</td><td class="n"><button class="ib" data-act="delC" data-id="${esc(c.id)}">Delete</button></td></tr>`).join('')}</table>`:`<div class="k" style="margin-top:8px">No transactions in ${y}.</div>`}`:''}</div>`}).join('')}).join(''):`<div class="card empty"><p>Add an account (tick “has a contribution limit” to track its room), then log a contribution or withdrawal to begin.</p></div>`)}
-function vLim(){const al=breaches().length;return `<div class="row" style="margin:16px 0"><h2 class="sp">Limits &amp; alerts</h2><button class="b p" data-act="addL">Add limit</button></div>`+
- (S.limits.length?S.limits.map(L=>{const x=lim(L),o=x.p*100>L.max+1e-9;return `<div class="card"><div class="row"><div class="sp"><b>${esc(lname(L))}</b> ≤ ${L.max}% of ${esc(scopeName(L.sc)+exTxt(L))}<div class="k">Now ${pc(x.p)} (${fmt(x.m)} of ${fmt(x.t)})</div></div><span class="tag ${o?'bad':'ok'}">${o?'Over limit':'OK'}</span><button class="ib" data-act="editL" data-id="${esc(L.id)}">Edit</button><button class="ib" data-act="delL" data-id="${esc(L.id)}">Delete</button></div>
- <div class="bar"><i style="width:${Math.min(100,x.p*100)}%;background:${o?'var(--r)':'var(--g)'}"></i><u style="left:${Math.min(99.5,L.max)}%"></u></div></div>`}).join(''):`<div class="card empty"><p>Cap any investment type or currency, for example Gold at 10% of your portfolio. You can choose which accounts a limit includes, for example leaving out your FHSA. You'll get an alert when it's exceeded.</p></div>`)}
+function vLim(){const R2=S.limits.map(L=>({L,x:lim(L)}));
+ const card=({L,x})=>{const low=isLow(L),o=lbad(L,x),th=thr(L);return `<div class="card"><div class="row"><div class="sp"><b>${esc(lname(L))}</b> ${low?'≥':'≤'} ${th}% of ${esc(scopeName(L.sc))}<div class="k">Now ${pc(x.p)} (${fmt(x.m)} of ${fmt(x.t)})</div>${exBul(L)}</div><span class="tag ${o?'bad':'ok'}">${o?(low?'Under minimum':'Over limit'):'OK'}</span><button class="ib" data-act="editL" data-id="${esc(L.id)}">Edit</button><button class="ib" data-act="delL" data-id="${esc(L.id)}">Delete</button></div>
+  <div class="bar"><i style="width:${Math.min(100,x.p*100)}%;background:${o?'var(--r)':'var(--g)'}"></i><u style="left:${Math.min(99.5,th)}%"></u></div></div>`};
+ const sec=(low,ttl,sub,eg)=>{const l=R2.filter(r=>isLow(r.L)==low),n=l.filter(r=>lbad(r.L,r.x)).length;return `<div class="row" style="margin:22px 0 4px"><h3 class="sp" style="margin:0">${ttl}${n?` <span class="tag bad">${n} ${low?'under':'over'}</span>`:''}</h3></div><div class="k" style="margin:0 0 10px">${sub}</div>`+(l.length?l.map(card).join(''):`<div class="card empty"><p>${eg}</p></div>`)};
+ return `<div class="row" style="margin:16px 0 0"><h2 class="sp">Limits &amp; alerts</h2><button class="b p" data-act="addL">Add limit</button></div>`+
+  sec(false,'Maximum limits','You get an alert when a share goes over its maximum.','No maximum limits yet. For example, cap Gold at 10% of your portfolio, or one ETF such as QQC at 15%. You can choose which accounts a limit includes.')+
+  sec(true,'Minimum limits','You get an alert when a share falls below its minimum.','No minimum limits yet. For example, keep Bonds at 20% or more, or make sure an ETF you rely on stays above 5%.')}
 const A=(u,t)=>`<a href="${u}" target="_blank" rel="noopener noreferrer">${t}</a>`;
 function vGuide(){const raw=vGuideRaw(),parts=raw.split('<div class="card">');GN=parts.length-1;let h=parts[0].replace(/(<div class="row" style="margin:16px 0 0">)(<h2 class="sp">Setup guide<\/h2>)/,'$1$2<button class="b" data-act="expA">Expand all</button><button class="b" data-act="colA">Collapse all</button>');
  parts.slice(1).forEach((p,i)=>{const last=i==parts.length-2,m=p.match(/^<h2>([\s\S]*?)<\/h2>/),id='g'+i,op=U.open.has(id);p=p.slice(m[0].length).replace(last?/<\/div><\/div>\s*$/:/<\/div>\s*$/,'');
@@ -550,13 +565,15 @@ function lModal(id){if(!S.accounts.length)return toast('Add an account first');
  const isTA=e=>/^[ta]:./.test(e),sel=new Set(E?exOf(E).filter(isTA):[]),keep=E?exOf(E).filter(e=>!isTA(e)):[],open=new Set();
  /* sel = what is LEFT OUT (same saved format as always: 't:<type>' / 'a:<account id>'), but the picker shows it the other way round: a ticked box = included */
  const gv=E?E.k+':'+E.val:'',cl=allCls();if(E&&E.k=='cls'&&!cl.includes(E.val))cl.push(E.val);
- modal(E?'Edit limit':'New limit',`<label>Applies to<select id="s">${scopeSel(E?E.sc:'all')}</select></label><label>Investment type or currency<select id="g"><optgroup label="Investment type">${O(cl.map(c=>['cls:'+c,c]),gv)}</optgroup><optgroup label="Currency">${O([['cur:CAD','CAD holdings'],['cur:USD','USD holdings']],gv)}</optgroup></select></label>
- <label>Maximum share (%)<input id="x" type="number" min="0" max="100" step="any" placeholder="10" value="${E?E.max:''}"></label>
+ const tk=[...new Set(rows().map(x=>x.h.tkr).filter(Boolean))].sort();if(E&&E.k=='tkr'&&!tk.includes(E.val))tk.push(E.val);
+ modal(E?'Edit limit':'New limit',`<label>Applies to<select id="s">${scopeSel(E?E.sc:'all')}</select></label><label>Investment type, holding or currency<select id="g"><optgroup label="Investment type">${O(cl.map(c=>['cls:'+c,c]),gv)}</optgroup><optgroup label="Specific holding (ticker)">${O(tk.map(t=>['tkr:'+t,t]),gv)}<option value="tkr:__other">Another ticker…</option></optgroup><optgroup label="Currency">${O([['cur:CAD','CAD holdings'],['cur:USD','USD holdings']],gv)}</optgroup></select><input id="gt" placeholder="Ticker, e.g. QQC" maxlength="15" autocapitalize="characters" spellcheck="false" style="text-transform:uppercase" hidden></label>
+ <label>Alert me when<select id="dr"><option value="max"${E&&isLow(E)?'':' selected'}>the share goes over a maximum</option><option value="min"${E&&isLow(E)?' selected':''}>the share falls below a minimum</option></select></label>
+ <label><span id="xl">Maximum share (%)</span><input id="x" type="number" min="0" max="100" step="any" placeholder="10" value="${E?thr(E):''}"></label>
  <details class="exd" open><summary>Accounts included in this limit <span class="k" id="exn"></span></summary><div class="k" id="exh" style="margin:8px 0 6px"></div><div class="exl" id="exb"></div></details>`,'Save',()=>{
-  const m=num('#x');if(!(m>=0&&m<=100))return bad('Enter a percentage from 0 to 100');const[k,...v]=$('#g').value.split(':');
-  const ex=[...sel,...keep],L={id:E?E.id:uid(),sc:$('#s').value,k,val:v.join(':'),max:m};if(ex.length)L.ex=ex;
+  const low=$('#dr').value=='min',m=num('#x');if(!(m>=0&&m<=100)||(low&&!(m>0)))return bad(low?'Enter a minimum above 0 and up to 100':'Enter a percentage from 0 to 100');const[k,...v]=$('#g').value.split(':');let val=v.join(':');if(k=='tkr'&&val=='__other')val=$('#gt').value.trim().toUpperCase();if(k=='tkr'&&!val)return bad('Enter a ticker');
+  const ex=[...sel,...keep],L={id:E?E.id:uid(),sc:$('#s').value,k,val};if(low){L.d='min';L.min=m}else L.max=m;if(ex.length)L.ex=ex;
   if(ex.length&&!(sum(limRows(L))>0))return bad('Nothing would be left to measure. Tick at least one account to include.');
-  if(E){Object.assign(E,L);if(!ex.length)delete E.ex}else S.limits.push(L);save();U.tab='limits';render()});
+  if(E){delete E.max;delete E.min;delete E.d;Object.assign(E,L);if(!ex.length)delete E.ex}else S.limits.push(L);save();U.tab='limits';render()});
  /* The account picker. It only offers what is inside the chosen "Applies to" scope: account types first (untick one = leave out every account of that type), each expandable to untick single accounts. It repaints whenever "Applies to" changes and drops left-out items that no longer apply. */
  /* the Overview include list must NOT affect limits, so every account is listed here, even ones left out of the dashboard */
  const inScope=(sc,a)=>(sc=='all'||(sc[0]=='h'&&(a.holder||'No holder')==sc.slice(2))||(sc[0]=='t'&&a.type==sc.slice(2))||(sc[0]=='a'&&a.id==sc.slice(2)));
@@ -573,7 +590,9 @@ function lModal(id){if(!S.accounts.length)return toast('Add an account first');
   if(fo)bx.querySelector(fo)?.focus()};
  $('#exb').addEventListener('change',e=>{const t=e.target,v=t.dataset.ex;if(!v)return;const r=exToggle([...sel],v,t.checked);sel.clear();r.forEach(x=>sel.add(x));paint()});
  $('#exb').addEventListener('click',e=>{const b=e.target.closest('[data-xt]');if(!b)return;const t=b.dataset.xt;open.has(t)?open.delete(t):open.add(t);paint()});
- $('#s').addEventListener('change',paint);paint()}
+ $('#s').addEventListener('change',paint);
+ const dirUI=()=>{$('#xl').textContent=$('#dr').value=='min'?'Minimum share (%)':'Maximum share (%)'};$('#dr').addEventListener('change',dirUI);dirUI();
+ $('#g').addEventListener('change',()=>{const o=$('#g').value=='tkr:__other';$('#gt').hidden=!o;if(o)$('#gt').focus()});paint()}
 function fxModal(){modal('Exchange rate',`<div class="k">Live rate comes from the free Frankfurter (ECB) service, with open.er-api.com as backup. It's a daily reference rate. Only the rate is requested.</div>
  <label>1 USD in CAD<input id="r" type="number" step="any" min="0" value="${R()}"></label><button class="b" data-act="live">Fetch live rate</button>`,'Save',()=>{
  const r=num('#r');if(!(r>0))return bad('Enter a rate above zero');if(r!=R())S.fx={r,d:today(),manual:true};save();render()})}
@@ -881,7 +900,7 @@ const ACT={accBy:d=>{U.accBy=d.v;render()},
  addAcc:()=>accModal(),editAcc:d=>accModal(d.id),addH:d=>hModal(d.id),addHold:()=>hModal(),csvImp:csvModal,xlsTpl:xlsDownload,editH:d=>hModal(d.id,d.h),addC:()=>cModal('d'),addW:()=>cModal('w'),addL:()=>lModal(),editL:d=>lModal(d.id),setPass:passModal,
  delAcc:d=>{if(!confirm('Delete this account and all its holdings, contributions and limits?'))return;S.accounts=S.accounts.filter(a=>a.id!=d.id);S.exc=S.exc.filter(e=>e!='a:'+d.id);S.contribs=S.contribs.filter(c=>c.acc!=d.id);S.limits=S.limits.filter(l=>l.sc!='a:'+d.id);S.limits.forEach(l=>{if(Array.isArray(l.ex)){l.ex=l.ex.filter(e=>e!='a:'+d.id);if(!l.ex.length)delete l.ex}});if(U.scope=='a:'+d.id)U.scope='all';save();render()},
  delH:d=>{if(!confirm('Remove this holding?'))return;const a=acc(d.id);a.h=a.h.filter(x=>x.id!=d.h);save();render()},
- delC:d=>{S.contribs=S.contribs.filter(c=>c.id!=d.id);save();render()},delL:d=>{const L=S.limits.find(l=>l.id==d.id);if(!L||!confirm('Delete the limit “'+lname(L)+' ≤ '+L.max+'%”?'))return;S.limits=S.limits.filter(l=>l.id!=d.id);save();render()},
+ delC:d=>{S.contribs=S.contribs.filter(c=>c.id!=d.id);save();render()},delL:d=>{const L=S.limits.find(l=>l.id==d.id);if(!L||!confirm('Delete the limit “'+lname(L)+' '+lsym(L)+'”?'))return;S.limits=S.limits.filter(l=>l.id!=d.id);save();render()},
  live:async()=>{toast('Fetching…');const ok=await fetchFx();toast(ok?'Rate updated':'Could not reach the rate service');if(ok)fxModal()},
  exp:async()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(await pack(true),null,1)],{type:'application/json'}));a.download=`portfolio-backup-${today()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1e3);toast(lock?'Encrypted backup saved':'Backup saved (unencrypted)')},
  imp:()=>$('#file').click(),manage:catModal,incX:d=>keepInc(()=>{U.incX.has(d.t)?U.incX.delete(d.t):U.incX.add(d.t)}),incAll:()=>{S.exc=[];U.dd=[];U.ddo=false;U.ddb=null;save();render()},togA:d=>{U.open.has(d.id)?U.open.delete(d.id):U.open.add(d.id);render()},cg:d=>{U.cg=d.v=='c'?'c':'m';render()},expA:()=>{openIds().forEach(i=>U.open.add(i));render()},colA:()=>{openIds().forEach(i=>U.open.delete(i));render()},
