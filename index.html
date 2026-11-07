@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-EC7mdSp4/hAuVUutJZgj0LGwgmuRIrxxIp5XVxhr6ew='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-RQGqTTjJ/O6L4fs+j3PdFTTbPqDWFZTrGYsS/Tefmmk='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
 <link rel="icon" href="data:,">
 <title>Portfolio tracker</title>
 <style>
@@ -37,6 +37,7 @@ table{width:100%;border-collapse:collapse}td{padding:8px 4px;border-bottom:1px s
 .th{display:flex;justify-content:space-between;margin:22px 4px 0;font-weight:650;font-size:15px}
 .charts{display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}.donut{width:100%;max-width:210px;display:block;margin:0 auto 12px}
 .charts.three{grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}.ct{text-align:center;font-weight:600;margin-bottom:8px}.charts.three .donut{max-width:190px}
+.charts.four{grid-template-columns:1fr;gap:20px}@media(min-width:720px){.charts.four{grid-template-columns:repeat(2,1fr);gap:24px}}.charts.four .donut{max-width:210px}
 .dd2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;margin-top:14px;align-items:start}
 .sel{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}.sel label{flex:1;min-width:160px;display:grid;gap:4px;color:var(--m);font-size:12px}
 .empty{text-align:center;padding:40px 16px}.empty p{color:var(--m)}
@@ -88,13 +89,13 @@ const effTheme=()=>TH||(MQ&&MQ.matches?'dark':'light'),applyTheme=()=>{document.
 applyTheme();if(MQ&&MQ.addEventListener)MQ.addEventListener('change',()=>{if(!TH){applyTheme();render()}});
 const SUN='<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>',MOON='<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
 const TYPES=['TFSA','RRSP','FHSA','Non-registered','RESP','Other'],CLS=['ETFs','Stocks','Bonds','Gold','Cash','Crypto','Real estate','Other'];
-const COL=['#2f6fed','#17a58a','#f2a30f','#e5484d','#8e6bf2','#3bb5e8','#7bb83d','#e5609f','#8a97a8'];
+const COL=['#2f6fed','#17a58a','#f2a30f','#e5484d','#8e6bf2','#3bb5e8','#7bb83d','#e5609f','#8a97a8','#0e7490','#b45309','#7c3aed','#be123c','#15803d','#0369a1','#a16207','#c026d3','#4d7c0f','#ea580c','#0d9488','#6366f1','#db2777','#65a30d','#d97706'];
 const PH='Unassigned';
 const uid=()=>Math.random().toString(36).slice(2,9),esc=s=>String(s??'').replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 const today=()=>new Date().toLocaleDateString('en-CA'),YR=new Date().getFullYear();
 const dflt=()=>({accounts:[],limits:[],contribs:[],fx:{r:1.37,d:null,manual:false},cur:'CAD',sync:{},cats:{types:[...TYPES],cls:[...CLS],inst:[],holders:[]}});
 let S=dflt(),lock=null,U={tab:'overview',scope:'all',by:'cls',dd:[],ddo:false,ddb:null,dds:null,accBy:'t',cgb:'type',year:YR,open:new Set(),cg:'m'};
-const norm=o=>{const d=dflt();for(const k in d)if(o&&o[k]!=null&&typeof o[k]==typeof d[k])d[k]=o[k];const nu=v=>Number.isFinite(+v)?+v:0;d.accounts.forEach(a=>{a.h=Array.isArray(a.h)?a.h:[];a.h.forEach(h=>h.amt=nu(h.amt));a.inst=typeof a.inst=='string'?a.inst:'';a.holder=typeof a.holder=='string'?a.holder.trim():'';a.room=nu(a.room);a.lim=a.lim===true||(a.lim==null&&a.room>0);a.al=typeof a.al=='number'&&a.al>=0&&a.al<=100?a.al:null;if(a.rooms&&typeof a.rooms=='object')for(const y in a.rooms)a.rooms[y]=nu(a.rooms[y])});d.contribs.forEach(c=>{c.amt=nu(c.amt);c.cad=nu(c.cad);c.date=String(c.date||'');c.k=c.k=='w'?'w':''});d.limits.forEach(l=>l.max=nu(l.max));if(!(d.fx.r>0))d.fx.r=1.37;if(!Array.isArray(d.cats.types)||!Array.isArray(d.cats.cls))d.cats=dflt().cats;d.cats.inst=Array.isArray(d.cats.inst)?d.cats.inst.filter(x=>typeof x=='string'):[];d.cats.holders=Array.isArray(d.cats.holders)?d.cats.holders.filter(x=>typeof x=='string'):[];
+const norm=o=>{const d=dflt();for(const k in d)if(o&&o[k]!=null&&typeof o[k]==typeof d[k])d[k]=o[k];const nu=v=>Number.isFinite(+v)?+v:0;d.accounts.forEach(a=>{a.h=Array.isArray(a.h)?a.h:[];a.h.forEach(h=>{h.amt=nu(h.amt);h.sym=typeof h.sym=='string'?h.sym.trim().toUpperCase():''});a.inst=typeof a.inst=='string'?a.inst:'';a.holder=typeof a.holder=='string'?a.holder.trim():'';a.room=nu(a.room);a.lim=a.lim===true||(a.lim==null&&a.room>0);a.al=typeof a.al=='number'&&a.al>=0&&a.al<=100?a.al:null;if(a.rooms&&typeof a.rooms=='object')for(const y in a.rooms)a.rooms[y]=nu(a.rooms[y])});d.contribs.forEach(c=>{c.amt=nu(c.amt);c.cad=nu(c.cad);c.date=String(c.date||'');c.k=c.k=='w'?'w':''});d.limits.forEach(l=>l.max=nu(l.max));if(!(d.fx.r>0))d.fx.r=1.37;if(!Array.isArray(d.cats.types)||!Array.isArray(d.cats.cls))d.cats=dflt().cats;d.cats.inst=Array.isArray(d.cats.inst)?d.cats.inst.filter(x=>typeof x=='string'):[];d.cats.holders=Array.isArray(d.cats.holders)?d.cats.holders.filter(x=>typeof x=='string'):[];
  const r0=d.cats.rooms;d.cats.rooms={};if(r0&&typeof r0=='object'&&!Array.isArray(r0))for(const t in r0){const v=nu(r0[t]);if(v>0)d.cats.rooms[t]=v}
  const a0=d.cats.alerts;d.cats.alerts={};if(a0&&typeof a0=='object'&&!Array.isArray(a0))for(const t in a0){const v=a0[t];if(typeof v=='number'&&v>=0&&v<=100)d.cats.alerts[t]=v}
  /* one-time carry-over: contribution room that used to be shared per account type now lives on each account of that type */
@@ -115,7 +116,8 @@ const rows=()=>S.accounts.flatMap(a=>a.h.map(h=>({a,h,v:toCAD(h.amt,h.cur)})));
 const sum=r=>r.reduce((s,x)=>s+x.v,0);
 const filt=(sc,r=rows())=>sc=='all'?r:sc[0]=='a'?r.filter(x=>x.a.id==sc.slice(2)):sc[0]=='h'?r.filter(x=>(x.a.holder||'No holder')==sc.slice(2)):r.filter(x=>x.a.type==sc.slice(2));
 const alabel=a=>S.accounts.some(b=>b!==a&&b.name==a.name)?a.name+' ('+(a.holder||'No holder')+')':a.name;
-const KEY={cls:x=>x.h.cls,acc:x=>alabel(x.a),type:x=>x.a.type,cur:x=>x.h.cur,holder:x=>x.a.holder||'No holder'};
+const hl=h=>h.sym||h.cls;
+const KEY={sym:x=>hl(x.h),cls:x=>x.h.cls,acc:x=>alabel(x.a),type:x=>x.a.type,cur:x=>x.h.cur,holder:x=>x.a.holder||'No holder'};
 const group=(r,by)=>{const m={};r.forEach(x=>{const k=KEY[by](x);m[k]=(m[k]||0)+x.v});return Object.entries(m).filter(e=>e[1]>0).sort((a,b)=>b[1]-a[1])};
 const catT=()=>[...new Set([...S.cats.types,...S.accounts.map(a=>a.type)])];
 const catI=()=>[...new Set([...(S.cats.inst||[]),...S.accounts.map(a=>a.inst).filter(Boolean)])];
@@ -132,7 +134,7 @@ const O=(l,sel)=>l.map(x=>{const[v,t]=Array.isArray(x)?x:[x,x];return `<option v
 const lim=L=>{const r=filt(L.sc),t=sum(r),m=sum(r.filter(x=>L.k=='cur'?x.h.cur==L.val:x.h.cls==L.val));return{t,m,p:t?m/t:0}};
 const breaches=()=>S.limits.map(L=>({L,...lim(L)})).filter(x=>x.p*100>x.L.max+1e-9);
 const lname=L=>L.k=='cur'?L.val+' holdings':L.val;
-let GN=0;const openIds=()=>U.tab=='accounts'?S.accounts.map(a=>a.id):U.tab=='contrib'?S.accounts.map(a=>'c:'+a.id):U.tab=='guide'?Array.from({length:GN},(_,i)=>'g'+i):[];
+let GN=0;const openIds=()=>U.tab=='accounts'?S.accounts.map(a=>a.id):U.tab=='holdings'?[...new Set(rows().map(x=>'p:'+x.h.cls+'|'+hl(x.h)))]:U.tab=='contrib'?S.accounts.map(a=>'c:'+a.id):U.tab=='guide'?Array.from({length:GN},(_,i)=>'g'+i):[];
 const roomOf=a=>a&&a.lim&&a.room>0?a.room:0,alertOf=a=>roomOf(a)>0&&typeof a.al=='number'&&a.al>=0&&a.al<=100?a.al:null;
 /* deposits use up room; withdrawals are logged separately and do not give room back */
 const dep=c=>c.k=='w'?0:c.cad,wdr=c=>c.k=='w'?c.cad:0,txs=a=>S.contribs.filter(c=>c.acc==a.id),dsum=a=>sum(txs(a).map(c=>({v:dep(c)}))),wsum=a=>sum(txs(a).map(c=>({v:wdr(c)})));
@@ -170,10 +172,10 @@ function donut(g,t,by,act='dd'){const sel=selOf(act,by);let o=25,s='';g.forEach(
 const legend=(g,t,by,act='dd')=>`<table>${g.map(([n,v])=>`<tr class="dd${selOf(act,by)===n?' sl':''}" tabindex="0" data-act="${act}" data-by="${by}" data-n="${esc(n)}"><td><span class="dot" style="background:${col(n)}"></span>${esc(n)}</td><td class="n">${fmt(v)}</td><td class="n">${pc(v/t)}</td></tr>`).join('')}</table>`;
 /* ---------- views ---------- */
 const emptyCard=`<div class="card empty"><h2>No accounts yet</h2><p>Add an account (TFSA, RRSP, FHSA, non-registered…), then add what you hold in it.</p><button class="b p" data-act="addAcc">Add account</button></div>`;
-const BYN={cls:'Investment type',acc:'Account',type:'Account type',holder:'Holder',cur:'Currency'},SUB={cls:'acc',acc:'cls',type:'cls',holder:'acc',cur:'cls'};
+const BYN={sym:'Holding',cls:'Investment type',acc:'Account',type:'Account type',holder:'Holder',cur:'Currency'},SUB={sym:'acc',cls:'sym',acc:'cls',type:'cls',holder:'acc',cur:'cls'};
 function vDD(sr){const P=U.dd;if(!U.ddo)return '';const r=sr.filter(x=>P.every(f=>KEY[f.by](x)==f.n)).sort((a,b)=>b.v-a.v),t=sum(r);if(!(t>0)){U.dd=[];U.ddo=false;return ''}
  /* every click adds a filter; the order you add them in never changes the result */
- const st=sum(sr),av=['cls','acc','type','holder','cur'].filter(k=>!P.some(f=>f.by==k)),cnt={};av.forEach(k=>cnt[k]=group(r,k).length);
+ const st=sum(sr),av=['cls','sym','acc','type','holder','cur'].filter(k=>!P.some(f=>f.by==k)),cnt={};av.forEach(k=>cnt[k]=group(r,k).length);
  const L=P[P.length-1],pref=[L?SUB[L.by]:(U.dds||'holder'),...av].filter(k=>av.includes(k)),dim=av.includes(U.ddb)?U.ddb:(pref.find(k=>cnt[k]>1)||pref[0]),g=dim?group(r,dim):[];
  const am=new Map();r.forEach(x=>{const e=am.get(x.a.id)||{a:x.a,v:0,h:[]};e.v+=x.v;e.h.push(x);am.set(x.a.id,e)});const al=[...am.values()].sort((a,b)=>b.v-a.v);
  const chips=P.map((f,i)=>`<span class="fc">${BYN[f.by]}: <b>${esc(f.n)}</b><button class="x" data-act="ddr" data-i="${i}" aria-label="Remove filter ${esc(BYN[f.by])}: ${esc(f.n)}" title="Remove this filter">×</button></span>`).join('');
@@ -184,15 +186,15 @@ function vDD(sr){const P=U.dd;if(!U.ddo)return '';const r=sr.filter(x=>P.every(f
  ${split}
  <div class="dd2"><div>${dim?`${donut(g,t,dim,'ddp')}${legend(g,t,dim,'ddp')}<div class="k" style="text-align:center;margin-top:6px">${g.length>1?'Click a slice or row to add it as a filter and go one level deeper.':'Only one value here. Pick another split above.'}</div>`:`<div class="k">Fully narrowed down. Remove a filter above to widen the selection.</div>`}</div>
  <div><div class="row"><b class="sp">What matches</b><span class="k">${fmt(t)}</span></div>
- <table class="hl" style="margin-top:6px">${al.map(e=>`<tr class="a1"><td><span class="dot" style="background:${col(e.a.type)}"></span><b>${esc(e.a.name)}</b><div class="k">${esc(e.a.holder||'No holder')} · ${esc(e.a.type)}</div></td><td class="n">${fmt(e.v)}</td><td class="n">${pc(t?e.v/t:0)}</td></tr>`+e.h.map(x=>`<tr class="s1"><td>${esc(x.h.cls)} · ${esc(x.h.cur)}${x.h.cur!=S.cur?' '+fmtN(x.h.amt,x.h.cur):''}</td><td class="n">${fmt(x.v)}</td><td class="n">${pc(t?x.v/t:0)}</td></tr>`).join('')).join('')}</table></div></div></div>`}
+ <table class="hl" style="margin-top:6px">${al.map(e=>`<tr class="a1"><td><span class="dot" style="background:${col(e.a.type)}"></span><b>${esc(e.a.name)}</b><div class="k">${esc(e.a.holder||'No holder')} · ${esc(e.a.type)}</div></td><td class="n">${fmt(e.v)}</td><td class="n">${pc(t?e.v/t:0)}</td></tr>`+e.h.map(x=>`<tr class="s1"><td>${esc(x.h.sym?x.h.sym+' · '+x.h.cls:x.h.cls)} · ${esc(x.h.cur)}${x.h.cur!=S.cur?' '+fmtN(x.h.amt,x.h.cur):''}</td><td class="n">${fmt(x.v)}</td><td class="n">${pc(t?x.v/t:0)}</td></tr>`).join('')).join('')}</table></div></div></div>`}
 const allBtn=(by,label)=>`<div style="text-align:center;margin-bottom:8px"><button class="chip${U.ddo&&!U.dd.length&&(U.ddb||U.dds||'holder')==by?' on':''}" data-act="ddall" data-by="${by}">${esc(label)}</button></div>`;
 /* ---------- constellation: stars are holders, accounts and holdings; click a star to go one level deeper ---------- */
 /* The view choice is remembered on this device only (like the theme); it is not part of your portfolio data. */
 const CVK='portfolio.view';try{U.view=localStorage.getItem(CVK)=='c'?'c':'d'}catch{U.view='d'}
 /* Constellation levels: which dimension each star size shows. Default = holder > account > investment type (the original view). Device-only setting, not part of your data. */
-const CKK='portfolio.levels',CKD=['holder','acc','cls'],CKO=['holder','type','acc','cls','cur'];U.ck=CKD.slice();U.cp=[];
+const CKK='portfolio.levels',CKD=['holder','acc','cls'],CKO=['holder','type','acc','cls','cur','sym'];U.ck=CKD.slice();U.cp=[];
 try{const v=JSON.parse(localStorage.getItem(CKK)||'null');if(Array.isArray(v)&&v.length==3&&new Set(v).size==3&&v.every(k=>CKO.includes(k)))U.ck=v}catch{}
-const cdef=()=>U.ck.join()==CKD.join(),LN={holder:'holder',type:'account type',acc:'account',cls:'investment type',cur:'currency'},LP={holder:'holders',type:'account types',acc:'accounts',cls:'investment types',cur:'currencies'};
+const cdef=()=>U.ck.join()==CKD.join(),LN={sym:'holding',holder:'holder',type:'account type',acc:'account',cls:'investment type',cur:'currency'},LP={sym:'holdings',holder:'holders',type:'account types',acc:'accounts',cls:'investment types',cur:'currencies'};
 const cpOf=id=>{const p=id.split('/'),n=p.length;return n==1?[id]:n==2?[p[0],id]:[p[0],p[0]+'/'+p[1]]};
 const setCk=(i,v)=>{if(!CKO.includes(v))return;const c=U.ck.slice(),j=c.indexOf(v);if(j>=0&&j!=i)c[j]=c[i];c[i]=v;U.ck=c;U.cp=[];U.dd=[];U.ddo=false;U.ddb=null;U.czA=1;try{localStorage.setItem(CKK,JSON.stringify(c))}catch{}render()};
 const CKSEL=()=>['Big stars','Medium stars','Small stars'].map((t,i)=>`<label>${t}<select data-chg="ck${i}">${O(CKO.map(k=>[k,BYN[k]]),U.ck[i])}</select></label>`).join('');
@@ -204,7 +206,7 @@ function ctree(sr){const rs=new Set(roomAlerts().map(x=>x.a.id)),bh=new Set(),hm
  breaches().forEach(b=>filt(b.L.sc).forEach(x=>{if(b.L.k=='cur'?x.h.cur==b.L.val:x.h.cls==b.L.val)bh.add(x.h.id)}));
  sr.forEach(x=>{if(!(x.v>0))return;const hn=x.a.holder||'No holder';let H=hm.get(hn);if(!H)hm.set(hn,H={name:hn,v:0,am:new Map()});
   let A=H.am.get(x.a.id);if(!A)H.am.set(x.a.id,A={id:'a:'+x.a.id,name:x.a.name,sub:x.a.type,aid:x.a.id,v:0,flag:rs.has(x.a.id),kids:[]});
-  const f=bh.has(x.h.id);A.v+=x.v;H.v+=x.v;if(f)A.flag=true;A.kids.push({id:'x:'+x.a.id+':'+x.h.id,name:x.h.cls,sub:x.h.cur,v:x.v,flag:f,kids:[]})});
+  const f=bh.has(x.h.id);A.v+=x.v;H.v+=x.v;if(f)A.flag=true;A.kids.push({id:'x:'+x.a.id+':'+x.h.id,name:hl(x.h),ck:x.h.cls,sub:x.h.sym?x.h.cls+' · '+x.h.cur:x.h.cur,v:x.v,flag:f,kids:[]})});
  return[...hm.values()].map(h=>{const kids=[...h.am.values()].sort((a,b)=>b.v-a.v);kids.forEach(a=>a.kids.sort((p,q)=>q.v-p.v));return{id:'h:'+h.name,name:h.name,v:h.v,flag:kids.some(a=>a.flag),kids}}).sort((a,b)=>b.v-a.v)}
 /* same tree, but with the three levels you picked (any order of holder / account type / account / investment type / currency); ids are paths so every node is unique */
 function ctreeG(sr,ks){const rs=new Set(roomAlerts().map(x=>x.a.id)),bh=new Set();
@@ -253,7 +255,7 @@ function vCons(sr,st){const T=sum(rows()),H=cdef()?ctree(sr):ctreeG(sr,U.ck),mob
   c.ks.forEach(k=>{const kx=cx+s*k.x,ky=cy+s*k.y,kc=col(k.n.ck??(lvl==2?k.n.name:k.n.sub)),kr=Math.max(k.r*s,2.6);
    lk+=`<line class="ln" x1="${f1(cx)}" y1="${f1(cy)}" x2="${f1(kx)}" y2="${f1(ky)}"/>`;
    k.sa.forEach(a=>{const ax=cx+s*a.x,ay=cy+s*a.y;lk+=`<line class="ln" x1="${f1(kx)}" y1="${f1(ky)}" x2="${f1(ax)}" y2="${f1(ay)}"/>`;
-    sat+=star(ax,ay,Math.max(a.r*s,1.4),col(a.n.name),a.n,{nav:1,tip:`${k.n.name} › ${nn(a.n)} · ${vp(a.n.v,ft)}${a.n.flag?' · alert':''} · click to open ${G?'its group':'its account'}`})});
+    sat+=star(ax,ay,Math.max(a.r*s,1.4),col(a.n.ck??a.n.name),a.n,{nav:1,tip:`${k.n.name} › ${nn(a.n)} · ${vp(a.n.v,ft)}${a.n.flag?' · alert':''} · click to open ${G?'its group':'its account'}`})});
    mid+=lvl==2?star(kx,ky,kr,kc,k.n,{tip:`${nn(k.n)} · ${vp(k.n.v,ft)}${k.n.flag?' · alert':''}`}):star(kx,ky,kr,kc,k.n,{nav:1,tab:lvl==1,tip:`${lvl==0?n.name+' › ':''}${nn(k.n)} · ${vp(k.n.v,ft)}${k.n.flag?' · alert':''} · click to zoom in`});
    if(k.l){const d=k.fp*s+8,ax=kx+k.dx*d,ay=ky+k.dy*d,an=k.dx>.35?'start':k.dx<-.35?'end':'middle';let y1,y2;
     if(an=='middle'){if(k.dy>0){y1=ay+8;y2=y1+13}else{y2=ay-4;y1=y2-13}}else{y1=ay-1;y2=ay+12}
@@ -276,14 +278,14 @@ function vCons(sr,st){const T=sum(rows()),H=cdef()?ctree(sr):ctreeG(sr,U.ck),mob
 function vOver(){const all=rows(),T=sum(all);if(!S.accounts.length)return emptyCard;
  const al=breaches(),cadN=sum(all.filter(x=>x.h.cur=='CAD')),usdV=sum(all.filter(x=>x.h.cur=='USD'));
  const hs=holders();if(U.by!='cls'&&U.by!='acc')U.by='cls';if(U.scope!='all'&&!(U.scope.startsWith('h:')&&hs.includes(U.scope.slice(2))))U.scope='all';
- const cv=U.view=='c',sr=filt(U.scope),st=sum(sr),g=group(sr,U.by),gc=group(sr,'cur'),gt=group(sr,'type'),gh=group(sr,'holder'),who=U.scope=='all'?'All holders':U.scope.slice(2);
+ const cv=U.view=='c',sr=filt(U.scope),st=sum(sr),g=group(sr,U.by),gc=group(sr,'cur'),gt=group(sr,'type'),gh=group(sr,'holder'),gs=group(sr,'sym'),who=U.scope=='all'?'All holders':U.scope.slice(2);
  return roomBanner()+(al.length?`<div class="alert"><b>${al.length} limit${al.length>1?'s':''} exceeded</b>${al.map(b=>`<div>${esc(lname(b.L))} is ${pc(b.p)} of ${esc(scopeName(b.L.sc))} (limit ${b.L.max}%)</div>`).join('')}</div>`:'')+
  `<div class="grid" style="margin-top:12px"><div class="card"><div class="k">Total value</div><div class="v">${fmt(T)}</div><div class="k">1 USD = ${R().toFixed(4)} CAD</div></div>
  <div class="card"><div class="k">Held in CAD</div><div class="v">${fmtN(cadN,'CAD')}</div><div class="k">${pc(T?cadN/T:0)} of portfolio</div></div>
  <div class="card"><div class="k">Held in USD</div><div class="v">${fmtN(usdV/R(),'USD')}</div><div class="k">${pc(T?usdV/T:0)} of portfolio · ≈ ${fmt(usdV)}</div></div></div>
  <div class="card"><div class="row" style="margin-bottom:12px"><div class="seg" role="group" aria-label="Overview style"><button class="${cv?'':'on'}" data-act="vw" data-v="d">Charts</button><button class="${cv?'on':''}" data-act="vw" data-v="c">Constellation</button></div></div><div class="sel"><label>Holder<select data-chg="scope">${O([['all','All holders'],...hs.map(h=>['h:'+h,h])],U.scope)}</select></label>
  ${cv?CKSEL():`<label>Group by<select data-chg="by">${O([['cls','Investment type'],['acc','Account']],U.by)}</select></label>`}</div>
- ${cv?vCons(sr,st):st?`<div class="charts three"><div><div class="k ct">Holders</div>${allBtn('holder',who)}${donut(gh,st,'holder')}${legend(gh,st,'holder')}</div><div><div class="k ct">Account types</div>${allBtn('type','All account types')}${donut(gt,st,'type')}${legend(gt,st,'type')}</div><div><div class="k ct">${esc(BYN[U.by])}</div>${allBtn(U.by,U.by=='cls'?'All investment types':'All accounts')}${donut(g,st,U.by)}${legend(g,st,U.by)}</div></div>
+ ${cv?vCons(sr,st):st?`<div class="charts four"><div><div class="k ct">${esc(BYN[U.by])}</div>${allBtn(U.by,U.by=='cls'?'All investment types':'All accounts')}${donut(g,st,U.by)}${legend(g,st,U.by)}</div><div><div class="k ct">Holdings</div>${allBtn('sym','All holdings')}${donut(gs,st,'sym')}${legend(gs,st,'sym')}</div><div><div class="k ct">Holders</div>${allBtn('holder',who)}${donut(gh,st,'holder')}${legend(gh,st,'holder')}</div><div><div class="k ct">Account types</div>${allBtn('type','All account types')}${donut(gt,st,'type')}${legend(gt,st,'type')}</div></div>
  <div style="margin-top:16px"><div class="row" style="gap:6px 10px"><b>Currency</b>${gc.map(([n,v])=>`<button class="chip" data-act="dd" data-by="cur" data-n="${esc(n)}"><span class="dot" style="background:${col(n)}"></span>${esc(n)} ${fmt(v)} · ${pc(v/st)}</button>`).join('')}</div><div class="bar">${gc.map(([n,v])=>`<i title="${esc(n)}: ${pc(v/st)}" style="width:${v/st*100}%;background:${col(n)}"></i>`).join('')}</div></div><div class="k" style="text-align:center;margin-top:10px">${esc(who)} · click a slice or row to start a drill-down.</div>`:'<p class="k">Nothing held in this selection yet.</p>'}</div>`+vDD(sr)}
 function vAcc(){const T=sum(rows()),gh=U.accBy=='h';let h=`<div class="row" style="margin:16px 0 0"><h2 class="sp">Accounts</h2><div class="seg"><button class="${gh?'':'on'}" data-act="accBy" data-v="t">By type</button><button class="${gh?'on':''}" data-act="accBy" data-v="h">By holder</button></div><button class="b" data-act="manage">Manage categories</button><button class="b p" data-act="addAcc">Add account</button></div>`;if(!S.accounts.length)return h+emptyCard;
  const nh=S.accounts.filter(a=>a.holder==PH).length;if(nh)h+=`<div class="alert"><b>${nh} account${nh>1?'s are':' is'} on the placeholder holder “${PH}”.</b> Edit ${nh>1?'each account':'the account'} to choose its real holder, or rename “${PH}” under Manage categories → Holders.</div>`;
@@ -293,9 +295,17 @@ function vAcc(){const T=sum(rows()),gh=U.accBy=='h';let h=`<div class="row" styl
    h+=`<div class="card"><div class="row"><button class="tg" data-act="togA" data-id="${esc(a.id)}" aria-expanded="${op}" aria-label="${op?'Collapse':'Expand'} ${esc(a.name)}">${op?'▾':'▸'}</button><div class="sp" data-act="togA" data-id="${esc(a.id)}" style="cursor:pointer"><b>${esc(a.name)}</b> <span class="k">· ${esc(gh?a.type:(a.holder||'No holder'))}${a.inst?' · '+esc(a.inst):''}</span>${a.holder==PH?' <span class="tag bad">Placeholder holder</span>':''}<div class="k">${pc(T?at/T:0)} of portfolio · CAD ${pc(at?cn/at:0)} / USD ${pc(at?us/at:0)}</div>${rm>0?`<div class="k">${lf<0?`<b style="color:var(--r)">${fmt(-lf)} over</b>`:fmt(lf)+' room left'} of ${fmt(rm)}</div>`:''}</div><div class="v" style="font-size:18px">${fmt(at)}</div>
    <button class="ib" data-act="editAcc" data-id="${esc(a.id)}">Edit</button><button class="ib" data-act="delAcc" data-id="${esc(a.id)}">Delete</button></div>
    ${op?`<div class="bar">${g.map(([n,v])=>`<i title="${esc(n)}" style="width:${v/at*100}%;background:${col(n)}"></i>`).join('')}</div>
-   <table>${a.h.map(x=>`<tr><td><span class="dot" style="background:${col(x.cls)}"></span>${esc(x.cls)}</td><td class="n">${fmtN(x.amt,x.cur)}</td><td class="n">${fmt(toCAD(x.amt,x.cur))}</td><td class="n">${pc(at?toCAD(x.amt,x.cur)/at:0)}</td>
+   <table>${a.h.map(x=>`<tr><td><span class="dot" style="background:${col(x.cls)}"></span>${x.sym?`<b>${esc(x.sym)}</b> <span class="k">${esc(x.cls)}</span>`:esc(x.cls)}</td><td class="n">${fmtN(x.amt,x.cur)}</td><td class="n">${fmt(toCAD(x.amt,x.cur))}</td><td class="n">${pc(at?toCAD(x.amt,x.cur)/at:0)}</td>
    <td class="n"><button class="ib" data-act="editH" data-id="${esc(a.id)}" data-h="${esc(x.id)}">Edit</button><button class="ib" data-act="delH" data-id="${esc(a.id)}" data-h="${esc(x.id)}">Remove</button></td></tr>`).join('')}</table>
    <button class="b" style="margin-top:8px" data-act="addH" data-id="${esc(a.id)}">Add holding</button>`:''}</div>`})});return h}
+function vHold(){const all=rows(),T=sum(all);
+ let h=`<div class="row" style="margin:16px 0 0"><h2 class="sp">Holdings</h2><button class="b" data-act="expA">Expand all</button><button class="b" data-act="colA">Collapse all</button><button class="b p" data-act="addHG">Add holding</button></div>`;
+ if(!S.accounts.length)return h+emptyCard;
+ if(!all.length)return h+`<div class="card empty"><p>Add a holding with its ticker (AMZN, VFV, XEQT…). It is sorted into an investment type for you and appears in the Overview charts.</p><button class="b p" data-act="addHG">Add holding</button></div>`;
+ group(all,'cls').forEach(([c,cv])=>{const m=new Map();all.filter(x=>x.h.cls==c).forEach(x=>{const k=hl(x.h),e=m.get(k)||{k,v:0,p:[]};e.v+=x.v;e.p.push(x);m.set(k,e)});
+  h+=`<div class="th"><span>${esc(c)}</span><span>${fmt(cv)} · ${pc(T?cv/T:0)}</span></div><div class="card"><table>`+[...m.values()].sort((a,b)=>b.v-a.v).map(e=>{const id='p:'+c+'|'+e.k,op=U.open.has(id),an=[...new Set(e.p.map(x=>x.a.name))].join(', ');
+   return `<tr><td style="width:30px"><button class="tg" data-act="togA" data-id="${esc(id)}" aria-expanded="${op}" aria-label="${op?'Collapse':'Expand'} ${esc(e.k)}">${op?'▾':'▸'}</button></td><td class="dd" tabindex="0" data-act="hdd" data-n="${esc(e.k)}" title="Show in the Overview drill-down"><span class="dot" style="background:${col(e.k)}"></span><b>${esc(e.k)}</b><div class="k" style="margin-left:18px">${esc(an)}</div></td><td class="n">${fmt(e.v)}</td><td class="n">${pc(T?e.v/T:0)}</td></tr>`+(op?e.p.map(x=>`<tr><td></td><td class="k">${esc(x.a.name)} · ${esc(x.a.holder||'No holder')}</td><td class="n k">${fmt(x.v)}${x.h.cur!=S.cur?' · '+fmtN(x.h.amt,x.h.cur):''}</td><td class="n"><button class="ib" data-act="editH" data-id="${esc(x.a.id)}" data-h="${esc(x.h.id)}">Edit</button><button class="ib" data-act="delH" data-id="${esc(x.a.id)}" data-h="${esc(x.h.id)}">Remove</button></td></tr>`).join(''):'')}).join('')+`</table></div>`});
+ return h}
 const fdt=d=>d.length==4?d:d.length==7?MN[+d.slice(5)-1]+' '+d.slice(0,4):d;
 const MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],fd=v=>HID?MASK:nf(S.cur).format(v),fc=v=>HID?MASK:new Intl.NumberFormat('en-CA',{style:'currency',currency:S.cur,notation:'compact',maximumFractionDigits:1}).format(v);
 function roomTiles(y){const d=S.accounts.filter(a=>roomOf(a)>0).map(a=>{const p=dsum(a),py=sum(txs(a).filter(c=>c.date.startsWith(y)).map(c=>({v:dep(c)}))),rm=roomOf(a),al=alertOf(a);return{a,p,py,rm,al,left:rm-p,hit:al!=null&&(rm-p)/rm*100<=al+1e-9}});if(!d.length)return '';
@@ -380,10 +390,10 @@ function vGuideRaw(){return `<div class="g"><div class="row" style="margin:16px 
 function render(){const n=breaches().length,ra=roomAlerts().length;
  const eb=$('#eye');eb.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true">${HID?EYEOFF:EYE}</svg>`;eb.setAttribute('aria-pressed',String(!HID));eb.setAttribute('aria-label',HID?'Show amounts':'Hide amounts');eb.title=HID?'Show amounts':'Hide amounts';
  const tb=$('#thm'),dk=effTheme()=='dark',tl=dk?'Switch to light mode':'Switch to dark mode';tb.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true">${dk?SUN:MOON}</svg>`;tb.setAttribute('aria-label',tl);tb.title=tl;
- $('#tabs').innerHTML=[['overview','Overview'],['accounts','Accounts'],['contrib','Contributions'+(ra?`<span class="cnt">${ra}</span>`:'')],['limits','Limits & alerts'+(n?`<span class="cnt">${n}</span>`:'')],['guide','Setup guide']].map(([k,l])=>`<button class="${U.tab==k?'on':''}" data-act="tab" data-v="${k}">${l}</button>`).join('');
+ $('#tabs').innerHTML=[['overview','Overview'],['accounts','Accounts'],['holdings','Holdings'],['contrib','Contributions'+(ra?`<span class="cnt">${ra}</span>`:'')],['limits','Limits & alerts'+(n?`<span class="cnt">${n}</span>`:'')],['guide','Setup guide']].map(([k,l])=>`<button class="${U.tab==k?'on':''}" data-act="tab" data-v="${k}">${l}</button>`).join('');
  document.querySelectorAll('.seg button').forEach(b=>b.classList.toggle('on',b.dataset.v==S.cur));
  $('#fxb').textContent=`USD/CAD ${R().toFixed(4)}${S.fx.manual?' (manual)':S.fx.d?' · '+S.fx.d:''}`;
- $('#app').innerHTML=({overview:vOver,accounts:vAcc,contrib:vCon,limits:vLim,guide:vGuide})[U.tab]()+`<p class="foot">${S.sync?.token?(S.sync.dirty?(syncErr?'Sync failed: '+esc(syncErr)+' · retrying':'Sync pending'):'Synced'+(S.sync.at?' at '+new Date(S.sync.at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):''))+' · encrypted before upload':'Your data stays in this browser. Back it up or turn on encrypted sync in “Backup &amp; privacy”.'}</p>`}
+ $('#app').innerHTML=({overview:vOver,accounts:vAcc,holdings:vHold,contrib:vCon,limits:vLim,guide:vGuide})[U.tab]()+`<p class="foot">${S.sync?.token?(S.sync.dirty?(syncErr?'Sync failed: '+esc(syncErr)+' · retrying':'Sync pending'):'Synced'+(S.sync.at?' at '+new Date(S.sync.at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):''))+' · encrypted before upload':'Your data stays in this browser. Back it up or turn on encrypted sync in “Backup &amp; privacy”.'}</p>`}
 /* ---------- modals ---------- */
 const bad=m=>{$('#er').textContent=m;return false};
 function modal(title,body,ok,fn,cls=''){const d=$('#dlg');d.className=cls;d.innerHTML=`<h3>${title}</h3><div class="f">${body}</div><p class="er" id="er"></p><div class="ar"><button class="b cx" data-act="x">${ok?'Cancel':'Close'}</button>${ok?`<button class="b p" id="ok">${ok}</button>`:''}</div>`;
@@ -407,11 +417,32 @@ function accModal(id){const a=id?acc(id):{name:'',type:catT()[0]||'',inst:'',hol
  const o={name:n,type:t,inst:ins,holder:hd,lim,room:lim?rm:0,al:lim&&alv!==''?al:null};
  if(id)Object.assign(a,o);else S.accounts.push({id:uid(),h:[],...o});save();render()});
  $('#lim').onchange=()=>{$('#limf').hidden=!$('#lim').checked}}
-function hModal(aid,hid){const a=acc(aid),h=hid?a.h.find(x=>x.id==hid):{cls:allCls()[0]||'',amt:'',cur:'CAD'};
- modal(hid?'Edit holding':'Add holding to '+esc(a.name),`<label>Investment type${pick('c','cn',allCls(),h.cls,'New investment type')}</label>
+/* ticker detection: your own holdings first, then a built-in list of common tickers, then a guess (Stocks) */
+const TKD={},tkAdd=(c,u,t)=>t.split(' ').forEach(k=>TKD[k]=[c,u]),SFX=/\.(TO|V|NE|CN|TSX)$/,tkBase=t=>t.replace(SFX,'');
+tkAdd('ETFs','CAD','VFV VSP VUN VCN VEQT XEQT VGRO XGRO VBAL XBAL VCNS XCNS XIU XIC ZSP ZCN ZEQT ZGRO HXQ HXS XUU XSP XUS VIU VEE XEF XEC ZEA ZEM VXC XAW ZAW QQC ZQQ XQQ HEQT HGRO XDV ZDV VDY CDZ XRE ZRE VRE XGD');
+tkAdd('ETFs','USD','SPY VOO IVV VTI QQQ QQQM DIA IWM VT VXUS VEA VWO VIG VYM SCHD SCHG SCHB SCHX VUG VTV VB VO VGT XLK XLF XLE XLV XLY XLP XLI XLU XLB XLRE XLC SMH SOXX ARKK IWD IWF IJH IJR EFA EEM IEFA IEMG ITOT IXUS SPLG VNQ JEPI JEPQ DGRO DVY QYLD TQQQ SOXL UPRO SPXL GDX GDXJ');
+tkAdd('Bonds','CAD','ZAG VAB XBB XSB VSB ZDB ZFL VLB');tkAdd('Bonds','USD','BND AGG BNDX TLT IEF SHY LQD HYG VCIT VGSH VGIT VGLT BIV BSV GOVT TIP');
+tkAdd('Gold','CAD','CGL CGL.C');tkAdd('Gold','USD','GLD IAU GLDM SGOL PHYS');tkAdd('Cash','CAD','CASH PSA CSAV ZMMK');
+tkAdd('Crypto','','BTC ETH SOL XRP ADA DOGE LTC');tkAdd('Crypto','USD','IBIT FBTC GBTC ETHA');tkAdd('Crypto','CAD','BTCC EBIT QBTC');
+tkAdd('Stocks','USD','AAPL MSFT AMZN GOOGL GOOG META NVDA TSLA BRK.B JPM V MA UNH XOM JNJ WMT PG HD COST NFLX AMD AVGO ORCL CRM ADBE INTC DIS KO PEP BAC PFE CSCO');
+function detect(raw,skip){const s=raw.trim().toUpperCase();if(!s)return null;
+ const mine=rows().filter(x=>x.h.sym&&x.h.id!=skip&&tkBase(x.h.sym)==tkBase(s)).pop(),b=TKD[s]||TKD[tkBase(s)],cur=SFX.test(s)?'CAD':b&&b[1]?b[1]:mine?mine.h.cur:'';
+ return mine?{cls:mine.h.cls,cur,src:'mine'}:b?{cls:b[0],cur,src:'list'}:{cls:'Stocks',cur,src:'guess'}}
+const fitCls=c=>allCls().find(x=>x.toLowerCase().replace(/s$/,'')==c.toLowerCase().replace(/s$/,''))||c;
+function hModal(aid,hid){const a=aid?acc(aid):null;if(!a&&!S.accounts.length)return toast('Add an account first');const h=hid?a.h.find(x=>x.id==hid):{sym:'',cls:allCls()[0]||'',amt:'',cur:'CAD'};
+ modal(hid?'Edit holding':'Add holding'+(a?' to '+esc(a.name):''),`${a?'':`<label>Account<select id="ha">${accOpts()}</select></label>`}
+ <label>Ticker (optional)<input id="tk" value="${esc(h.sym)}" placeholder="e.g. AMZN, VFV, XEQT" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="15"></label><div class="k" id="tkh"></div>
+ <label>Investment type${pick('c','cn',allCls(),h.cls,'New investment type')}</label>
  <div class="two"><label>Amount invested<input id="m" type="number" min="0" step="any" value="${h.amt}"></label><label>Currency<select id="u">${O(['CAD','USD'],h.cur)}</select></label></div>`,'Save',()=>{
- const cls=canon(pv('c','cn'),allCls()),amt=num('#m');if(!cls)return bad('Choose an investment type');if(!(amt>=0))return bad('Enter a valid amount');
- const o={id:hid||uid(),cls,amt,cur:$('#u').value};if(hid)Object.assign(h,o);else a.h.push(o);save();render()})}
+ const sym=$('#tk').value.trim().toUpperCase(),cls=canon(pv('c','cn'),allCls()),amt=num('#m'),ac=a||acc($('#ha').value);
+ if(sym&&!/^[A-Z0-9.^=-]{1,15}$/.test(sym))return bad('Use only letters, numbers, dots or dashes in the ticker');if(!cls)return bad('Choose an investment type');if(!(amt>=0))return bad('Enter a valid amount');
+ const o={id:hid||uid(),sym,cls,amt,cur:$('#u').value};if(hid)Object.assign(h,o);else ac.h.push(o);save();render()});
+ let tc=!!hid,tu=!!hid;const T=$('#tk'),hn=$('#tkh');
+ const put=(id,v)=>{const e=$('#'+id);if(![...e.options].some(o=>o.value==v))e.insertBefore(new Option(v,v),e.querySelector('option[value=__new]'));e.value=v;if(e.dataset.new)$('#'+e.dataset.new).hidden=true};
+ const upd=()=>{const s=T.value.trim().toUpperCase(),d=detect(s,hid);if(!d){hn.textContent='Leave blank for things without a ticker, such as cash, a GIC or a gold bar.';return}
+  const c=fitCls(d.cls);if(!tc)put('c',c);if(!tu&&d.cur)put('u',d.cur);const mine=pv('c','cn');
+  hn.textContent=(d.src=='mine'?'Same as your other '+s+' holding: ':d.src=='list'?'Recognized: ':'Not in my list of ETFs, bonds, gold and crypto, so assumed ')+c+(d.cur?' · '+d.cur:'')+(d.src=='guess'?'. Change the type below if that is wrong; your choice is reused next time.':'')+(tc&&mine&&mine!=c?' (keeping your choice: '+mine+')':'')};
+ T.oninput=upd;$('#c').onchange=()=>{tc=true;upd()};$('#u').onchange=()=>{tu=true};upd()}
 const accOpts=()=>holders().map(hn=>`<optgroup label="${esc(hn)}">${S.accounts.filter(a=>(a.holder||'No holder')==hn).map(a=>`<option value="${esc(a.id)}">${esc(a.name)} · ${esc(a.type)}</option>`).join('')}</optgroup>`).join('');
 function cModal(kind){if(!S.accounts.length)return toast('Add an account first');const wd=kind=='w';
  modal(wd?'Add withdrawal':'Add contribution',`<label>Account<select id="a">${accOpts()}</select></label><div class="thr"><label>Year<input id="dy" type="number" min="1900" max="2100" step="1" value="${today().slice(0,4)}"></label><label>Month (optional)<select id="dmo"><option value="">Not specified</option>${MN.map((n,i)=>`<option value="${i+1}"${i+1==+today().slice(5,7)?' selected':''}>${n}</option>`).join('')}</select></label><label>Day (optional)<select id="dda"><option value="">Not specified</option>${Array.from({length:31},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join('')}</select></label></div><span class="k">Only the year is required. Enter just a year, a month and year, or a full date, whichever you know.</span>
@@ -561,7 +592,7 @@ function restoreModal(){
  if(rv){resetPass(boot);return false}
  await persist();boot()},'lk')}
 /* ---------- events ---------- */
-const ACT={accBy:d=>{U.accBy=d.v;render()},
+const ACT={addHG:()=>hModal(),hdd:d=>{U.tab='overview';U.scope='all';U.ca=null;U.dd=[{by:'sym',n:d.n}];U.ddo=true;U.ddb=null;render();$('#dd')?.scrollIntoView({block:'start',behavior:'smooth'})},accBy:d=>{U.accBy=d.v;render()},
  vw:d=>{U.view=d.v=='c'?'c':'d';try{localStorage.setItem(CVK,U.view)}catch{}U.czA=1;render()},
  cz:d=>{const id=d.id;
   if(!cdef()&&(id=='up'||id=='all'||id.startsWith('g:'))){U.cp=id=='up'?U.cp.slice(0,-1):id=='all'?[]:cpOf(id)}
