@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-9hvGuCd2OOsaTFHb2jQS2xXsYTIl5NbHvEtcehRjRhU='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-TI077W/uP6hTMkru26ItqwO4Y2KiM91WG++WwcuZ6jc='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
 <link rel="icon" href="data:,">
 <title>Portfolio tracker</title>
 <style>
@@ -186,7 +186,7 @@ function donut(g,t,by,act='dd'){const sel=selOf(act,by);let o=25,s='';g.forEach(
  return `<svg viewBox="0 0 42 42" class="donut" role="group" aria-label="Allocation chart">${s}<text x="21" y="22.3" text-anchor="middle" font-size="3.1" font-weight="700" fill="currentColor">${fmt(t)}</text></svg>`}
 const legend=(g,t,by,act='dd')=>`<table>${g.map(([n,v])=>`<tr class="dd${selOf(act,by)===n?' sl':''}" tabindex="0" data-act="${act}" data-by="${by}" data-n="${esc(n)}"><td><span class="dot" style="background:${col(n)}"></span>${esc(n)}</td><td class="n">${fmt(v)}</td><td class="n">${pc(v/t)}</td></tr>`).join('')}</table>`;
 /* ---------- views ---------- */
-const emptyCard=`<div class="card empty"><h2>No accounts yet</h2><p>Add an account (TFSA, RRSP, FHSA, non-registered…), then add what you hold in it, by ticker (like VFV or AMZN) or just by investment type.</p><button class="b p" data-act="addAcc">Add account</button></div>`;
+const emptyCard=`<div class="card empty"><h2>No accounts yet</h2><p>Add an account (TFSA, RRSP, FHSA, non-registered…), then add what you hold in it, by ticker (like VFV or AMZN) or just by investment type.</p><button class="b p" data-act="addAcc">Add account</button> <button class="b" data-act="csvImp">Import from CSV</button></div>`;
 const BYN={cls:'Investment type',tkr:'Holding (ticker)',acc:'Account',type:'Account type',holder:'Holder',cur:'Currency'},SUB={cls:'acc',tkr:'acc',acc:'cls',type:'cls',holder:'acc',cur:'cls'},DISP=['cls','tkr','acc','type','holder','cur'];
 function vDD(sr){const P=U.dd;if(!U.ddo)return '';const r=sr.filter(x=>P.every(f=>KEY[f.by](x)==f.n)).sort((a,b)=>b.v-a.v),t=sum(r);if(!(t>0)){U.dd=[];U.ddo=false;return ''}
  /* every click adds a filter; the order you add them in never changes the result */
@@ -302,7 +302,7 @@ function vOver(){const all=rows(),T=sum(all);if(!S.accounts.length)return emptyC
  ${cv?CKSEL():`<label>Group by<select data-chg="by">${O([['cls','Investment type'],['tkr','Holding (ticker)'],['acc','Account']],U.by)}</select></label>`}</div>
  ${cv?vCons(sr,st):st?`<div class="charts three"><div><div class="k ct">Holders</div>${allBtn('holder',who)}${donut(gh,st,'holder')}${legend(gh,st,'holder')}</div><div><div class="k ct">Account types</div>${allBtn('type','All account types')}${donut(gt,st,'type')}${legend(gt,st,'type')}</div><div><div class="k ct">${esc(BYN[U.by])}</div>${allBtn(U.by,U.by=='cls'?'All investment types':U.by=='tkr'?'All holdings':'All accounts')}${donut(g,st,U.by)}${legend(g,st,U.by)}${U.by=='tkr'&&!sr.some(x=>x.h.tkr||x.h.nm)?'<div class="k" style="text-align:center;margin-top:6px">No tickers yet. Add one when you add or edit a holding.</div>':''}</div></div>
  <div style="margin-top:16px"><div class="row" style="gap:6px 10px"><b>Currency</b>${gc.map(([n,v])=>`<button class="chip" data-act="dd" data-by="cur" data-n="${esc(n)}"><span class="dot" style="background:${col(n)}"></span>${esc(n)} ${fmt(v)} · ${pc(v/st)}</button>`).join('')}</div><div class="bar">${gc.map(([n,v])=>`<i title="${esc(n)}: ${pc(v/st)}" style="width:${v/st*100}%;background:${col(n)}"></i>`).join('')}</div></div><div class="k" style="text-align:center;margin-top:10px">${esc(who)} · click a slice or row to start a drill-down.</div>`:'<p class="k">Nothing held in this selection yet.</p>'}</div>`+vDD(sr)}
-function vAcc(){const T=sum(rows()),gh=U.accBy=='h';let h=`<div class="row" style="margin:16px 0 0"><h2 class="sp">Accounts</h2><div class="seg"><button class="${gh?'':'on'}" data-act="accBy" data-v="t">By type</button><button class="${gh?'on':''}" data-act="accBy" data-v="h">By holder</button></div><button class="b" data-act="manage">Manage categories</button>${S.accounts.length?'<button class="b" data-act="addHold">Add holding</button>':''}<button class="b p" data-act="addAcc">Add account</button></div>`;if(!S.accounts.length)return h+emptyCard;
+function vAcc(){const T=sum(rows()),gh=U.accBy=='h';let h=`<div class="row" style="margin:16px 0 0"><h2 class="sp">Accounts</h2><div class="seg"><button class="${gh?'':'on'}" data-act="accBy" data-v="t">By type</button><button class="${gh?'on':''}" data-act="accBy" data-v="h">By holder</button></div><button class="b" data-act="manage">Manage categories</button>${S.accounts.length?'<button class="b" data-act="addHold">Add holding</button>':''}<button class="b" data-act="csvImp">Import CSV</button><button class="b p" data-act="addAcc">Add account</button></div>`;if(!S.accounts.length)return h+emptyCard;
  const nh=S.accounts.filter(a=>a.holder==PH).length;if(nh)h+=`<div class="alert"><b>${nh} account${nh>1?'s are':' is'} on the placeholder holder “${PH}”.</b> Edit ${nh>1?'each account':'the account'} to choose its real holder, or rename “${PH}” under Manage categories → Holders.</div>`;
  h+=`<div class="row" style="margin:10px 0 0;justify-content:flex-end"><button class="b" data-act="expA">Expand all</button><button class="b" data-act="colA">Collapse all</button></div>`;
  (gh?holders():types()).forEach(t=>{h+=`<div class="th"><span>${esc(t)}</span><span>${fmt(sum(filt((gh?'h:':'t:')+t)))}</span></div>`;
@@ -467,7 +467,7 @@ function lModal(){if(!S.accounts.length)return toast('Add an account first');
 function fxModal(){modal('Exchange rate',`<div class="k">Live rate comes from the free Frankfurter (ECB) service, with open.er-api.com as backup. It's a daily reference rate. Only the rate is requested.</div>
  <label>1 USD in CAD<input id="r" type="number" step="any" min="0" value="${R()}"></label><button class="b" data-act="live">Fetch live rate</button>`,'Save',()=>{
  const r=num('#r');if(!(r>0))return bad('Enter a rate above zero');if(r!=R())S.fx={r,d:today(),manual:true};save();render()})}
-function menuModal(){modal('Backup & privacy',`<div class="menu"><button class="b" data-act="exp">Export backup (JSON)</button><button class="b" data-act="imp">Import backup</button><button class="b" data-act="sync">Git Repo setup${S.sync?.token?' (on)':''}</button>${S.sync?.token?'<button class="b" data-act="syncNow">Sync now</button>':''}
+function menuModal(){modal('Backup & privacy',`<div class="menu"><button class="b" data-act="exp">Export backup (JSON)</button><button class="b" data-act="imp">Import backup</button><button class="b" data-act="csvImp">Import holdings from CSV</button><button class="b" data-act="csvTpl">Download CSV template</button><button class="b" data-act="sync">Git Repo setup${S.sync?.token?' (on)':''}</button>${S.sync?.token?'<button class="b" data-act="syncNow">Sync now</button>':''}
  <button class="b" data-act="setPass">Change passphrase</button><button class="b" data-act="recKey">${lock?.hdr?'Make a new recovery key':'Set up recovery key'}</button><button class="b" data-act="lockNow">Lock now</button><button class="b" data-act="wipe" style="color:var(--r)">Erase all data</button></div>
  <div class="k">Saved data is always encrypted (AES-256), and the app locks itself after 10 minutes idle. ${lock?.hdr?'If you forget your passphrase, your recovery key can unlock your data. Keep a backup too.':'<b>No recovery key yet.</b> If you forget your passphrase, your data can\'t be opened. Set one up now.'}</div>`)}
 const pwErr=(p,q)=>p.length<8?'Use at least 8 characters':!(/[a-z]/.test(p)&&/[A-Z]/.test(p)&&/\d/.test(p)&&/[^A-Za-z0-9]/.test(p))?'Include an uppercase letter, a lowercase letter, a number and a symbol':p!=q?'Passphrases don\'t match':'';
@@ -600,6 +600,85 @@ function restoreModal(){
  lock=l;S=norm(d);S.sync={repo,token,path,sha:rm.sha,dirty:false,n:0,at:Date.now()};
  if(rv){resetPass(boot);return false}
  await persist();boot()},'lk')}
+/* ---------- CSV import (holdings) ---------- */
+/* One row per holding. Accounts are matched by name (and holder); accounts that don't exist yet are created. The file is read in the browser only; nothing is uploaded. */
+const CSVH=['Holder','Account','Account type','Ticker','Name','Investment type','Amount','Currency'];
+const CSVX=[['Alex','Wealthsimple TFSA','TFSA','VFV','Vanguard S&P 500 ETF','ETFs','5000','CAD'],['Alex','Wealthsimple TFSA','TFSA','AMZN','Amazon','','2000','USD'],['Alex','Wealthsimple RRSP','RRSP','XEQT','','','3000','CAD'],['Sam','Joint account','Non-registered','','Gold bars','Gold','800','CAD'],['Sam','Joint account','Non-registered','','Cash','Cash','1000','CAD']];
+const csvQ=v=>/[",\r\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;
+function csvDownload(){const t='\uFEFF'+[CSVH,...CSVX].map(r=>r.map(csvQ).join(',')).join('\r\n')+'\r\n',a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download='portfolio-holdings-template.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1e3);toast('Template downloaded')}
+function csvParse(t){t=t.replace(/^\uFEFF/,'');const f1=t.split(/\r?\n/,1)[0],dl=[',',';','\t'].map(d=>[d,f1.split(d).length]).sort((a,b)=>b[1]-a[1])[0][0],out=[];let row=[],f='',q=false;
+ for(let i=0;i<t.length;i++){const c=t[i];
+  if(q){if(c=='"'){if(t[i+1]=='"'){f+='"';i++}else q=false}else f+=c}
+  else if(c=='"'&&f==='')q=true;
+  else if(c==dl){row.push(f);f=''}
+  else if(c=='\n'||c=='\r'){if(c=='\r'&&t[i+1]=='\n')i++;row.push(f);out.push(row);row=[];f=''}
+  else f+=c}
+ if(q)throw new Error('A quoted value in the file is never closed (check for a stray " mark)');
+ if(f!==''||row.length){row.push(f);out.push(row)}return out}
+const nk=s=>String(s??'').toLowerCase().replace(/[^a-z0-9]/g,'');
+const CSVA={holder:['holder','owner','person','accountholder'],acc:['account','accountname'],type:['accounttype','acctype'],tkr:['ticker','symbol','tickersymbol'],nm:['name','holdingname','description','security'],cls:['investmenttype','assettype','assetclass','class','category'],amt:['amount','amountinvested','value','marketvalue','balance'],cur:['currency','cur','ccy']};
+const CSVC={etf:'ETFs',etfs:'ETFs',stock:'Stocks',stocks:'Stocks',equity:'Stocks',equities:'Stocks',bond:'Bonds',bonds:'Bonds',crypto:'Crypto',cryptocurrency:'Crypto',realestate:'Real estate',reit:'Real estate',reits:'Real estate'};
+/* Reads and checks the whole file without touching your data. Any problem means nothing is imported. */
+function csvPlan(text){const R=csvParse(text),errs=[],warns=[],recs=[];
+ if(!R.length||R.every(r=>r.every(c=>!String(c).trim())))throw new Error('The file is empty');
+ const hd=R[0].map(nk),ix={};for(const k in CSVA)ix[k]=hd.findIndex(h=>CSVA[k].includes(h));
+ const miss=[ix.acc<0&&'Account',ix.amt<0&&'Amount'].filter(Boolean);
+ if(miss.length)throw new Error('The first row must be the column names. Missing: '+miss.join(', ')+'. Download the template to see the layout.');
+ const used=Object.values(ix);R[0].forEach((h,j)=>{if(String(h).trim()&&!used.includes(j))warns.push('Ignored column “'+String(h).trim()+'”')});
+ const names=[...new Set(rows().map(x=>x.h.nm).filter(Boolean))],tm={},na=new Map(),nc=new Set(),nt=new Set(),nh=new Set();
+ R.slice(1).forEach((r,i)=>{const rn=i+2;if(r.every(c=>!String(c).trim()))return;
+  const g=k=>ix[k]>=0?String(r[ix[k]]??'').trim():'',e=m=>errs.push('Row '+rn+': '+m);
+  const acn=g('acc'),hd0=g('holder'),ty0=g('type'),tk=g('tkr').toUpperCase().replace(/\s+/g,''),nm0=g('nm').slice(0,60),cl0=g('cls'),am0=g('amt'),cu0=g('cur').toUpperCase();
+  if(!acn)return e('Account is blank');
+  const amt=am0===''?NaN:Number(am0.replace(/[$,\s]/g,''));if(!(amt>=0&&isFinite(amt)))return e('Amount “'+am0+'” is not a valid number');
+  const cur={'':'CAD',CAD:'CAD',CA:'CAD',USD:'USD',US:'USD'}[cu0];if(!cur)return e('Currency “'+cu0+'” must be CAD or USD');
+  if(tk&&!/^[A-Z0-9][A-Z0-9.\-^=]{0,14}$/.test(tk))return e('Ticker “'+tk+'” has characters that are not allowed');
+  let cls=CSVC[nk(cl0)]||cl0;if(!cls&&tk)cls=tm[tk]||tkCls(tk)?.cls||'';
+  if(!cls)return e(tk?'Investment type is blank and ticker '+tk+' is not in the built-in list':'Investment type is blank (it is needed when there is no ticker)');
+  const kn=allCls().find(x=>x.toLowerCase()==cls.toLowerCase());
+  if(kn)cls=kn;else if(cl0&&!nc.has(cls.toLowerCase())){nc.add(cls.toLowerCase());warns.push('New investment type “'+cls+'” (row '+rn+'). Check the spelling.')}
+  if(tk&&!tm[tk])tm[tk]=cls;
+  const hd=hd0?canon(hd0,catH()):'',ty=ty0?canon(ty0,catT()):'',m=S.accounts.filter(a=>a.name.toLowerCase()==acn.toLowerCase()&&(!hd||(a.holder||'').toLowerCase()==hd.toLowerCase()));
+  if(m.length>1)return e('More than one account is called “'+acn+'”. Fill in the Holder column.');
+  const A=m[0]||null;let key,holder=A?A.holder:hd,type=A?A.type:ty;
+  if(A)key='e:'+A.id;
+  else{key='n:'+hd.toLowerCase()+'|'+acn.toLowerCase();const pn=na.get(key);
+   if(pn)type=pn.type;
+   else{if(!hd)return e('“'+acn+'” is not one of your accounts yet. Fill in the Holder (and Account type) to create it.');if(!type)return e('New account “'+acn+'” needs an Account type');
+    na.set(key,{type});
+    if(!catT().some(x=>x.toLowerCase()==type.toLowerCase())&&!nt.has(type.toLowerCase())){nt.add(type.toLowerCase());warns.push('New account type “'+type+'” (row '+rn+'). Check the spelling.')}
+    if(!catH().some(x=>x.toLowerCase()==hd.toLowerCase())&&!nh.has(hd.toLowerCase())){nh.add(hd.toLowerCase());warns.push('New holder “'+hd+'” (row '+rn+'). Check the spelling.')}}}
+  const nm=nm0?canon(nm0,names):'';if(nm&&!names.includes(nm))names.push(nm);
+  recs.push({k:key,a:A,name:A?A.name:acn,holder,type,h:{id:uid(),cls,amt,cur,tkr:tk,nm}})});
+ return{recs,errs,warns}}
+let CSVP=null,CSVM='add';
+function csvView(){const el=$('#csvp');if(!el)return;const P=CSVP;if(!P){el.innerHTML='';return}
+ if(P.fatal){el.innerHTML=`<div class="alert"><b>${esc(P.fatal)}</b></div>`;return}
+ const ex=new Map();P.recs.forEach(r=>{if(r.a)ex.set(r.a.id,r.a)});
+ const nw=[...new Set(P.recs.filter(r=>!r.a).map(r=>r.k))],nwn=nw.map(k=>P.recs.find(r=>r.k==k).name),have=[...ex.values()].filter(a=>a.h.length),old=have.reduce((t,a)=>t+a.h.length,0),w=P.warns.map(x=>`<div class="k">${esc(x)}</div>`).join('');
+ if(P.errs.length){el.innerHTML=`<div class="alert"><b>${P.errs.length} problem${P.errs.length>1?'s':''} found. Nothing has been imported.</b>${P.errs.slice(0,10).map(x=>`<div>${esc(x)}</div>`).join('')}${P.errs.length>10?`<div class="k">…and ${P.errs.length-10} more</div>`:''}<div class="k">Fix these in your CSV, then choose the file again.</div></div>${w}`;return}
+ const n=ex.size+nw.length;
+ el.innerHTML=`<div class="stp">Ready to import</div><div><b>${P.recs.length} holding${P.recs.length==1?'':'s'}</b> in ${n} account${n==1?'':'s'}${nw.length?` · ${nw.length} new: ${esc(nwn.slice(0,5).join(', '))}${nw.length>5?'…':''}`:''}</div>
+ <table style="margin-top:6px">${P.recs.slice(0,8).map(r=>`<tr><td>${esc(dn(r.h))}<div class="k">${esc(r.h.cls)}</div></td><td>${esc(r.name)}<div class="k">${esc(r.holder||'')}</div></td><td class="n">${fmtN(r.h.amt,r.h.cur)}</td></tr>`).join('')}</table>${P.recs.length>8?`<div class="k">…and ${P.recs.length-8} more</div>`:''}
+ ${have.length?`<div class="stp">${have.length==1?'This account already has':'These accounts already have'} ${old} holding${old==1?'':'s'}</div><label class="chk"><input type="radio" name="csvm" value="add"${CSVM=='add'?' checked':''}> Add the CSV rows to what is there</label><label class="chk"><input type="radio" name="csvm" value="rep"${CSVM=='rep'?' checked':''}> Replace ${have.length==1?'its':'their'} holdings with the CSV rows</label>`:''}${w}`;
+ el.querySelectorAll('input[name=csvm]').forEach(r=>r.onchange=()=>{CSVM=r.value})}
+function csvApply(P,mode){const ex=new Map();P.recs.forEach(r=>{if(r.a)ex.set(r.a.id,r.a)});const have=[...ex.values()].filter(a=>a.h.length),old=have.reduce((t,a)=>t+a.h.length,0);
+ if(mode=='rep'&&old&&!confirm(`Replace ${old} existing holding${old==1?'':'s'} in ${have.length} account${have.length==1?'':'s'} with the CSV rows? This cannot be undone.`))return false;
+ const made=new Map(),cleared=new Set();
+ P.recs.forEach(r=>{let A=r.a;
+  if(!A){A=made.get(r.k);if(!A){A={id:uid(),name:r.name,type:r.type,inst:'',holder:r.holder,lim:false,room:0,al:null,h:[]};made.set(r.k,A);S.accounts.push(A)}}
+  else if(mode=='rep'&&!cleared.has(A.id)){A.h=[];cleared.add(A.id)}
+  A.h.push(r.h)});
+ U.dd=[];U.ddo=false;U.ddb=null;U.ca=null;save();render();
+ toast(`Imported ${P.recs.length} holding${P.recs.length==1?'':'s'}${made.size?` and ${made.size} new account${made.size==1?'':'s'}`:''}`)}
+function csvModal(){CSVP=null;CSVM='add';
+ modal('Import holdings from CSV',`<div class="k">One row per holding. The file is read in your browser and never uploaded. Accounts that don't exist yet are created. Leave Investment type blank to have it filled in from the ticker.</div>
+ <button class="b" data-act="csvTpl">Download CSV template</button>
+ <label>CSV file<input type="file" id="csvf" accept=".csv,text/csv,text/plain"></label><div id="csvp"></div>`,'Import',()=>{
+ if(!CSVP||CSVP.fatal)return bad(CSVP?CSVP.fatal:'Choose a CSV file first');if(CSVP.errs.length)return bad('Fix the problems listed above in your CSV, then choose the file again');if(!CSVP.recs.length)return bad('The file has no holdings to import');
+ return csvApply(CSVP,CSVM)},'wide');
+ $('#csvf').onchange=async e=>{const f=e.target.files[0];CSVP=null;$('#er').textContent='';
+  if(f){if(f.size>2e6)CSVP={fatal:'That file is too large for a holdings list (2 MB max).'};else try{CSVP=csvPlan(await f.text())}catch(x){CSVP={fatal:x.message}}}csvView()}}
 /* ---------- events ---------- */
 const ACT={accBy:d=>{U.accBy=d.v;render()},
  vw:d=>{U.view=d.v=='c'?'c':'d';try{localStorage.setItem(CVK,U.view)}catch{}U.czA=1;render()},
@@ -612,7 +691,7 @@ const ACT={accBy:d=>{U.accBy=d.v;render()},
   else return;
   U.dd=[];U.ddo=false;U.ddb=null;U.czA=1;render()},
  cdd:()=>{if(!cdef()){U.ddb=null;U.dd=U.cp.map((i,j)=>({by:U.ck[j],n:decodeURIComponent(i.replace(/^g:/,'').split('/').pop())}));U.dds=U.dd.length?null:U.ck[0];U.ddo=true;render();$('#dd')?.scrollIntoView({block:'start',behavior:'smooth'});return}const a=U.ca&&acc(U.ca);U.ddb=null;if(a){U.dd=[{by:'acc',n:alabel(a)}];U.dds=null}else{U.dd=[];U.dds=U.scope=='all'?'holder':'acc'}U.ddo=true;render();$('#dd')?.scrollIntoView({block:'start',behavior:'smooth'})},dd:d=>{const P=U.dd,same=U.ddo&&P.length==1&&P[0].by==d.by&&P[0].n==d.n;U.dd=same?[]:[{by:d.by,n:d.n}];U.ddo=!same;U.ddb=null;render();if(U.ddo)$('#dd')?.scrollIntoView({block:'start',behavior:'smooth'})},ddall:d=>{const by=d.by||'holder',same=U.ddo&&!U.dd.length&&(U.ddb||U.dds||'holder')==by;U.dd=[];U.ddo=!same;U.ddb=null;U.dds=same?null:by;render();if(U.ddo)$('#dd')?.scrollIntoView({block:'start',behavior:'smooth'})},ddp:d=>{if(!U.dd.some(f=>f.by==d.by))U.dd.push({by:d.by,n:d.n});U.ddb=null;render();$('#dd')?.scrollIntoView({block:'nearest',behavior:'smooth'})},ddr:d=>{U.dd.splice(+d.i,1);U.ddb=null;render()},ddb:d=>{U.ddb=d.v;render()},ddx:()=>{U.dd=[];U.ddo=false;render()},eye:()=>{HID=!HID;render()},theme:()=>{TH=effTheme()=='dark'?'light':'dark';try{localStorage.setItem(TK,TH)}catch{}applyTheme();render()},tab:d=>{U.tab=d.v;render()},cur:d=>{S.cur=d.v;save();render()},fx:fxModal,menu:menuModal,x:()=>$('#dlg').close(),
- addAcc:()=>accModal(),editAcc:d=>accModal(d.id),addH:d=>hModal(d.id),addHold:()=>hModal(),editH:d=>hModal(d.id,d.h),addC:()=>cModal('d'),addW:()=>cModal('w'),addL:lModal,setPass:passModal,
+ addAcc:()=>accModal(),editAcc:d=>accModal(d.id),addH:d=>hModal(d.id),addHold:()=>hModal(),csvImp:csvModal,csvTpl:csvDownload,editH:d=>hModal(d.id,d.h),addC:()=>cModal('d'),addW:()=>cModal('w'),addL:lModal,setPass:passModal,
  delAcc:d=>{if(!confirm('Delete this account and all its holdings, contributions and limits?'))return;S.accounts=S.accounts.filter(a=>a.id!=d.id);S.contribs=S.contribs.filter(c=>c.acc!=d.id);S.limits=S.limits.filter(l=>l.sc!='a:'+d.id);if(U.scope=='a:'+d.id)U.scope='all';save();render()},
  delH:d=>{if(!confirm('Remove this holding?'))return;const a=acc(d.id);a.h=a.h.filter(x=>x.id!=d.h);save();render()},
  delC:d=>{S.contribs=S.contribs.filter(c=>c.id!=d.id);save();render()},delL:d=>{S.limits=S.limits.filter(l=>l.id!=d.id);save();render()},
