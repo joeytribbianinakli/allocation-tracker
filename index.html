@@ -18,7 +18,7 @@
   Do not loosen the policy (no 'unsafe-inline', no extra connect-src hosts): it is a deliberate privacy feature.
   To verify, open the file in a browser and check the console for "violates the following Content Security Policy".
 -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-M2ht0W255GlaWyWJkJSVIS9LLCXJfHI3wlQRp2Zpfqg='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-au0hxa5nrAZjmlpsJPME9/slF2YGqf5uxHmlbNY007g='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
 <link rel="icon" href="data:,">
 <title>Portfolio tracker</title>
 <style>
@@ -543,9 +543,11 @@ const cashEff=(v,cu)=>v=='-'?'':v||(allCls().find(c=>/cash/i.test(c)&&(cu=='CAD'
 const cashKeep=(v,m,tot)=>{const n=parseFloat(v);return n>0?Math.min(tot,m=='d'?n:tot*Math.min(100,n)/100):0};
 /* CASH POTS: one per account and currency = the sum of that account's holdings whose investment type is the CAD (or USD) cash type. tot / keep are in the pot's own currency; cap = what the plan may spend, in CAD; rs = the cash holdings with their share of the pot (by CAD value), used to take the spent cash out of the right holdings; inc = the account is part of the current selection. */
 function cashPots(sc,ex,cf){ex=ex||[];const inP=c=>filt(sc,[c]).length>0&&!ex.some(e=>exHit(e,c)),all=rows(),R0=R(),out=[];
- S.accounts.forEach(a=>['CAD','USD'].forEach(cu=>{const ty=cu=='CAD'?cf.tc:cf.tu;if(!ty)return;
-  const rs=all.filter(x=>x.a===a&&x.v>0&&(x.h.cls||'').toLowerCase()==ty.toLowerCase());if(!rs.length)return;
-  const nat=x=>cu=='USD'?(x.h.cur=='USD'?x.h.amt:x.h.amt/R0):x.v,tot=rs.reduce((s,x)=>s+nat(x),0),tv=sum(rs);if(!(tot>0))return;
+ /* A cash holding belongs to the pot of ITS OWN currency, whichever of the two cash types it is filed under. So picking the same type for CAD and USD cash (for example just "Cash") never counts a holding twice, and USD cash is never quietly converted into CAD cash. */
+ const tys=[cf.tc,cf.tu].filter(Boolean).map(s=>s.toLowerCase());
+ S.accounts.forEach(a=>['CAD','USD'].forEach(cu=>{if(!tys.length)return;
+  const rs=all.filter(x=>x.a===a&&x.v>0&&tys.includes((x.h.cls||'').toLowerCase())&&(x.h.cur=='USD'?'USD':'CAD')==cu);if(!rs.length)return;
+  const nat=x=>x.h.amt,tot=rs.reduce((s,x)=>s+nat(x),0),tv=sum(rs);if(!(tot>0))return;
   const keep=cashKeep(cu=='CAD'?cf.kc:cf.ku,cu=='CAD'?cf.mc:cf.mu,tot),fx=cu=='USD'?R0:1;
   out.push({a,cu,rs:rs.map(x=>({x,w:x.v/tv})),tot,keep,use:tot-keep,fx,cap:(tot-keep)*fx,inc:inP(rs[0]),used:0})}));
  return out}
@@ -592,7 +594,8 @@ function cashPlan(sc,ex,cf){ex=ex||[];const inP=c=>filt(sc,[c]).length>0&&!ex.so
  const n=cand.length,J=lims.length,inS=lims.map(q=>cand.map(c=>cashInL(q.L,c))),mt=lims.map((q,j)=>cand.map((c,i)=>inS[j][i]&&lmatch(q.L,c))),
   m0=lims.map(q=>q.m),t0=lims.map(q=>q.t),/* THE USUAL MIX IS MEASURED PER HOLDING ACROSS ALL INCLUDED ACCOUNTS: KV = what each holding (ticker, type, currency) is worth in total over every included account, wherever it sits, so VFV kept in three accounts is one VFV with one overall share. kk = the holding each buyable row belongs to, kv = its total today, w = its share of the whole included portfolio. */
   V=sum(pr),KV=pr.reduce((M,x)=>{const k=kf(x.h);M.set(k,(M.get(k)||0)+x.v);return M},new Map()),kk=cand.map(c=>kf(c.h)),av0=KV.size?V/KV.size:1,
-  KR=new Map(kk.map((k,i)=>[k,KV.get(k)||(cand.some((c,j)=>kk[j]==k&&c.ty)?av0:0)])),Rt=[...KR.values()].reduce((a,b)=>a+b,0),w=kk.map(k=>Rt>0?KR.get(k)/Rt:0),kv=kk.map(k=>KV.get(k)||0),
+  /* the "usual share" of a holding is its share of EVERY holding in the included accounts (KV), including ones an account's "Invests in" list does not allow it to buy; only new positions that nothing holds yet get a stand-in weight (av0). Weighting only the buyable holdings while scaling by the whole portfolio skewed the split. */
+  KR=(M=>{kk.forEach(k=>{if(!M.has(k))M.set(k,cand.some((c,j)=>kk[j]==k&&c.ty)?av0:0)});return M})(new Map(KV)),Rt=[...KR.values()].reduce((a,b)=>a+b,0),w=kk.map(k=>Rt>0?KR.get(k)/Rt:0),kv=kk.map(k=>KV.get(k)||0),
   /* what spending 1 of a pot takes out of each limit: the cash holdings it comes from may count in the limit's total and/or match it */
   dm=lims.map(q=>pots.map(p=>p.rs.reduce((s,r)=>s+(cashInL(q.L,r.x)&&lmatch(q.L,r.x)?r.w:0),0))),
   dt=lims.map(q=>pots.map(p=>p.rs.reduce((s,r)=>s+(cashInL(q.L,r.x)?r.w:0),0))),
@@ -621,7 +624,8 @@ function cashPlan(sc,ex,cf){ex=ex||[];const inP=c=>filt(sc,[c]).length>0&&!ex.so
  const out=lims.map((q,j)=>q.tx?null:{L:q.o||q.L,t0:q.t,p0:q.p,t1:t[j],m1:m[j],p1:t[j]>0?m[j]/t[j]:0}).filter(Boolean);
  /* limits that are still outside after the plan, with what it would take to fix them */
  const open=out.filter(o=>lbad(o.L,{t:o.t1,p:o.p1})).map(o=>{const L=o.L,low=lside(L,{t:o.t1,p:o.p1})=='under',pp=(isTgt(L)?L.tgt:low?L.min:L.max)/100;
-  return{...o,low,fix:low?(pp<1?(pp*o.t1-o.m1)/(1-pp):null):null,more:!low&&pp>0?o.m1/pp-o.t1:null,sell:!low&&pp<1?(o.m1-pp*o.t1)/(1-pp):null}});
+  /* mv = how much has to move INTO (under) or OUT OF (over) the limit's holdings, with the money staying inside the limit's scope (the total is unchanged). fix / sell / more are the other readings: new money added to the holding (fix), the amount to sell if the proceeds LEAVE the scope (sell), or new money added to everything else (more). */
+  return{...o,low,mv:low?pp*o.t1-o.m1:o.m1-pp*o.t1,fix:low?(pp<1?(pp*o.t1-o.m1)/(1-pp):null):null,more:!low&&pp>0?o.m1/pp-o.t1:null,sell:!low&&pp<1?(o.m1-pp*o.t1)/(1-pp):null}});
  return{Ct,cand,out,open,pots}}
 function cashCard(){
  const c=U.cash,r=c.run,fm=(v,cu)=>HID?MASK:nf(cu,0).format(v),cls=allCls();
@@ -662,14 +666,18 @@ function cashCard(){
  const lt=P.out.length?`<div class="stp">Your limits after this cash</div><table>${P.out.map(o=>{const L=o.L,sd=lside(L,{t:o.t1,p:o.p1}),b=!!sd,tg=isTgt(L),edge=!b&&Math.abs(o.p1*100-thr(L))<0.15;
   return `<tr><td><b>${esc(lname(L))}</b> <span class="k">${lsym(L)} of ${esc(scopeName(L.sc))}</span></td><td class="n">${pc(o.p0)} → <b>${pc(o.p1)}</b></td><td class="n"><span class="tag ${b?'bad':'ok'}">${b?(sd=='under'?(tg?'Under target':'Under min'):(tg?'Over target':'Over max')):edge?(tg?'On target':'At limit'):'OK'}</span></td></tr>`}).join('')}</table>`:`<div class="k" style="margin-top:12px">You have no limits yet, so this simply keeps your current mix. Add limits above and the plan will follow them.</div>`;
  /* what could not be met */
- const op=P.open.length?`<div class="alert" style="margin-top:12px"><b>${P.open.length==1?'1 limit':P.open.length+' limits'} can't be fully met with this cash</b>${P.open.map(o=>`<div style="margin-top:8px"><b>${esc(lname(o.L))}</b> ${lsym(o.L)} of ${esc(scopeName(o.L.sc))}<div class="k">${lbad(o.L,{t:o.t0,p:o.p0})?'Was '+pc(o.p0)+' before, ':''}${pc(o.p1)} after.${o.low?(o.fix>0?` It would take about ${fmt(o.fix)} more in ${esc(lname(o.L))} to reach ${isTgt(o.L)?'the target':'the minimum'}.`:''):`${o.sell>0?` Selling about ${fmt(o.sell)} of it would bring it ${isTgt(o.L)?'back to the target':'under'}${o.more>0?`, or adding about ${fmt(o.more)} to everything else in that scope`:''}.`:o.more>0?` Adding about ${fmt(o.more)} to everything else in that scope would bring it ${isTgt(o.L)?'back to the target':'under'}.`:''}`}</div></div>`).join('')}</div>`:'';
+ /* what the plan actually spends (the capacity is P.Ct; a plan may leave some of it unused when limits block every buy), and a pointer for an unmet minimum: accounts whose cash could fill it if they were allowed to invest in that type */
+ const usedN=cu=>ps.filter(p=>p.cu==cu).reduce((s,p)=>s+p.used/p.fx,0),usedT=ps.reduce((s,p)=>s+p.used,0),
+  srcU=[usedN('CAD')>=0.5?fmtN(usedN('CAD'),'CAD'):'',usedN('USD')>=0.005?fmtN(usedN('USD'),'USD')+' at '+R().toFixed(4):''].filter(Boolean).join(' + '),
+  hint=o=>{if(!o.low||o.L.k!='cls'||!(o.fix>0))return '';const as=[...new Set(ps.filter(p=>!P.cand.some(c=>c.a===p.a&&lmatch(o.L,c))).map(p=>p.a))];return as.length?` Cash in ${esc(as.map(alabel).join(', '))} could help if ${as.length>1?'those accounts':'that account'} invest${as.length>1?'':'s'} in ${esc(o.L.val)} (Accounts tab, Edit account, Invests in).`:''};
+ const op=P.open.length?`<div class="alert" style="margin-top:12px"><b>${P.open.length==1?'1 limit':P.open.length+' limits'} can't be fully met with this cash</b>${P.open.map(o=>`<div style="margin-top:8px"><b>${esc(lname(o.L))}</b> ${lsym(o.L)} of ${esc(scopeName(o.L.sc))}<div class="k">${lbad(o.L,{t:o.t0,p:o.p0})?'Was '+pc(o.p0)+' before, ':''}${pc(o.p1)} after.${o.low?(o.fix>0?` Moving about ${fmt(o.mv)} into ${esc(lname(o.L))} from other holdings in that scope, or adding about ${fmt(o.fix)} of new money to it, would reach ${isTgt(o.L)?'the target':'the minimum'}.`:''):`${o.mv>0?` Moving about ${fmt(o.mv)} out of it into other holdings in that scope would bring it ${isTgt(o.L)?'back to the target':'under'}${o.sell>0?` (selling about ${fmt(o.sell)} and taking the money out of that scope would too)`:''}${o.more>0?`, or adding about ${fmt(o.more)} of new money to everything else in that scope`:''}.`:o.more>0?` Adding about ${fmt(o.more)} of new money to everything else in that scope would bring it ${isTgt(o.L)?'back to the target':'under'}.`:''}`}${hint(o)}</div></div>`).join('')}</div>`:'';
  /* mix by investment type: the total stays the same, so cash types shrink by what was spent and the types bought grow */
  const b0=new Map(),a0=new Map(),tv=sum(rows());rows().forEach(x=>{b0.set(x.h.cls,(b0.get(x.h.cls)||0)+x.v);a0.set(x.h.cls,(a0.get(x.h.cls)||0)+x.v)});
  P.cand.forEach(x=>{if(x.x>0)a0.set(x.h.cls||'Other',(a0.get(x.h.cls||'Other')||0)+x.x)});
  ps.forEach(p=>{if(p.used>0)p.rs.forEach(q=>a0.set(q.x.h.cls,(a0.get(q.x.h.cls)||0)-p.used*q.w))});
  const mix=[...a0.keys()].sort((p,q)=>a0.get(q)-a0.get(p)),
   mixT=`<div class="stp">Mix by investment type</div><table>${mix.map(k=>{const b=b0.get(k)||0,a=a0.get(k)||0,df=a-b;return `<tr><td><span class="dot" style="background:${col(k)}"></span>${esc(k)}</td><td class="n">${tv>0?pc(b/tv):'—'} → <b>${tv>0?pc(a/tv):'—'}</b></td><td class="n"><span class="k">${Math.abs(df)<0.5?'—':(df>0?'+':'−')+fmt(Math.abs(df))}</span></td></tr>`}).join('')}</table><div class="k" style="margin-top:6px">This counts every account in your portfolio. The limits above only count the accounts each limit applies to (see "excluding" there), so the percentages can differ.</div>`;
- return `<div class="card" id="cashc">${head}<div id="cashr" style="margin-top:14px"><div>Available: <b>${fmt(sn('CAD','tot')+sn('USD','tot')*R())}</b> <span class="k">(${avl})</span></div><div>Using: <b>${fmt(P.Ct)}</b> <span class="k">(${src})</span> <span class="k">from the cash in ${esc(scopeName(r.sc))}${esc(exTxt({ex:r.ex}))}</span></div>${kept}${HID?'<div class="k" style="margin-top:4px">Amounts are hidden. Use the eye button at the top to show them.</div>':''}${op}${buyT}<div class="k" style="margin-top:8px">${cx}</div>${lf}${balT}${lt}${mixT}<div class="k" style="margin-top:12px">This is arithmetic on your own holdings and limits, not financial advice.</div></div></div>`}
+ return `<div class="card" id="cashc">${head}<div id="cashr" style="margin-top:14px"><div>Available: <b>${fmt(sn('CAD','tot')+sn('USD','tot')*R())}</b> <span class="k">(${avl})</span></div><div>Free to allocate: <b>${fmt(P.Ct)}</b> <span class="k">(${src})</span> <span class="k">from the cash in ${esc(scopeName(r.sc))}${esc(exTxt({ex:r.ex}))}</span></div><div>Allocated by this plan: <b>${fmt(usedT)}</b> <span class="k">(${srcU||'nothing'})</span>${P.Ct-usedT>=1?` <span class="k">· ${fmt(P.Ct-usedT)} left unused</span>`:''}</div>${kept}${HID?'<div class="k" style="margin-top:4px">Amounts are hidden. Use the eye button at the top to show them.</div>':''}${op}${buyT}<div class="k" style="margin-top:8px">${cx}</div>${lf}${balT}${lt}${mixT}<div class="k" style="margin-top:12px">This is arithmetic on your own holdings and limits, not financial advice.</div></div></div>`}
 /* popup: the cash found in each account, what you keep and what is free to use (follows the types, the keep amounts and the account choice as they are now) */
 function cashAvail(){const c=U.cash,cf=cashCf(),fm=(v,cu)=>HID?MASK:nf(cu,2).format(v);
  if(!cf.tc&&!cf.tu){toast('Pick the investment type for your CAD cash, USD cash or both first');return}
