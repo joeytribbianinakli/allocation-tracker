@@ -18,7 +18,7 @@
   Do not loosen the policy (no 'unsafe-inline', no extra connect-src hosts): it is a deliberate privacy feature.
   To verify, open the file in a browser and check the console for "violates the following Content Security Policy".
 -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-ZOIeINw53jgwmNG6RohujZvFkDZLz4w3/KlB614TfYM='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-b0p9Hs1qHU2ftkyahhOXnnkWmqV/yeWe+6OpMKCniHc='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
 <link rel="icon" href="data:,">
 <title>Portfolio tracker</title>
 <style>
@@ -95,6 +95,8 @@ dialog.wide{width:min(600px,94vw)}#cb{max-height:58vh;overflow-y:auto;padding-ri
 .inc{margin-top:12px;background:var(--c)}.inc .chk{display:flex;align-items:center;gap:8px;color:var(--t);font-size:13px}.inc .chk input{width:auto}.inc .exl{margin-top:2px}
 .cbx{position:relative;display:block}.cbl{position:absolute;left:0;right:0;top:100%;margin-top:4px;max-height:220px;overflow-y:auto;background:var(--c);border:1px solid var(--b);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:30;padding:4px}.cbl[hidden]{display:none}.cbl button{display:flex;width:100%;justify-content:space-between;align-items:center;gap:12px;border:0;background:none;color:var(--t);padding:8px 10px;border-radius:6px;text-align:left;font:inherit;font-size:13px}.cbl button.on,.cbl button:hover{background:color-mix(in srgb,var(--a) 13%,transparent)}.cbl .k{font-size:12px;white-space:nowrap}
 .b:disabled,.ib:disabled{opacity:.35;cursor:default}.ib:disabled:hover{background:none;color:var(--m)}
+/* saved account lists: one control, used in the Overview, the limit dialog and Allocate cash */
+.slb{display:grid;gap:6px;margin:8px 0 10px;padding:8px 10px;border:1px solid var(--b);border-radius:8px;background:var(--bg)}.slr{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.slr>.k{white-space:nowrap}.slr select,.slr input{flex:1 1 150px;min-width:0;width:auto}.slr .b{white-space:nowrap}.sls{display:flex;align-items:center;gap:4px;flex-wrap:wrap}.sls>.k{flex:1 1 140px}.sls .ib.dl:hover{color:var(--r)}.slerr{color:var(--r);font-size:12px}.slerr:empty{display:none}
 </style></head><body>
 <header>
  <div class="wrap top"><h1>Portfolio</h1>
@@ -407,7 +409,7 @@ function vInc(){const as=S.accounts,n=as.filter(a=>!incOn(a)).length,hs=holders(
  sm=!n?'everything':n==as.length?'nothing':(as.length-n)+' of '+as.length+' accounts';
  const body=types().map(t=>{const at=as.filter(a=>a.type==t),k=at.filter(incOn).length,o=U.incX.has(t),part=k>0&&k<at.length;
   return `<div class="exr"><button type="button" class="tg" data-act="incX" data-t="${esc(t)}" aria-expanded="${o}" aria-label="${o?'Collapse':'Expand'} ${esc(t)} accounts" title="${o?'Hide':'Show'} the ${esc(t)} accounts">${o?'▾':'▸'}</button><label class="chk"><input type="checkbox" data-inc="t:${esc(t)}"${k==at.length?' checked':''}${part?' data-ind="1"':''}> ${esc(t)} <span class="k">· ${at.length} account${at.length==1?'':'s'}${part?', '+(at.length-k)+' left out':''}</span></label></div>${o?`<div class="exk">${at.map(a=>`<label class="chk"><input type="checkbox" data-inc="a:${esc(a.id)}"${incOn(a)?' checked':''}> ${esc(a.name)}${hs?` <span class="k">${esc(a.holder||'No holder')}</span>`:''}</label>`).join('')}</div>`:''}`}).join('');
- return `<details class="exd inc" id="incd"${U.incO?' open':''}><summary>Include in dashboard <span class="k">(${sm})</span></summary><div class="k" style="margin:8px 0 6px">Untick an account type to leave all of its accounts out of the totals, charts and drill-downs below, or expand it to leave out single accounts. Limits, alerts and the other tabs always use every account.</div>${n?'<div class="row" style="margin:0 0 8px"><button type="button" class="ib" data-act="incAll">Include everything</button></div>':''}<div class="exl" id="incl">${body}</div></details>`}
+ return `<details class="exd inc" id="incd"${U.incO?' open':''}><summary>Include in dashboard <span class="k">(${sm})</span>${slTag('ov')}</summary>${slBar('ov')}<div class="k" style="margin:8px 0 6px">Untick an account type to leave all of its accounts out of the totals, charts and drill-downs below, or expand it to leave out single accounts. Limits, alerts and the other tabs always use every account.</div>${n?'<div class="row" style="margin:0 0 8px"><button type="button" class="ib" data-act="incAll">Include everything</button></div>':''}<div class="exl" id="incl">${body}</div></details>`}
 /* one include/leave-out toggle shared by the Overview list and the limit dialog: arr = the left-out list ('t:<type>' / 'a:<account id>'), on = include it. Returns a new list. Ticking one account under a left-out type keeps that type's other accounts left out. */
 const exToggle=(arr,v,on)=>{let r=arr.slice();const t=v[0]=='t',k=v.slice(2);
  if(t){const ids=new Set(S.accounts.filter(a=>a.type==k).map(a=>'a:'+a.id));r=r.filter(e=>e!=v&&!ids.has(e));if(!on)r.push(v)}
@@ -415,7 +417,8 @@ const exToggle=(arr,v,on)=>{let r=arr.slice();const t=v[0]=='t',k=v.slice(2);
   if(on){if(r.includes(tv)){r=r.filter(e=>e!=tv);S.accounts.filter(b=>b.type==a.type&&b!==a).forEach(b=>r.push('a:'+b.id))}r=r.filter(e=>e!=v)}
   else if(!r.includes(tv)&&!r.includes(v))r.push(v)}
  return[...new Set(r)]};
-function incSet(v,on){S.exc=exToggle(S.exc,v,on);U.dd=[];U.ddo=false;U.ddb=null;const ca=U.ca&&acc(U.ca);if(ca&&!incOn(ca))U.ca=null}
+function incPut(x){S.exc=x;U.dd=[];U.ddo=false;U.ddb=null;const ca=U.ca&&acc(U.ca);if(ca&&!incOn(ca))U.ca=null}
+const incSet=(v,on)=>incPut(exToggle(S.exc,v,on));
 const keepInc=fn=>{const l=$('#incl'),sc=l?l.scrollTop:0;fn();render();const n=$('#incl');if(n)n.scrollTop=sc};
 function vOver(){const all=visRows(),T=sum(all);if(!S.accounts.length)return emptyCard;
  const al=breaches(),cadN=sum(all.filter(x=>x.h.cur=='CAD')),usdV=sum(all.filter(x=>x.h.cur=='USD'));
@@ -475,6 +478,49 @@ function vCon(){const ys=[...new Set([YR,U.year,...S.contribs.map(c=>+c.date.sli
   return `<div class="card"><div class="row"><button class="tg" data-act="togA" data-id="${esc(id)}" aria-expanded="${op}" aria-label="${op?'Collapse':'Expand'} ${esc(a.name)}">${op?'▾':'▸'}</button><div class="sp" data-act="togA" data-id="${esc(id)}" style="cursor:pointer"><b>${esc(a.name)}</b> <span class="k">· ${esc(a.type)}</span><div class="k">${rm>0?`${fmt(p)} of ${fmt(rm)} room · ${o?`<b style="color:var(--r)">${fmt(p-rm)} over</b>`:fmt(rm-p)+' left'}`:`${fmt(p)} contributed in total · no limit`}${w>0?' · '+fmt(w)+' withdrawn in total':''}</div><div class="k">${fmt(py)} in ${y}${pwd>0?' · '+fmt(pwd)+' withdrawn in '+y:''}</div></div>
   ${rm>0?`<span class="tag ${o||lo?'bad':'ok'}">${o?'Over limit':lo?'Low room':pc(p/rm)}</span>`:''}</div>
   ${op?`${rm>0?`<div class="bar"><i style="width:${Math.min(100,p/rm*100)}%;background:${o?'var(--r)':'var(--g)'}"></i></div>`:''}${yr.length?`<table>${yr.map(c=>`<tr><td>${esc(fdt(c.date))}</td><td>${c.k=='w'?'Withdrawal':'Deposit'}</td><td class="n">${c.k=='w'?'−':''}${fmtN(c.amt,c.cur)}</td><td class="n"><button class="ib" data-act="delC" data-id="${esc(c.id)}">Delete</button></td></tr>`).join('')}</table>`:`<div class="k" style="margin-top:8px">No transactions in ${y}.</div>`}`:''}</div>`}).join('')}).join(''):`<div class="card empty"><p>Add an account (tick “has a contribution limit” to track its room), then log a contribution or withdrawal to begin.</p></div>`)}
+/* ---------- SAVED ACCOUNT LISTS ----------
+   ONE saved-list control for every place where accounts can be included or left out: the Overview "Include in dashboard" list, the New/Edit limit dialog, and Allocate cash. A saved list lives in S.ct as {id,name,sc,ex}: a scope (the same values as "Applies to") plus what is left out ('t:<type>' / 'a:<account id>').
+   Loading a list COPIES it into the place you are in. It is not a live link, so you can still tick or untick afterwards, and later changing or deleting the list does not change a limit or view that already used it. Whether two selections are "the same" is decided by the accounts they actually include, so "TFSA only" equals "everything except the other types".
+   Each place registers an adapter in SLX[key]: get() = its current {sc,ex}; set(sc,ex) = apply a list and repaint; re() = just repaint (keeping the list's scroll position). Keys: 'ov' Overview, 'lim' limit dialog, 'cash' Allocate cash. Naming and renaming happen inline (not in a pop-up) because the limit dialog is itself a dialog. */
+const SLX={};U.sl={};
+const slS=k=>U.sl[k]||(U.sl[k]={tid:'',mode:'',msg:''});
+const slAcc=(sc,ex)=>S.accounts.filter(a=>filt(sc,[{a}]).length>0&&!ex.some(e=>exHit(e,{a})));
+const slSig=(sc,ex)=>slAcc(sc,ex).map(a=>a.id).sort().join('|');
+const slEx=ids=>{const r=[];types().forEach(t=>{const at=S.accounts.filter(a=>a.type==t);if(at.length&&at.every(a=>ids.has(a.id)))r.push('t:'+t);else at.forEach(a=>{if(ids.has(a.id))r.push('a:'+a.id)})});return r};
+const slCur=k=>{const ad=SLX[k],st=slS(k),t=S.ct.find(x=>x.id==st.tid)||null;if(!t)st.tid='';const c=ad.get();return{ad,st,t,c,dirty:!!t&&slSig(t.sc,t.ex)!=slSig(c.sc,c.ex)}};
+const slTag=k=>{const{t,dirty}=slCur(k);return t?` <span class="k">· “${esc(t.name)}”${dirty?' (changed)':''}</span>`:''};
+function slBar(k){const{st,t,dirty}=slCur(k),nm=st.mode=='ren'&&t?t.name:'';
+ return `<div class="slb" data-k="${k}" role="group" aria-label="Saved account lists"><div class="slr"><span class="k">Saved list</span><select data-sl="pick" aria-label="Saved list"><option value="">${S.ct.length?'None selected':'None saved yet'}</option>${S.ct.map(x=>`<option value="${esc(x.id)}"${x.id==st.tid?' selected':''}>${esc(x.name)}</option>`).join('')}</select><button type="button" class="b" data-sl="new">Save as new list</button></div>`
+ +(t?`<div class="sls"><span class="k">${dirty?'You changed this list. Update it to keep the changes.':'Loaded · '+slAcc(t.sc,t.ex).length+' of '+S.accounts.length+' accounts'}</span><button type="button" class="b" data-sl="upd" aria-label="Update “${esc(t.name)}” with the current selection"${dirty?'':' disabled'}>Update</button>${dirty?'<button type="button" class="ib" data-sl="rev">Revert</button>':''}<button type="button" class="ib" data-sl="ren">Rename</button><button type="button" class="ib dl" data-sl="del">Delete</button></div>`:'')
+ +(st.mode?`<div class="slr"><input data-sl="name" maxlength="60" value="${esc(nm)}" placeholder="Name this list, e.g. Registered accounts only" autocomplete="off" aria-label="List name"><button type="button" class="b p" data-sl="ok">${st.mode=='ren'?'Rename':'Save list'}</button><button type="button" class="b" data-sl="no">Cancel</button></div>`:'')
+ +`<div class="slerr" role="alert">${esc(st.msg)}</div></div>`}
+const slFoc=(k,q)=>document.querySelector('.slb[data-k="'+k+'"] '+q)?.focus();
+function slApply(k,t){const{ad,st}=slCur(k);st.mode='';st.msg='';
+ if(!slAcc(t.sc,t.ex).length){st.tid='';st.msg='“'+t.name+'” has no accounts that match your portfolio any more.';ad.re();return}
+ st.tid=t.id;ad.set(t.sc,t.ex)}
+function slDo(k,a){if(!SLX[k])return;const{ad,st,t,c}=slCur(k),bar=document.querySelector('.slb[data-k="'+k+'"]');st.msg='';
+ if(a=='new'){st.mode='new';ad.re();slFoc(k,'[data-sl=name]')}
+ else if(a=='ren'){if(!t)return;st.mode='ren';ad.re();slFoc(k,'[data-sl=name]')}
+ else if(a=='no'){st.mode='';ad.re();slFoc(k,'[data-sl=pick]')}
+ else if(a=='rev'){if(t)slApply(k,t);slFoc(k,'[data-sl=pick]')}
+ else if(a=='ok'){const inp=bar&&bar.querySelector('[data-sl=name]'),er=bar&&bar.querySelector('.slerr');if(!inp)return;const n=inp.value.trim(),f=m=>{er.textContent=m;inp.focus()};
+  if(!n)return f('Enter a name');
+  if(S.ct.some(x=>x.id!=(st.mode=='ren'&&t?t.id:'')&&x.name.toLowerCase()==n.toLowerCase()))return f('A saved list with that name already exists');
+  if(st.mode=='ren'){if(!t)return;t.name=n}
+  else{if(!slAcc(c.sc,c.ex).length)return f('Include at least one account before saving');const x={id:uid(),name:n,sc:c.sc,ex:[...c.ex]};S.ct.push(x);st.tid=x.id}
+  st.mode='';save();ad.re();slFoc(k,'[data-sl=pick]')}
+ else if(a=='upd'){if(!t)return;const A0=slAcc(t.sc,t.ex),A1=slAcc(c.sc,c.ex);
+  if(!A1.length){st.msg='Include at least one account before updating.';ad.re();return}
+  const d=(x,y)=>{const Y=new Set(y.map(z=>z.id));return x.filter(z=>!Y.has(z.id)).map(alabel)},ls=(h,l)=>l.length?'\n'+h+': '+(l.length>6?l.slice(0,6).join(', ')+' and '+(l.length-6)+' more':l.join(', ')):'';
+  if(!confirm('Update the saved list “'+t.name+'”?\n'+ls('Adds',d(A1,A0))+ls('Removes',d(A0,A1))+'\n\nLimits and views that already used this list keep their own choices.'))return;
+  t.sc=c.sc;t.ex=[...c.ex];save();ad.re();slFoc(k,'[data-sl=pick]')}
+ else if(a=='del'){if(!t)return;if(!confirm('Delete the saved list “'+t.name+'”?\n\nLimits and views that already used it keep their own choices.'))return;
+  S.ct=S.ct.filter(x=>x.id!=t.id);for(const y in U.sl)if(U.sl[y].tid==t.id)U.sl[y].tid='';save();ad.re();slFoc(k,'[data-sl=pick]')}}
+SLX.ov={get:()=>({sc:'all',ex:S.exc}),set:(sc,ex)=>{const keep=new Set(slAcc(sc,ex).map(a=>a.id));incPut(slEx(new Set(S.accounts.filter(a=>!keep.has(a.id)).map(a=>a.id))));save();keepInc(()=>{});slFoc('ov','[data-sl=pick]')},re:()=>keepInc(()=>{})};
+SLX.cash={get:()=>({sc:U.cash.sc,ex:U.cash.ex}),set:(sc,ex)=>{U.cash.sc=sc;U.cash.ex=[...ex];cashPaint();slFoc('cash','[data-sl=pick]')},re:()=>cashPaint()};
+document.addEventListener('click',e=>{const b=e.target.closest('button[data-sl]'),bar=b&&b.closest('.slb');if(bar)slDo(bar.dataset.k,b.dataset.sl)});
+document.addEventListener('change',e=>{const t=e.target,bar=t.dataset&&t.dataset.sl=='pick'&&t.closest('.slb');if(!bar)return;const k=bar.dataset.k,x=S.ct.find(y=>y.id==t.value);if(x)slApply(k,x);else{const st=slS(k);st.tid='';st.mode='';st.msg='';SLX[k].re()}slFoc(k,'[data-sl=pick]')});
+document.addEventListener('keydown',e=>{const t=e.target,bar=t.dataset&&t.dataset.sl=='name'&&t.closest('.slb');if(!bar)return;if(e.key=='Enter'){e.preventDefault();slDo(bar.dataset.k,'ok')}else if(e.key=='Escape'){e.preventDefault();e.stopPropagation();slDo(bar.dataset.k,'no')}});
 /* ---------- CASH ALLOCATOR (Limits & alerts tab) ----------
    Type in the cash you have (CAD and/or USD) and see where to put it. NOTHING here is saved: the numbers live in U.cash until the page is closed or reloaded.
    How the plan is made, in this order:
@@ -485,7 +531,7 @@ function vCon(){const ys=[...new Set([YR,U.year,...S.contribs.map(c=>+c.date.sli
    The cash goes out in equal steps. Each step goes to the holding furthest below its usual share that passes rule 1 and does not pull a minimum under. If nothing passes, rule 1 still wins over minimums; if even that is impossible, the least-bad choice is used and the result says what could not be met.
    Candidates are the rows of the chosen accounts that hold something (account + holding). Limits are measured exactly like the Limits list: limRows (scope minus exclusions), CAD-converted, same ticker/currency/type matching. Contribution room is NOT part of the plan (it is only shown as a reminder). */
 /* U.cash.ex = accounts left out of the cash plan, written like limit exclusions ('t:TFSA' a whole account type, 'a:<id>' one account). Saved inclusion lists live in S.ct as {id,name,sc,ex} and are the only part of this feature that is stored. */
-const cashNew=()=>({cad:'',usd:'',sc:'all',ex:[],tid:'',po:false,xo:new Set(),run:null});U.cash=cashNew();U.cashO=false;
+const cashNew=()=>({cad:'',usd:'',sc:'all',ex:[],po:true,xo:new Set(),run:null});U.cash=cashNew();U.cashO=false;
 const cashAcc=sc=>S.accounts.filter(a=>filt(sc,[{a}]).length>0);
 const cashInL=(L,c)=>filt(L.sc,[c]).length>0&&!exOf(L).some(e=>exHit(e,c));
 function cashPlan(C,sc,ex){ex=ex||[];const inP=c=>filt(sc,[c]).length>0&&!ex.some(e=>exHit(e,c));
@@ -518,12 +564,9 @@ function cashPlan(C,sc,ex){ex=ex||[];const inP=c=>filt(sc,[c]).length>0&&!ex.som
  return{C,cand,out,open}}
 function cashCard(){
  const c=U.cash,r=c.run,fm=(v,cu)=>HID?MASK:nf(cu,0).format(v);
- const tp=S.ct.find(t=>t.id==c.tid),dirty=!!tp&&(tp.sc!=c.sc||[...tp.ex].sort().join('|')!=[...c.ex].sort().join('|')),
-  st=tp?(dirty?'You changed this list. Choose Update to keep the changes, or Save as new list.':'Saved list loaded.'):S.ct.length?'Pick a saved list, or choose accounts and save them as a list.':'Choose which accounts can receive cash, then save that choice as a list to reuse it.';
  const inp=`<div class="sel"><label>Cash in CAD<input data-cash="cad" type="number" inputmode="decimal" min="0" step="any" placeholder="0" value="${esc(c.cad)}"></label><label>Cash in USD<input data-cash="usd" type="number" inputmode="decimal" min="0" step="any" placeholder="0" value="${esc(c.usd)}"></label></div>
- <div class="sel"><label>Put it in<select data-cash="sc">${scopeSel(c.sc)}</select></label><label>Saved list<select data-cash="tpl"><option value="">None</option>${S.ct.map(t=>`<option value="${esc(t.id)}"${t.id==c.tid?' selected':''}>${esc(t.name)}</option>`).join('')}</select></label></div>${cashPicker()}
- <div class="row" style="margin:10px 0 0;gap:6px"><button class="b" data-act="ctNew">Save as new list</button>${tp?`<button class="b" data-act="ctUpd"${dirty?'':' disabled'}>Update “${esc(tp.name)}”</button><button class="b" data-act="ctRen">Rename</button><button class="b" data-act="ctDel">Delete</button>`:''}</div><div class="k" style="margin:6px 0 12px">${st}</div>`;
- const head=`<div class="row" style="margin:0 0 6px"><h2 class="sp">Allocate new cash</h2><button class="ib" data-act="cashT">Close</button></div><div class="k" style="margin-bottom:10px">Enter the cash you have in CAD, USD or both. The plan follows your limits first, then keeps your current mix. Your cash amounts and results are not saved (they are gone when you close or reload the page). Saved lists of accounts are kept with your portfolio.</div>${inp}<div class="row"><button class="b p" data-act="cashGo">Show allocation</button><button class="b" data-act="cashClr">Clear</button></div>`;
+ <div class="sel"><label>Put it in<select data-cash="sc">${scopeSel(c.sc)}</select></label></div>${cashPicker()}`;
+ const head=`<div class="row" style="margin:0 0 6px"><h2 class="sp">Allocate new cash</h2><button class="ib" data-act="cashT">Close</button></div><div class="k" style="margin-bottom:10px">Enter the cash you have in CAD, USD or both. The plan follows your limits first, then keeps your current mix. Your cash amounts and results are not saved (they are gone when you close or reload the page). Saved account lists are kept with your portfolio and also work in the Overview and in limits.</div>${inp}<div class="row"><button class="b p" data-act="cashGo">Show allocation</button><button class="b" data-act="cashClr">Clear</button></div>`;
  if(!r)return `<div class="card" id="cashc">${head}</div>`;
  const P=cashPlan(r.cad+r.usd*R(),r.sc,r.ex);
  if(P.err)return `<div class="card" id="cashc">${head}<div class="alert" style="margin-top:12px">${esc(P.err)}</div></div>`;
@@ -556,10 +599,9 @@ function cashPicker(){const c=U.cash,sc=c.sc,as=cashAcc(sc),ex=c.ex,one=sc.start
  hint=one?'This is a single account, so there is nothing to choose.':!as.length?'There are no accounts in this selection.':tn?'Untick any account that should not receive this cash.':'Untick an account type to leave out all of its accounts, or expand it to leave out only some of them.',
  body=one||!as.length?'':tn?as.map(ac).join(''):types().filter(t=>as.some(a=>a.type==t)).map(t=>{const at=as.filter(a=>a.type==t),n=at.filter(outA).length,o=c.xo.has(t),part=n>0&&n<at.length;
   return `<div class="exr"><button type="button" class="tg" data-act="cashXt" data-t="${esc(t)}" aria-expanded="${o}" aria-label="${o?'Collapse':'Expand'} ${esc(t)} accounts" title="${o?'Hide':'Show'} the ${esc(t)} accounts">${o?'▾':'▸'}</button><label class="chk"><input type="checkbox" data-cx="t:${esc(t)}"${part?' data-ind="1"':''}${n?'':' checked'}> ${esc(t)} <span class="k">· ${at.length} account${at.length==1?'':'s'}${part?', '+n+' left out':n?', all left out':''}</span></label></div>${o?`<div class="exk">${at.map(ac).join('')}</div>`:''}`}).join('');
- return `<details class="exd" id="cashpd"${c.po?' open':''}><summary>Accounts included <span class="k">${sm}</span></summary><div class="k" style="margin:8px 0 6px">${hint}</div><div class="exl">${body}</div></details>`}
-const cashRe=(k,v)=>{const l=document.querySelector('#cashpd .exl'),y=l?l.scrollTop:0;render();const n=document.querySelector('#cashpd .exl');if(n)n.scrollTop=y;[...document.querySelectorAll('['+k+']')].find(x=>x.getAttribute(k)==v)?.focus()};
-const cashApply=id=>{const t=S.ct.find(x=>x.id==id);if(!t){U.cash.tid='';render();return}U.cash.tid=t.id;U.cash.sc=t.sc;U.cash.ex=[...t.ex];render()};
-const ctName=(title,val,exId,fn)=>modal(title,`<label>Name<input id="ctn" maxlength="60" value="${esc(val)}" placeholder="e.g. Registered accounts only" autocomplete="off"></label><div class="k">A saved list remembers the “Put it in” choice and the accounts you left out.</div>`,'Save',()=>{const n=$('#ctn').value.trim();if(!n)return bad('Enter a name');if(S.ct.some(t=>t.id!=exId&&t.name.toLowerCase()==n.toLowerCase()))return bad('A saved list with that name already exists');fn(n)});
+ return `<details class="exd inc" id="cashpd"${c.po?' open':''}><summary>Accounts included <span class="k">${sm}</span>${slTag('cash')}</summary>${slBar('cash')}<div class="k" style="margin:8px 0 6px">${hint}</div><div class="exl">${body}</div></details>`}
+const cashPaint=()=>{const l=document.querySelector('#cashpd .exl'),y=l?l.scrollTop:0;render();const n=document.querySelector('#cashpd .exl');if(n)n.scrollTop=y};
+const cashRe=(k,v)=>{cashPaint();[...document.querySelectorAll('['+k+']')].find(x=>x.getAttribute(k)==v)?.focus()};
 /* reorder a limit: it swaps places with the nearest limit of the same kind (maximum or minimum) above or below it, so the order inside each list, and in the alert banner, is yours to choose. The order is saved. */
 const mvL=(id,dir)=>{const i=S.limits.findIndex(l=>l.id==id);if(i<0)return;const low=lk(S.limits[i]);let j=i+dir;while(j>=0&&j<S.limits.length&&lk(S.limits[j])!=low)j+=dir;if(j<0||j>=S.limits.length)return;[S.limits[i],S.limits[j]]=[S.limits[j],S.limits[i]];save();render();const b=[...document.querySelectorAll('[data-act="limMv"]')].find(x=>x.dataset.id==id&&x.dataset.d==String(dir)&&!x.disabled)||[...document.querySelectorAll('[data-act="limMv"]')].find(x=>x.dataset.id==id&&!x.disabled);if(b)b.focus()};
 document.addEventListener('change',e=>{const v=e.target.dataset&&e.target.dataset.cx;if(!v)return;U.cash.ex=exToggle(U.cash.ex,v,e.target.checked);cashRe('data-cx',v)});
@@ -568,7 +610,6 @@ const cashRun=()=>{const g=k=>document.querySelector('[data-cash="'+k+'"]');if(!
  const cad=Math.max(0,parseFloat(U.cash.cad)||0),usd=Math.max(0,parseFloat(U.cash.usd)||0);if(!(cad+usd>0)){toast('Enter cash in CAD, USD or both');return}
  U.cash.run={cad,usd,sc:U.cash.sc,ex:[...U.cash.ex]};render();const e=$('#cashr');if(e)e.scrollIntoView({block:'nearest',behavior:'smooth'})};
 document.addEventListener('input',e=>{const k=e.target.dataset&&e.target.dataset.cash;if(!k)return;const v=e.target.value;
- if(k=='tpl'){cashApply(v);return}
  if(k=='sc'){U.cash.sc=v;const as=cashAcc(v),tn=v[0]=='t';U.cash.ex=U.cash.ex.filter(x=>{const y=x.slice(2);return x[0]=='t'?!tn&&as.some(a=>a.type==y):as.some(a=>a.id==y)});render();return}
  U.cash[k]=v});
 document.addEventListener('keydown',e=>{if(e.key=='Enter'&&e.target.dataset&&e.target.dataset.cash){e.preventDefault();cashRun()}});
@@ -634,7 +675,7 @@ const bad=m=>{$('#er').textContent=m;return false};
 function modal(title,body,ok,fn,cls=''){const d=$('#dlg');d.className=cls;d.innerHTML=`<h3>${title}</h3><div class="f">${body}</div><p class="er" id="er"></p><div class="ar"><button class="b cx" data-act="x">${ok?'Cancel':'Close'}</button>${ok?`<button class="b p" id="ok">${ok}</button>`:''}</div>`;
  if(!d.open)d.showModal();d.querySelector('input,select')?.focus();
  if(ok)$('#ok').onclick=async()=>{try{if(await fn()!==false)d.close()}catch(e){bad(e.message)}}}
-$('#dlg').onkeydown=e=>{if(e.key=='Enter'&&e.target.tagName!='BUTTON'){e.preventDefault();if(e.target.id?.startsWith('tkn-')){$('#tkadd')?.click();return}if(e.target.id?.startsWith('cn-')){e.target.parentElement.querySelector('[data-act]')?.click();return}$('#ok')?.click()}};
+$('#dlg').onkeydown=e=>{if(e.key=='Enter'&&e.target.tagName!='BUTTON'){e.preventDefault();if(e.target.dataset&&e.target.dataset.sl=='name')return;if(e.target.id?.startsWith('tkn-')){$('#tkadd')?.click();return}if(e.target.id?.startsWith('cn-')){e.target.parentElement.querySelector('[data-act]')?.click();return}$('#ok')?.click()}};
 $('#dlg').oncancel=e=>{if($('#dlg').classList.contains('lk'))e.preventDefault()};
 const num=id=>parseFloat($(id).value);
 const pick=(id,nid,list,cur,ph)=>`<select id="${id}" data-new="${nid}">${O(list,cur)}<option value="__new">+ New…</option></select><input id="${nid}" placeholder="${ph}" ${list.length?'hidden':''}>`;
@@ -705,7 +746,7 @@ function cModal(kind){if(!S.accounts.length)return toast('Add an account first')
  let d=String(y);if(mo){d+='-'+String(mo).padStart(2,'0');if(da){if(new Date(Date.UTC(y,mo-1,da)).getUTCMonth()!=mo-1)return bad('That day does not exist in '+MN[mo-1]+' '+y);d+='-'+String(da).padStart(2,'0')}}
  S.contribs.push({id:uid(),acc:$('#a').value,date:d,amt,cur:$('#u').value,cad:toCAD(amt,$('#u').value),k:wd?'w':''});U.year=+d.slice(0,4);save();U.tab='contrib';render()});const dm=$('#dmo'),dv=$('#dda');dm.onchange=()=>{dv.disabled=!dm.value;if(!dm.value)dv.value=''}}
 function lModal(id){if(!S.accounts.length)return toast('Add an account first');
- const E=id?S.limits.find(l=>l.id==id):null;if(id&&!E)return;
+ const E=id?S.limits.find(l=>l.id==id):null;if(id&&!E)return;U.sl.lim={tid:'',mode:'',msg:''};
  const isTA=e=>/^[ta]:./.test(e),sel=new Set(E?exOf(E).filter(isTA):[]),keep=E?exOf(E).filter(e=>!isTA(e)):[],open=new Set();
  /* sel = what is LEFT OUT (same saved format as always: 't:<type>' / 'a:<account id>'), but the picker shows it the other way round: a ticked box = included */
  const gv=E?(E.k=='tkr'?'tkr:*':E.k+':'+E.val):'',cl=allCls();if(E&&E.k=='cls'&&!cl.includes(E.val))cl.push(E.val);
@@ -716,7 +757,7 @@ function lModal(id){if(!S.accounts.length)return toast('Add an account first');
  <label>Alert me when<select id="dr"><option value="tgt"${E&&isTgt(E)?' selected':''}>the share drifts away from a target (stay around it)</option><option value="max"${E&&lk(E)=='max'?' selected':''}>the share goes over a maximum</option><option value="min"${E&&isLow(E)?' selected':''}>the share falls below a minimum</option></select></label>
  <label><span id="xl">Maximum share (%)</span><input id="x" type="number" min="0" max="100" step="any" placeholder="10" value="${E?thr(E):''}"></label>
  <label id="tll" hidden><span>Allowed drift, plus or minus (percentage points)</span><input id="tl" type="number" min="0" max="100" step="any" placeholder="2" value="${E&&isTgt(E)?E.tol:''}"><div class="k" id="tlh" style="margin-top:4px"></div></label>
- <details class="exd" open><summary>Accounts included in this limit <span class="k" id="exn"></span></summary><div class="k" id="exh" style="margin:8px 0 6px"></div><div class="exl" id="exb"></div></details>`,'Save',()=>{
+ <details class="exd" open><summary>Accounts included in this limit <span class="k" id="exn"></span><span id="slt"></span></summary><div id="slm"></div><div class="k" id="exh" style="margin:8px 0 6px"></div><div class="exl" id="exb"></div></details>`,'Save',()=>{
   const dv=$('#dr').value,low=dv=='min',tg=dv=='tgt',m=num('#x');if(!(m>=0&&m<=100)||((low||tg)&&!(m>0)))return bad(tg?'Enter a target above 0 and up to 100':low?'Enter a minimum above 0 and up to 100':'Enter a percentage from 0 to 100');let tl=0;if(tg){tl=num('#tl');if(!(tl>0&&tl<m))return bad('Enter an allowed drift above 0 and below the target ('+m+'). Otherwise 0% would count as on target.')}const[k,...v]=$('#g').value.split(':');let val=v.join(':');if(k=='tkr'){if($('#gt').value.trim()&&addT()===false)return false;if(!tsel.size)return bad('Tick or type at least one ticker');val=[...tsel].join(',')}
   const ex=[...sel,...keep],L={id:E?E.id:uid(),sc:$('#s').value,k,val};if(tg){L.d='tgt';L.tgt=m;L.tol=tl}else if(low){L.d='min';L.min=m}else L.max=m;if(ex.length)L.ex=ex;
   if(ex.length&&!(sum(limRows(L))>0))return bad('Nothing would be left to measure. Tick at least one account to include.');
@@ -734,7 +775,9 @@ function lModal(id){if(!S.accounts.length)return toast('Add an account first');
    return `<div class="exr"><button type="button" class="tg" data-xt="${esc(t)}" aria-expanded="${o}" aria-label="${o?'Collapse':'Expand'} ${esc(t)} accounts" title="${o?'Hide':'Show'} the ${esc(t)} accounts">${o?'▾':'▸'}</button><label class="chk"><input type="checkbox" data-ex="t:${esc(t)}" data-n="${part?1:0}"${n?'':' checked'}> ${esc(t)} <span class="k">· ${at.length} account${at.length==1?'':'s'}${part?', '+n+' left out':n?', all left out':''}</span></label></div>${o?`<div class="exk">${at.map(ac).join('')}</div>`:''}`}).join('');
   bx.querySelectorAll('input[data-ex^="t:"]').forEach(i=>{i.indeterminate=+i.dataset.n>0});
   const ne=as.filter(outA).length;$('#exn').textContent=one||!as.length?'':ne?'('+(as.length-ne)+' of '+as.length+' included)':'(all included)';
+  $('#slt').innerHTML=slTag('lim');$('#slm').innerHTML=slBar('lim');
   if(fo)bx.querySelector(fo)?.focus()};
+ SLX.lim={get:()=>({sc:$('#s').value,ex:[...sel]}),set:(sc,ex)=>{const p=$('#s');if(![...p.options].some(o=>o.value==sc))sc='all';p.value=sc;sel.clear();ex.forEach(e=>sel.add(e));paint();slFoc('lim','[data-sl=pick]')},re:()=>paint()};
  $('#exb').addEventListener('change',e=>{const t=e.target,v=t.dataset.ex;if(!v)return;const r=exToggle([...sel],v,t.checked);sel.clear();r.forEach(x=>sel.add(x));paint()});
  $('#exb').addEventListener('click',e=>{const b=e.target.closest('[data-xt]');if(!b)return;const t=b.dataset.xt;open.has(t)?open.delete(t):open.add(t);paint()});
  $('#s').addEventListener('change',paint);
@@ -1109,7 +1152,7 @@ const ACT={tkMan:()=>tkModal(),tkAdd:()=>tkAddRow(),tkDel:d=>tkDelRow(+d.i),tkUn
   else return;
   U.dd=[];U.ddo=false;U.ddb=null;U.czA=1;render()},
  cdd:()=>{if(!cdef()){U.ddb=null;U.dd=U.cp.map((i,j)=>({by:U.ck[j],n:decodeURIComponent(i.replace(/^g:/,'').split('/').pop())}));U.dds=U.dd.length?null:U.ck[0];U.ddo=true;render();$('#dd')?.scrollIntoView({block:'start',behavior:'smooth'});return}const a=U.ca&&acc(U.ca);U.ddb=null;if(a){U.dd=[{by:'acc',n:alabel(a)}];U.dds=null}else{U.dd=[];U.dds=U.scope=='all'?'holder':'acc'}U.ddo=true;render();$('#dd')?.scrollIntoView({block:'start',behavior:'smooth'})},dd:d=>{const P=U.dd,same=U.ddo&&P.length==1&&P[0].by==d.by&&P[0].n==d.n;U.dd=same?[]:[{by:d.by,n:d.n}];U.ddo=!same;U.ddb=null;render();if(U.ddo)$('#dd')?.scrollIntoView({block:'start',behavior:'smooth'})},ddall:d=>{const by=d.by||'holder',same=U.ddo&&!U.dd.length&&(U.ddb||U.dds||'holder')==by;U.dd=[];U.ddo=!same;U.ddb=null;U.dds=same?null:by;render();if(U.ddo)$('#dd')?.scrollIntoView({block:'start',behavior:'smooth'})},ddp:d=>{if(!U.dd.some(f=>f.by==d.by))U.dd.push({by:d.by,n:d.n});U.ddb=null;render();$('#dd')?.scrollIntoView({block:'nearest',behavior:'smooth'})},ddr:d=>{U.dd.splice(+d.i,1);U.ddb=null;render()},ddb:d=>{U.ddb=d.v;render()},ddx:()=>{U.dd=[];U.ddo=false;render()},eye:()=>{HID=!HID;render()},lT:d=>{const st=d.id[0]=='L'?U.le:U.lc;st.has(d.id)?st.delete(d.id):st.add(d.id);render()},lAll:d=>{const c=d.v=='c';U.lc=new Set(c?['sec:tgt','sec:max','sec:min']:[]);U.le=new Set(c?[]:S.limits.map(l=>'L:'+l.id));render()},alT:()=>{U.alC=!U.alC;try{localStorage.setItem(ALK,U.alC?'c':'e')}catch{}render()},theme:()=>{TH=effTheme()=='dark'?'light':'dark';try{localStorage.setItem(TK,TH)}catch{}applyTheme();render()},tab:d=>{U.tab=d.v;render()},cur:d=>{S.cur=d.v;save();render()},fx:fxModal,menu:menuModal,x:()=>$('#dlg').close(),fv:d=>fvModal(d.k),fvgo:d=>{$('#dlg').close();ACT[d.g]?.({by:d.by,n:d.n})},
- addAcc:()=>accModal(),editAcc:d=>accModal(d.id),addH:d=>hModal(d.id),addHold:()=>hModal(),csvImp:csvModal,xlsTpl:xlsDownload,editH:d=>hModal(d.id,d.h),addC:()=>cModal('d'),addW:()=>cModal('w'),addL:()=>lModal(),editL:d=>lModal(d.id),cashT:()=>{U.cashO=!U.cashO;render();if(U.cashO)$('#cashc')?.scrollIntoView({block:'nearest',behavior:'smooth'})},cashGo:()=>cashRun(),cashClr:()=>{U.cash=cashNew();render()},cashXt:d=>{const o=U.cash.xo;o.has(d.t)?o.delete(d.t):o.add(d.t);cashRe('data-t',d.t)},ctNew:()=>ctName('Save inclusion list','',null,n=>{const t={id:uid(),name:n,sc:U.cash.sc,ex:[...U.cash.ex]};S.ct.push(t);U.cash.tid=t.id;save();render();toast('Saved “'+n+'”')}),ctUpd:()=>{const t=S.ct.find(x=>x.id==U.cash.tid);if(!t)return;t.sc=U.cash.sc;t.ex=[...U.cash.ex];save();render();toast('Updated “'+t.name+'”')},ctRen:()=>{const t=S.ct.find(x=>x.id==U.cash.tid);if(!t)return;ctName('Rename saved list',t.name,t.id,n=>{t.name=n;save();render()})},ctDel:()=>{const t=S.ct.find(x=>x.id==U.cash.tid);if(!t||!confirm('Delete the saved list “'+t.name+'”?'))return;S.ct=S.ct.filter(x=>x.id!=t.id);U.cash.tid='';save();render()},limMv:d=>mvL(d.id,+d.d),setPass:passModal,
+ addAcc:()=>accModal(),editAcc:d=>accModal(d.id),addH:d=>hModal(d.id),addHold:()=>hModal(),csvImp:csvModal,xlsTpl:xlsDownload,editH:d=>hModal(d.id,d.h),addC:()=>cModal('d'),addW:()=>cModal('w'),addL:()=>lModal(),editL:d=>lModal(d.id),cashT:()=>{U.cashO=!U.cashO;render();if(U.cashO)$('#cashc')?.scrollIntoView({block:'nearest',behavior:'smooth'})},cashGo:()=>cashRun(),cashClr:()=>{U.cash=cashNew();delete U.sl.cash;render()},cashXt:d=>{const o=U.cash.xo;o.has(d.t)?o.delete(d.t):o.add(d.t);cashRe('data-t',d.t)},limMv:d=>mvL(d.id,+d.d),setPass:passModal,
  delAcc:d=>{if(!confirm('Delete this account and all its holdings, contributions and limits?'))return;S.accounts=S.accounts.filter(a=>a.id!=d.id);S.exc=S.exc.filter(e=>e!='a:'+d.id);S.contribs=S.contribs.filter(c=>c.acc!=d.id);S.limits=S.limits.filter(l=>l.sc!='a:'+d.id);S.ct=S.ct.filter(t=>t.sc!='a:'+d.id);S.ct.forEach(t=>{t.ex=t.ex.filter(e=>e!='a:'+d.id)});U.cash.ex=U.cash.ex.filter(e=>e!='a:'+d.id);if(U.cash.sc=='a:'+d.id)U.cash.sc='all';U.cash.run=null;S.limits.forEach(l=>{if(Array.isArray(l.ex)){l.ex=l.ex.filter(e=>e!='a:'+d.id);if(!l.ex.length)delete l.ex}});if(U.scope=='a:'+d.id)U.scope='all';save();render()},
  delH:d=>{if(!confirm('Remove this holding?'))return;const a=acc(d.id);a.h=a.h.filter(x=>x.id!=d.h);save();render()},
  delC:d=>{S.contribs=S.contribs.filter(c=>c.id!=d.id);save();render()},delL:d=>{const L=S.limits.find(l=>l.id==d.id);if(!L||!confirm('Delete the limit “'+lname(L)+' '+lsym(L)+'”?'))return;S.limits=S.limits.filter(l=>l.id!=d.id);save();render()},
