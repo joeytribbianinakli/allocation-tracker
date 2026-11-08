@@ -18,7 +18,7 @@
   Do not loosen the policy (no 'unsafe-inline', no extra connect-src hosts): it is a deliberate privacy feature.
   To verify, open the file in a browser and check the console for "violates the following Content Security Policy".
 -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-kMJvKeXROL6uwVJOPWEf7PNJ0gfS0078SBZ2ByJSCN0='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-9SakFa1wE1jCLDSBFQXxSeYLaaUKQGCCFga4aC0RUCo='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
 <link rel="icon" href="data:,">
 <title>Portfolio tracker</title>
 <style>
@@ -471,10 +471,81 @@ function vCon(){const ys=[...new Set([YR,U.year,...S.contribs.map(c=>+c.date.sli
   return `<div class="card"><div class="row"><button class="tg" data-act="togA" data-id="${esc(id)}" aria-expanded="${op}" aria-label="${op?'Collapse':'Expand'} ${esc(a.name)}">${op?'▾':'▸'}</button><div class="sp" data-act="togA" data-id="${esc(id)}" style="cursor:pointer"><b>${esc(a.name)}</b> <span class="k">· ${esc(a.type)}</span><div class="k">${rm>0?`${fmt(p)} of ${fmt(rm)} room · ${o?`<b style="color:var(--r)">${fmt(p-rm)} over</b>`:fmt(rm-p)+' left'}`:`${fmt(p)} contributed in total · no limit`}${w>0?' · '+fmt(w)+' withdrawn in total':''}</div><div class="k">${fmt(py)} in ${y}${pwd>0?' · '+fmt(pwd)+' withdrawn in '+y:''}</div></div>
   ${rm>0?`<span class="tag ${o||lo?'bad':'ok'}">${o?'Over limit':lo?'Low room':pc(p/rm)}</span>`:''}</div>
   ${op?`${rm>0?`<div class="bar"><i style="width:${Math.min(100,p/rm*100)}%;background:${o?'var(--r)':'var(--g)'}"></i></div>`:''}${yr.length?`<table>${yr.map(c=>`<tr><td>${esc(fdt(c.date))}</td><td>${c.k=='w'?'Withdrawal':'Deposit'}</td><td class="n">${c.k=='w'?'−':''}${fmtN(c.amt,c.cur)}</td><td class="n"><button class="ib" data-act="delC" data-id="${esc(c.id)}">Delete</button></td></tr>`).join('')}</table>`:`<div class="k" style="margin-top:8px">No transactions in ${y}.</div>`}`:''}</div>`}).join('')}).join(''):`<div class="card empty"><p>Add an account (tick “has a contribution limit” to track its room), then log a contribution or withdrawal to begin.</p></div>`)}
+/* ---------- CASH ALLOCATOR (Limits & alerts tab) ----------
+   Type in the cash you have (CAD and/or USD) and see where to put it. NOTHING here is saved: the numbers live in U.cash until the page is closed or reloaded.
+   How the plan is made, in this order:
+   1. A maximum limit is never pushed over, and an existing breach is never made worse.
+   2. Any minimum limit that is under is topped up first, the furthest-below one first. If nothing you hold can fill a minimum (for example a Bonds minimum with no bond fund), a NEW position is suggested.
+   3. What is left is split in line with how the chosen accounts are invested now (every holding keeps its usual share).
+   The cash goes out in equal steps. Each step goes to the holding furthest below its usual share that passes rule 1 and does not pull a minimum under. If nothing passes, rule 1 still wins over minimums; if even that is impossible, the least-bad choice is used and the result says what could not be met.
+   Candidates are the rows of the chosen accounts that hold something (account + holding). Limits are measured exactly like the Limits list: limRows (scope minus exclusions), CAD-converted, same ticker/currency/type matching. Contribution room is NOT part of the plan (it is only shown as a reminder). */
+U.cash={cad:'',usd:'',sc:'all',run:null};U.cashO=false;
+const cashInL=(L,c)=>filt(L.sc,[c]).length>0&&!exOf(L).some(e=>exHit(e,c));
+function cashPlan(C,sc){
+ const lims=S.limits.map(L=>({L,...lim(L)})),cand=filt(sc).filter(x=>x.v>0).map(x=>({a:x.a,h:x.h,v:x.v,x:0,nw:false}));
+ if(!cand.length)return{err:sc=='all'?'Add some holdings first. The plan is built from what you hold now.':'There are no holdings in that selection to add to. Pick a different account, or choose the entire portfolio.'};
+ /* a minimum that nothing in the chosen accounts can fill gets a new position, placed in the first account that fits both the cash selection and the limit */
+ lims.forEach(q=>{const L=q.L;if(!isLow(L)||!(q.t>0)||cand.some(c=>cashInL(L,c)&&lmatch(L,c)))return;
+  const tk=tkl(L)[0],e=tk?tkGet(tk):null,h=L.k=='tkr'?{tkr:tk,nm:'',cls:(e&&e.cls)||(tkCls(tk)||{}).cls||'',cur:(e&&e.cur)||'CAD',amt:0}:L.k=='cur'?{tkr:'',nm:'',cls:'',cur:L.val,amt:0}:{tkr:'',nm:'',cls:L.val,cur:'CAD',amt:0};
+  const a=S.accounts.find(a=>{const c={a,h,v:0};return filt(sc,[c]).length>0&&cashInL(L,c)});if(a)cand.push({a,h,v:0,x:0,nw:true})});
+ const n=cand.length,J=lims.length,inS=lims.map(q=>cand.map(c=>cashInL(q.L,c))),mt=lims.map((q,j)=>cand.map((c,i)=>inS[j][i]&&lmatch(q.L,c))),
+  m=lims.map(q=>q.m),t=lims.map(q=>q.t),V=sum(cand),w=cand.map(c=>V>0?c.v/V:0),
+  viol=(j,mm,tt)=>{if(!(tt>0))return 0;const L=lims[j].L,r=mm/tt*100;return isLow(L)?Math.max(0,L.min-r):Math.max(0,r-L.max)},
+  N=400,d=C/N,best=l=>l.reduce((a,b)=>b.def>a.def+1e-12?b:a);
+ let X=0;
+ for(let s=0;s<N;s++){
+  const bf=lims.map((q,j)=>viol(j,m[j],t[j])),
+   info=cand.map((c,i)=>{const av=lims.map((q,j)=>viol(j,m[j]+(mt[j][i]?d:0),t[j]+(inS[j][i]?d:0)));let wmx=false,wmn=false,sa=0;av.forEach((x,j)=>{if(x>bf[j]+1e-9){isLow(lims[j].L)?wmn=true:wmx=true}sa+=x});return{i,av,wmx,wmn,sa,def:w[i]*(V+X+d)-(c.v+c.x)}});
+  let ok=info.filter(o=>!o.wmx&&!o.wmn);if(!ok.length)ok=info.filter(o=>!o.wmx);
+  let pick=null;
+  if(ok.length){const vm=lims.map((q,j)=>j).filter(j=>isLow(lims[j].L)&&bf[j]>1e-9).sort((a,b)=>bf[b]-bf[a]);
+   for(const j of vm){const h=ok.filter(o=>o.av[j]<bf[j]-1e-9);if(h.length){pick=best(h);break}}
+   if(!pick)pick=best(ok)}
+  else pick=info.reduce((a,b)=>b.sa<a.sa-1e-12?b:a);
+  const i=pick.i;cand[i].x+=d;X+=d;for(let j=0;j<J;j++){if(mt[j][i])m[j]+=d;if(inS[j][i])t[j]+=d}}
+ const out=lims.map((q,j)=>({L:q.L,t0:q.t,p0:q.p,t1:t[j],m1:m[j],p1:t[j]>0?m[j]/t[j]:0}));
+ /* limits that are still outside after the plan, with what it would take to fix them */
+ const open=out.filter(o=>lbad(o.L,{t:o.t1,p:o.p1})).map(o=>{const L=o.L,low=isLow(L),pp=(low?L.min:L.max)/100;
+  return{...o,low,fix:low?(pp<1?(pp*o.t1-o.m1)/(1-pp):null):null,more:!low&&pp>0?o.m1/pp-o.t1:null,sell:!low&&pp<1?(o.m1-pp*o.t1)/(1-pp):null}});
+ return{C,cand,out,open}}
+function cashCard(){
+ const c=U.cash,r=c.run,fm=(v,cu)=>HID?MASK:nf(cu,0).format(v);
+ const inp=`<div class="sel"><label>Cash in CAD<input data-cash="cad" type="number" inputmode="decimal" min="0" step="any" placeholder="0" value="${esc(c.cad)}"></label><label>Cash in USD<input data-cash="usd" type="number" inputmode="decimal" min="0" step="any" placeholder="0" value="${esc(c.usd)}"></label><label>Put it in<select data-cash="sc">${scopeSel(c.sc)}</select></label></div>`;
+ const head=`<div class="row" style="margin:0 0 6px"><h2 class="sp">Allocate new cash</h2><button class="ib" data-act="cashT">Close</button></div><div class="k" style="margin-bottom:10px">Enter the cash you have in CAD, USD or both. The plan follows your limits first, then keeps your current mix. Nothing here is saved, so it is gone when you close or reload the page.</div>${inp}<div class="row"><button class="b p" data-act="cashGo">Show allocation</button><button class="b" data-act="cashClr">Clear</button></div>`;
+ if(!r)return `<div class="card" id="cashc">${head}</div>`;
+ const P=cashPlan(r.cad+r.usd*R(),r.sc);
+ if(P.err)return `<div class="card" id="cashc">${head}<div class="alert" style="margin-top:12px">${esc(P.err)}</div></div>`;
+ const C=P.C,nat=x=>x.h.cur=='USD'?x.x/R():x.x,buys=P.cand.filter(x=>nat(x)>=0.5),
+  src=r.cad>0&&r.usd>0?` <span class="k">(${fmtN(r.cad,'CAD')} + ${fmtN(r.usd,'USD')} at ${R().toFixed(4)})</span>`:r.usd>0?` <span class="k">(${fmtN(r.usd,'USD')} at ${R().toFixed(4)})</span>`:'',
+  nm=x=>x.nw?(x.h.tkr||(x.h.cls?'New '+x.h.cls+' holding':'New '+x.h.cur+' holding')):lbl(x.h);
+ /* what to buy, grouped by account */
+ const g=new Map();buys.forEach(x=>{if(!g.has(x.a))g.set(x.a,[]);g.get(x.a).push(x)});
+ const gl=[...g.entries()].map(([a,l])=>({a,l:l.sort((p,q)=>q.x-p.x),tot:sum(l.map(z=>({v:z.x})))})).sort((p,q)=>q.tot-p.tot);
+ const anyRoom=gl.some(e=>roomOf(e.a)>0);
+ const buyT=`<div class="stp">What to buy</div><table class="hl">${gl.map(e=>{const rm=roomOf(e.a),left=rm-dsum(e.a);
+  return `<tr class="a1"><td colspan="2"><b>${esc(alabel(e.a))}</b> <span class="k">${esc(e.a.type)}${e.a.holder&&e.a.holder!=PH?' · '+esc(e.a.holder):''}${rm>0?' · room left '+fmt(Math.max(0,left)):''}</span>${rm>0&&e.tot>Math.max(0,left)+1e-6?' <span class="tag bad">over room</span>':''}</td><td class="n"><b>${fmt(e.tot)}</b></td></tr>`+e.l.map(x=>`<tr><td style="padding-left:18px">${esc(nm(x))}${x.nw?' <span class="tag ok">new</span>':''} <span class="k">${esc(x.h.cls||'')}${x.h.cur=='USD'?(x.h.cls?' · ':'')+'USD':''}</span></td><td class="n"><b>${fm(nat(x),x.h.cur)}</b></td><td class="n">${x.h.cur=='USD'?`<span class="k">≈ ${fmt(x.x)}</span>`:''}</td></tr>`).join('')}).join('')}</table>${anyRoom?'<div class="k" style="margin-top:6px">Room left only matters if this is new money you will deposit into that account. Cash already inside the account does not use room.</div>':''}`;
+ /* currency check */
+ const sU=sum(P.cand.filter(x=>x.h.cur=='USD').map(x=>({v:x.x/R()}))),dU=sU-r.usd;
+ const cx=Math.abs(dU)<1?`Your CAD and USD cash cover these buys as they are, with no currency exchange.`:dU>0?`These buys need ${fm(sU,'USD')} but you have ${fm(r.usd,'USD')}. Convert about ${fm(dU*R(),'CAD')} to ${fm(dU,'USD')} (at ${R().toFixed(4)}).`:`These buys need only ${fm(sU,'USD')} of your ${fm(r.usd,'USD')}. Convert about ${fm(-dU,'USD')} to ${fm(-dU*R(),'CAD')} (at ${R().toFixed(4)}).`;
+ /* limits after the plan */
+ const lt=P.out.length?`<div class="stp">Your limits after this cash</div><table>${P.out.map(o=>{const L=o.L,low=isLow(L),b=lbad(L,{t:o.t1,p:o.p1}),edge=!b&&Math.abs(o.p1*100-thr(L))<0.15;
+  return `<tr><td><b>${esc(lname(L))}</b> <span class="k">${lsym(L)} of ${esc(scopeName(L.sc))}</span></td><td class="n">${pc(o.p0)} → <b>${pc(o.p1)}</b></td><td class="n"><span class="tag ${b?'bad':'ok'}">${b?(low?'Under min':'Over max'):edge?'At limit':'OK'}</span></td></tr>`}).join('')}</table>`:`<div class="k" style="margin-top:12px">You have no limits yet, so this simply keeps your current mix. Add limits above and the plan will follow them.</div>`;
+ /* what could not be met */
+ const op=P.open.length?`<div class="alert" style="margin-top:12px"><b>${P.open.length==1?'1 limit':P.open.length+' limits'} can't be fully met with this cash</b>${P.open.map(o=>`<div style="margin-top:8px"><b>${esc(lname(o.L))}</b> ${lsym(o.L)} of ${esc(scopeName(o.L.sc))}<div class="k">${lbad(o.L,{t:o.t0,p:o.p0})?'Was '+pc(o.p0)+' before, ':''}${pc(o.p1)} after.${o.low?(o.fix>0?` It would take about ${fmt(o.fix)} more in ${esc(lname(o.L))} to reach the minimum.`:''):`${o.sell>0?` Selling about ${fmt(o.sell)} of it would bring it under${o.more>0?`, or adding about ${fmt(o.more)} to everything else in that scope`:''}.`:o.more>0?` Adding about ${fmt(o.more)} to everything else in that scope would bring it under.`:''}`}</div></div>`).join('')}</div>`:'';
+ /* mix by investment type */
+ const b0=new Map(),a0=new Map(),tv=sum(rows());rows().forEach(x=>{b0.set(x.h.cls,(b0.get(x.h.cls)||0)+x.v);a0.set(x.h.cls,(a0.get(x.h.cls)||0)+x.v)});P.cand.forEach(x=>{if(x.x>0)a0.set(x.h.cls||'Other',(a0.get(x.h.cls||'Other')||0)+x.x)});
+ const tv1=tv+C,mix=[...a0.keys()].sort((p,q)=>a0.get(q)-a0.get(p)),
+  mixT=`<div class="stp">Mix by investment type</div><table>${mix.map(k=>{const b=b0.get(k)||0,a=a0.get(k)||0;return `<tr><td><span class="dot" style="background:${col(k)}"></span>${esc(k)}</td><td class="n">${tv>0?pc(b/tv):'—'} → <b>${pc(a/tv1)}</b></td><td class="n"><span class="k">${a-b<0.5?'—':'+'+fmt(a-b)}</span></td></tr>`}).join('')}</table>`;
+ return `<div class="card" id="cashc">${head}<div id="cashr" style="margin-top:14px"><div>Investing <b>${fmt(C)}</b>${src} <span class="k">in ${esc(scopeName(r.sc))}</span></div>${HID?'<div class="k" style="margin-top:4px">Amounts are hidden. Use the eye button at the top to show them.</div>':''}${op}${buyT}<div class="k" style="margin-top:8px">${cx}</div>${lt}${mixT}<div class="k" style="margin-top:12px">This is arithmetic on your own holdings and limits, not financial advice.</div></div></div>`}
+const cashRun=()=>{const g=k=>document.querySelector('[data-cash="'+k+'"]');if(!g('cad'))return;U.cash.cad=g('cad').value;U.cash.usd=g('usd').value;U.cash.sc=g('sc').value;
+ const cad=Math.max(0,parseFloat(U.cash.cad)||0),usd=Math.max(0,parseFloat(U.cash.usd)||0);if(!(cad+usd>0)){toast('Enter cash in CAD, USD or both');return}
+ U.cash.run={cad,usd,sc:U.cash.sc};render();const e=$('#cashr');if(e)e.scrollIntoView({block:'nearest',behavior:'smooth'})};
+document.addEventListener('input',e=>{const k=e.target.dataset&&e.target.dataset.cash;if(k)U.cash[k]=e.target.value});
+document.addEventListener('keydown',e=>{if(e.key=='Enter'&&e.target.dataset&&e.target.dataset.cash){e.preventDefault();cashRun()}});
 function vLim(){const R2=S.limits.map(L=>({L,x:lim(L)}));
  const card=({L,x})=>{const low=isLow(L),o=lbad(L,x),th=thr(L),id='L:'+L.id,cl=!U.le.has(id);return `<div class="li"><div class="lh"><button class="tg" data-act="lT" data-id="${esc(id)}" aria-expanded="${!cl}" aria-label="${cl?'Expand':'Collapse'} ${esc(lname(L))} limit">${cl?'▸':'▾'}</button><div class="lt" data-act="lT" data-id="${esc(id)}"><b>${esc(lname(L))}</b> <span class="lg">${low?'≥':'≤'} ${th}% of ${esc(scopeName(L.sc))}</span></div><span class="lp">${pc(x.p)}</span><span class="tag ${o?'bad':'ok'}">${o?(low?'Under minimum':'Over limit'):'OK'}</span><button class="ib" data-act="editL" data-id="${esc(L.id)}">Edit</button><button class="ib" data-act="delL" data-id="${esc(L.id)}">Delete</button></div><div class="bar"><i style="width:${Math.min(100,x.p*100)}%;background:${o?'var(--r)':'var(--g)'}"></i><u style="left:${Math.min(99.5,th)}%"></u></div>${cl?'':`<div class="ld">${fmt(x.m)} of ${fmt(x.t)}${exBul(L)}</div>`}</div>`};
  const sec=(low,ttl,sub,eg)=>{const l=R2.filter(r=>isLow(r.L)==low),n=l.filter(r=>lbad(r.L,r.x)).length,id=low?'sec:min':'sec:max',cl=U.lc.has(id);return `<div class="ls ${low?'mn':'mx'}"><div class="row" style="margin:0 0 6px;gap:4px"><button class="tg" data-act="lT" data-id="${id}" aria-expanded="${!cl}" aria-label="${cl?'Expand':'Collapse'} ${esc(ttl)}" style="font-size:12px;width:20px;padding:2px">${cl?'▸':'▾'}</button><h3 class="sp lsh" data-act="lT" data-id="${id}">${ttl} <span class="lsc">${l.length}</span>${n?` <span class="tag bad">${n} ${low?'under':'over'}</span>`:''}</h3></div>`+(cl?'':l.length?`<div class="ll">${l.map(card).join('')}</div>`:`<div class="k" style="margin:0 0 0 26px">${eg}</div>`)+'</div>'};
- return `<div class="row" style="margin:16px 0 0"><h2 class="sp">Limits &amp; alerts</h2><button class="b sm" data-act="lAll" data-v="e">Expand all</button><button class="b sm" data-act="lAll" data-v="c">Collapse all</button><button class="b sm" data-act="tkMan">Manage tickers</button><button class="b p sm" data-act="addL">Add limit</button></div>`+
+ return `<div class="row" style="margin:16px 0 0"><h2 class="sp">Limits &amp; alerts</h2><button class="b sm" data-act="lAll" data-v="e">Expand all</button><button class="b sm" data-act="lAll" data-v="c">Collapse all</button><button class="b sm" data-act="tkMan">Manage tickers</button><button class="b sm" data-act="cashT" aria-expanded="${U.cashO}">Allocate cash</button><button class="b p sm" data-act="addL">Add limit</button></div>`+(U.cashO?cashCard():'')+
   sec(false,'Maximum limits','You get an alert when a share goes over its maximum.','No maximum limits yet. For example, cap Gold at 10% of your portfolio, or cap VFV + VOO together at 30% (CAD and USD funds are combined). You can choose which accounts a limit includes.')+
   sec(true,'Minimum limits','You get an alert when a share falls below its minimum.','No minimum limits yet. For example, keep Bonds at 20% or more, or make sure an ETF you rely on stays above 5%.')}
 const A=(u,t)=>`<a href="${u}" target="_blank" rel="noopener noreferrer">${t}</a>`;
@@ -993,7 +1064,7 @@ const ACT={tkMan:()=>tkModal(),tkAdd:()=>tkAddRow(),tkDel:d=>tkDelRow(+d.i),tkUn
   else return;
   U.dd=[];U.ddo=false;U.ddb=null;U.czA=1;render()},
  cdd:()=>{if(!cdef()){U.ddb=null;U.dd=U.cp.map((i,j)=>({by:U.ck[j],n:decodeURIComponent(i.replace(/^g:/,'').split('/').pop())}));U.dds=U.dd.length?null:U.ck[0];U.ddo=true;render();$('#dd')?.scrollIntoView({block:'start',behavior:'smooth'});return}const a=U.ca&&acc(U.ca);U.ddb=null;if(a){U.dd=[{by:'acc',n:alabel(a)}];U.dds=null}else{U.dd=[];U.dds=U.scope=='all'?'holder':'acc'}U.ddo=true;render();$('#dd')?.scrollIntoView({block:'start',behavior:'smooth'})},dd:d=>{const P=U.dd,same=U.ddo&&P.length==1&&P[0].by==d.by&&P[0].n==d.n;U.dd=same?[]:[{by:d.by,n:d.n}];U.ddo=!same;U.ddb=null;render();if(U.ddo)$('#dd')?.scrollIntoView({block:'start',behavior:'smooth'})},ddall:d=>{const by=d.by||'holder',same=U.ddo&&!U.dd.length&&(U.ddb||U.dds||'holder')==by;U.dd=[];U.ddo=!same;U.ddb=null;U.dds=same?null:by;render();if(U.ddo)$('#dd')?.scrollIntoView({block:'start',behavior:'smooth'})},ddp:d=>{if(!U.dd.some(f=>f.by==d.by))U.dd.push({by:d.by,n:d.n});U.ddb=null;render();$('#dd')?.scrollIntoView({block:'nearest',behavior:'smooth'})},ddr:d=>{U.dd.splice(+d.i,1);U.ddb=null;render()},ddb:d=>{U.ddb=d.v;render()},ddx:()=>{U.dd=[];U.ddo=false;render()},eye:()=>{HID=!HID;render()},lT:d=>{const st=d.id[0]=='L'?U.le:U.lc;st.has(d.id)?st.delete(d.id):st.add(d.id);render()},lAll:d=>{const c=d.v=='c';U.lc=new Set(c?['sec:max','sec:min']:[]);U.le=new Set(c?[]:S.limits.map(l=>'L:'+l.id));render()},alT:()=>{U.alC=!U.alC;try{localStorage.setItem(ALK,U.alC?'c':'e')}catch{}render()},theme:()=>{TH=effTheme()=='dark'?'light':'dark';try{localStorage.setItem(TK,TH)}catch{}applyTheme();render()},tab:d=>{U.tab=d.v;render()},cur:d=>{S.cur=d.v;save();render()},fx:fxModal,menu:menuModal,x:()=>$('#dlg').close(),fv:d=>fvModal(d.k),fvgo:d=>{$('#dlg').close();ACT[d.g]?.({by:d.by,n:d.n})},
- addAcc:()=>accModal(),editAcc:d=>accModal(d.id),addH:d=>hModal(d.id),addHold:()=>hModal(),csvImp:csvModal,xlsTpl:xlsDownload,editH:d=>hModal(d.id,d.h),addC:()=>cModal('d'),addW:()=>cModal('w'),addL:()=>lModal(),editL:d=>lModal(d.id),setPass:passModal,
+ addAcc:()=>accModal(),editAcc:d=>accModal(d.id),addH:d=>hModal(d.id),addHold:()=>hModal(),csvImp:csvModal,xlsTpl:xlsDownload,editH:d=>hModal(d.id,d.h),addC:()=>cModal('d'),addW:()=>cModal('w'),addL:()=>lModal(),editL:d=>lModal(d.id),cashT:()=>{U.cashO=!U.cashO;render();if(U.cashO)$('#cashc')?.scrollIntoView({block:'nearest',behavior:'smooth'})},cashGo:()=>cashRun(),cashClr:()=>{U.cash={cad:'',usd:'',sc:'all',run:null};render()},setPass:passModal,
  delAcc:d=>{if(!confirm('Delete this account and all its holdings, contributions and limits?'))return;S.accounts=S.accounts.filter(a=>a.id!=d.id);S.exc=S.exc.filter(e=>e!='a:'+d.id);S.contribs=S.contribs.filter(c=>c.acc!=d.id);S.limits=S.limits.filter(l=>l.sc!='a:'+d.id);S.limits.forEach(l=>{if(Array.isArray(l.ex)){l.ex=l.ex.filter(e=>e!='a:'+d.id);if(!l.ex.length)delete l.ex}});if(U.scope=='a:'+d.id)U.scope='all';save();render()},
  delH:d=>{if(!confirm('Remove this holding?'))return;const a=acc(d.id);a.h=a.h.filter(x=>x.id!=d.h);save();render()},
  delC:d=>{S.contribs=S.contribs.filter(c=>c.id!=d.id);save();render()},delL:d=>{const L=S.limits.find(l=>l.id==d.id);if(!L||!confirm('Delete the limit “'+lname(L)+' '+lsym(L)+'”?'))return;S.limits=S.limits.filter(l=>l.id!=d.id);save();render()},
