@@ -18,7 +18,7 @@
   Do not loosen the policy (no 'unsafe-inline', no extra connect-src hosts): it is a deliberate privacy feature.
   To verify, open the file in a browser and check the console for "violates the following Content Security Policy".
 -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-vwIbCxfTIt7u3AwKvWv/yrjR7daXRDQLfO3k0+kI7RQ='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-W/4nBmPhQV2QboyoKA/+WqLnB/IQ0JQJq3jsXPzOVao='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
 <link rel="icon" href="data:,">
 <title>Portfolio tracker</title>
 <style>
@@ -186,13 +186,15 @@ const exName=e=>{const v=e.slice(2);return e[0]=='t'||e[0]=='h'?v+' accounts':e[
 const exTxt=L=>{const n=exOf(L).map(exName);return n.length?' excluding '+(n.length>1?n.slice(0,-1).join(', ')+' and '+n[n.length-1]:n[0]):''};
 const exBul=L=>{const n=exOf(L).map(exName);return n.length?`<div class="k" style="margin-top:6px">Excluding</div><ul class="xl">${n.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''};
 /* LIMITS: L.k = what is measured ('cls' investment type, 'cur' currency, 'tkr' one holding by ticker). L.d=='min' = alert when the share falls BELOW L.min; otherwise alert when it goes OVER L.max. A limit has one threshold, so a range is two limits. */
-const lmatch=(L,x)=>L.k=='cur'?x.h.cur==L.val:L.k=='tkr'?!!x.h.tkr&&x.h.tkr==L.val:x.h.cls==L.val;
+/* a 'tkr' limit may cover several tickers: L.val is a comma-separated list such as 'VFV,VOO' (one ticker = a list of one, so older saved limits still work). All matching holdings are added together in CAD, so a CAD fund and its USD twin share one cap. */
+const tkl=L=>L.k=='tkr'?String(L.val||'').split(',').map(s=>s.trim()).filter(Boolean):[];
+const lmatch=(L,x)=>L.k=='cur'?x.h.cur==L.val:L.k=='tkr'?!!x.h.tkr&&tkl(L).includes(x.h.tkr):x.h.cls==L.val;
 const lim=L=>{const r=limRows(L),t=sum(r),m=sum(r.filter(x=>lmatch(L,x)));return{t,m,p:t?m/t:0}};
 const isLow=L=>L.d=='min',thr=L=>isLow(L)?L.min:L.max,lsym=L=>(isLow(L)?'≥ ':'≤ ')+thr(L)+'%';
 /* a minimum is only judged when something is held in scope (t>0); a holding you do not own at all counts as 0% */
 const lbad=(L,x)=>isLow(L)?x.t>0&&x.p*100<L.min-1e-9:x.p*100>L.max+1e-9;
 const breaches=()=>S.limits.map(L=>({L,...lim(L)})).filter(x=>lbad(x.L,x));
-const lname=L=>L.k=='cur'?L.val+' holdings':L.k=='tkr'?L.val+' (holding)':L.val;
+const lname=L=>L.k=='cur'?L.val+' holdings':L.k=='tkr'?tkl(L).join(' + ')+(tkl(L).length>1?' (combined)':' (holding)'):L.val;
 const limBanner=tg=>{const al=breaches(),f=low=>al.filter(b=>isLow(b.L)==low),pl=a=>'limit'+(a.length>1?'s':''),
  blk=(a,t,fn)=>a.length?`<div class="alert">${alH(a.length+' '+pl(a)+' '+t,tg)}${a.map(fn).join('')}</div>`:'';
  const it=b=>`<div style="margin-top:8px"><b>${esc(lname(b.L))}</b> ${lsym(b.L)} of ${esc(scopeName(b.L.sc))}<div class="k">Now ${pc(b.p)}</div></div>`;
@@ -462,7 +464,7 @@ function vLim(){const R2=S.limits.map(L=>({L,x:lim(L)}));
  const card=({L,x})=>{const low=isLow(L),o=lbad(L,x),th=thr(L),id='L:'+L.id,cl=!U.le.has(id);return `<div class="li"><div class="lh"><button class="tg" data-act="lT" data-id="${esc(id)}" aria-expanded="${!cl}" aria-label="${cl?'Expand':'Collapse'} ${esc(lname(L))} limit">${cl?'▸':'▾'}</button><div class="lt" data-act="lT" data-id="${esc(id)}"><b>${esc(lname(L))}</b> <span class="lg">${low?'≥':'≤'} ${th}% of ${esc(scopeName(L.sc))}</span></div><span class="lp">${pc(x.p)}</span><span class="tag ${o?'bad':'ok'}">${o?(low?'Under minimum':'Over limit'):'OK'}</span><button class="ib" data-act="editL" data-id="${esc(L.id)}">Edit</button><button class="ib" data-act="delL" data-id="${esc(L.id)}">Delete</button></div><div class="bar"><i style="width:${Math.min(100,x.p*100)}%;background:${o?'var(--r)':'var(--g)'}"></i><u style="left:${Math.min(99.5,th)}%"></u></div>${cl?'':`<div class="ld">${fmt(x.m)} of ${fmt(x.t)}${exBul(L)}</div>`}</div>`};
  const sec=(low,ttl,sub,eg)=>{const l=R2.filter(r=>isLow(r.L)==low),n=l.filter(r=>lbad(r.L,r.x)).length,id=low?'sec:min':'sec:max',cl=U.lc.has(id);return `<div class="ls ${low?'mn':'mx'}"><div class="row" style="margin:0 0 6px;gap:4px"><button class="tg" data-act="lT" data-id="${id}" aria-expanded="${!cl}" aria-label="${cl?'Expand':'Collapse'} ${esc(ttl)}" style="font-size:12px;width:20px;padding:2px">${cl?'▸':'▾'}</button><h3 class="sp lsh" data-act="lT" data-id="${id}">${ttl} <span class="lsc">${l.length}</span>${n?` <span class="tag bad">${n} ${low?'under':'over'}</span>`:''}</h3></div>`+(cl?'':l.length?`<div class="ll">${l.map(card).join('')}</div>`:`<div class="k" style="margin:0 0 0 26px">${eg}</div>`)+'</div>'};
  return `<div class="row" style="margin:16px 0 0"><h2 class="sp">Limits &amp; alerts</h2><button class="b sm" data-act="lAll" data-v="e">Expand all</button><button class="b sm" data-act="lAll" data-v="c">Collapse all</button><button class="b p sm" data-act="addL">Add limit</button></div>`+
-  sec(false,'Maximum limits','You get an alert when a share goes over its maximum.','No maximum limits yet. For example, cap Gold at 10% of your portfolio, or one ETF such as QQC at 15%. You can choose which accounts a limit includes.')+
+  sec(false,'Maximum limits','You get an alert when a share goes over its maximum.','No maximum limits yet. For example, cap Gold at 10% of your portfolio, or cap VFV + VOO together at 30% (CAD and USD funds are combined). You can choose which accounts a limit includes.')+
   sec(true,'Minimum limits','You get an alert when a share falls below its minimum.','No minimum limits yet. For example, keep Bonds at 20% or more, or make sure an ETF you rely on stays above 5%.')}
 const A=(u,t)=>`<a href="${u}" target="_blank" rel="noopener noreferrer">${t}</a>`;
 function vGuide(){const raw=vGuideRaw(),parts=raw.split('<div class="card">');GN=parts.length-1;let h=parts[0].replace(/(<div class="row" style="margin:16px 0 0">)(<h2 class="sp">Setup guide<\/h2>)/,'$1$2<button class="b" data-act="expA">Expand all</button><button class="b" data-act="colA">Collapse all</button>');
@@ -577,13 +579,15 @@ function lModal(id){if(!S.accounts.length)return toast('Add an account first');
  const E=id?S.limits.find(l=>l.id==id):null;if(id&&!E)return;
  const isTA=e=>/^[ta]:./.test(e),sel=new Set(E?exOf(E).filter(isTA):[]),keep=E?exOf(E).filter(e=>!isTA(e)):[],open=new Set();
  /* sel = what is LEFT OUT (same saved format as always: 't:<type>' / 'a:<account id>'), but the picker shows it the other way round: a ticked box = included */
- const gv=E?E.k+':'+E.val:'',cl=allCls();if(E&&E.k=='cls'&&!cl.includes(E.val))cl.push(E.val);
- const tk=[...new Set(rows().map(x=>x.h.tkr).filter(Boolean))].sort();if(E&&E.k=='tkr'&&!tk.includes(E.val))tk.push(E.val);
- modal(E?'Edit limit':'New limit',`<label>Applies to<select id="s">${scopeSel(E?E.sc:'all')}</select></label><label>Investment type, holding or currency<select id="g"><optgroup label="Investment type">${O(cl.map(c=>['cls:'+c,c]),gv)}</optgroup><optgroup label="Specific holding (ticker)">${O(tk.map(t=>['tkr:'+t,t]),gv)}<option value="tkr:__other">Another ticker…</option></optgroup><optgroup label="Currency">${O([['cur:CAD','CAD holdings'],['cur:USD','USD holdings']],gv)}</optgroup></select><input id="gt" placeholder="Ticker, e.g. QQC" maxlength="15" autocapitalize="characters" spellcheck="false" style="text-transform:uppercase" hidden></label>
+ const gv=E?(E.k=='tkr'?'tkr:*':E.k+':'+E.val):'',cl=allCls();if(E&&E.k=='cls'&&!cl.includes(E.val))cl.push(E.val);
+ /* tsel = the tickers that count toward this limit (one or many); own = tickers you hold now */
+ const tsel=new Set(E?tkl(E):[]),own=[...new Set(rows().map(x=>x.h.tkr).filter(Boolean))],TKRE=/^[A-Z0-9][A-Z0-9.\-^=]{0,14}$/;
+ modal(E?'Edit limit':'New limit',`<label>Applies to<select id="s">${scopeSel(E?E.sc:'all')}</select></label><label>Investment type, holdings or currency<select id="g"><optgroup label="Investment type">${O(cl.map(c=>['cls:'+c,c]),gv)}</optgroup><optgroup label="Specific holdings">${O([['tkr:*','Specific tickers (one or more)']],gv)}</optgroup><optgroup label="Currency">${O([['cur:CAD','CAD holdings'],['cur:USD','USD holdings']],gv)}</optgroup></select></label>
+ <div id="tkp" class="exd" hidden><div class="k" style="margin:0 0 6px">Tick every ticker that counts toward this limit. Their total is measured together, and USD funds are converted to CAD at your exchange rate. For example, tick VFV (CAD) and VOO (USD) to cap them as one S&amp;P 500 share.</div><div class="exl" id="tkl2"></div><div class="row" style="margin-top:8px;flex-wrap:nowrap"><input id="gt" placeholder="Add other tickers, e.g. VOO, IVV" autocomplete="off" autocapitalize="characters" spellcheck="false" style="flex:1;text-transform:uppercase"><button type="button" class="b" id="tka">Add</button></div></div>
  <label>Alert me when<select id="dr"><option value="max"${E&&isLow(E)?'':' selected'}>the share goes over a maximum</option><option value="min"${E&&isLow(E)?' selected':''}>the share falls below a minimum</option></select></label>
  <label><span id="xl">Maximum share (%)</span><input id="x" type="number" min="0" max="100" step="any" placeholder="10" value="${E?thr(E):''}"></label>
  <details class="exd" open><summary>Accounts included in this limit <span class="k" id="exn"></span></summary><div class="k" id="exh" style="margin:8px 0 6px"></div><div class="exl" id="exb"></div></details>`,'Save',()=>{
-  const low=$('#dr').value=='min',m=num('#x');if(!(m>=0&&m<=100)||(low&&!(m>0)))return bad(low?'Enter a minimum above 0 and up to 100':'Enter a percentage from 0 to 100');const[k,...v]=$('#g').value.split(':');let val=v.join(':');if(k=='tkr'&&val=='__other')val=$('#gt').value.trim().toUpperCase();if(k=='tkr'&&!val)return bad('Enter a ticker');
+  const low=$('#dr').value=='min',m=num('#x');if(!(m>=0&&m<=100)||(low&&!(m>0)))return bad(low?'Enter a minimum above 0 and up to 100':'Enter a percentage from 0 to 100');const[k,...v]=$('#g').value.split(':');let val=v.join(':');if(k=='tkr'){if($('#gt').value.trim()&&addT()===false)return false;if(!tsel.size)return bad('Tick or type at least one ticker');val=[...tsel].join(',')}
   const ex=[...sel,...keep],L={id:E?E.id:uid(),sc:$('#s').value,k,val};if(low){L.d='min';L.min=m}else L.max=m;if(ex.length)L.ex=ex;
   if(ex.length&&!(sum(limRows(L))>0))return bad('Nothing would be left to measure. Tick at least one account to include.');
   if(E){delete E.max;delete E.min;delete E.d;Object.assign(E,L);if(!ex.length)delete E.ex}else S.limits.push(L);save();U.tab='limits';render()});
@@ -605,7 +609,12 @@ function lModal(id){if(!S.accounts.length)return toast('Add an account first');
  $('#exb').addEventListener('click',e=>{const b=e.target.closest('[data-xt]');if(!b)return;const t=b.dataset.xt;open.has(t)?open.delete(t):open.add(t);paint()});
  $('#s').addEventListener('change',paint);
  const dirUI=()=>{$('#xl').textContent=$('#dr').value=='min'?'Minimum share (%)':'Maximum share (%)'};$('#dr').addEventListener('change',dirUI);dirUI();
- $('#g').addEventListener('change',()=>{const o=$('#g').value=='tkr:__other';$('#gt').hidden=!o;if(o)$('#gt').focus()});paint()}
+ /* the ticker picker: owned tickers (plus any typed ones) as tick boxes; typed tickers are validated like the holding dialog's ticker field */
+ const paintT=()=>{const all=[...new Set([...own,...tsel])].sort();$('#tkl2').innerHTML=all.length?all.map(t=>{const cs=[...new Set(rows().filter(x=>x.h.tkr==t).map(x=>x.h.cur))];return `<label class="chk"><input type="checkbox" data-tk="${esc(t)}"${tsel.has(t)?' checked':''}> ${esc(t)} <span class="k">${cs.length?esc(cs.join(' / ')):'not held right now'}</span></label>`}).join(''):'<div class="k">No holdings with a ticker yet. Type tickers below.</div>'};
+ const addT=()=>{const inp=$('#gt'),ps=inp.value.toUpperCase().split(/[\s,;+]+/).filter(Boolean),b=ps.find(p=>!TKRE.test(p));if(b){bad('“'+b+'” is not a valid ticker (letters, numbers, dots and dashes, up to 15 characters)');return false}ps.forEach(p=>tsel.add(p));inp.value='';$('#er').textContent='';paintT();return true};
+ $('#tkl2').addEventListener('change',e=>{const t=e.target.dataset.tk;if(!t)return;e.target.checked?tsel.add(t):tsel.delete(t)});
+ $('#tka').onclick=addT;$('#gt').addEventListener('keydown',e=>{if(e.key=='Enter'){e.preventDefault();e.stopPropagation();addT()}});
+ const tkUI=()=>{$('#tkp').hidden=$('#g').value!='tkr:*'};$('#g').addEventListener('change',()=>{tkUI();if(!$('#tkp').hidden)$('#gt').focus()});paintT();tkUI();paint()}
 function fxModal(){modal('Exchange rate',`<div class="k">Live rate comes from the free Frankfurter (ECB) service, with open.er-api.com as backup. It's a daily reference rate. Only the rate is requested.</div>
  <label>1 USD in CAD<input id="r" type="number" step="any" min="0" value="${R()}"></label><button class="b" data-act="live">Fetch live rate</button>`,'Save',()=>{
  const r=num('#r');if(!(r>0))return bad('Enter a rate above zero');if(r!=R())S.fx={r,d:today(),manual:true};save();render()})}
