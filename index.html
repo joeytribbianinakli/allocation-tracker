@@ -18,7 +18,7 @@
   Do not loosen the policy (no 'unsafe-inline', no extra connect-src hosts): it is a deliberate privacy feature.
   To verify, open the file in a browser and check the console for "violates the following Content Security Policy".
 -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-W/4nBmPhQV2QboyoKA/+WqLnB/IQ0JQJq3jsXPzOVao='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-kMJvKeXROL6uwVJOPWEf7PNJ0gfS0078SBZ2ByJSCN0='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
 <link rel="icon" href="data:,">
 <title>Portfolio tracker</title>
 <style>
@@ -120,7 +120,7 @@ const COL=['#2f6fed','#17a58a','#f2a30f','#e5484d','#8e6bf2','#3bb5e8','#7bb83d'
 const PH='Unassigned';
 const uid=()=>Math.random().toString(36).slice(2,9),esc=s=>String(s??'').replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 const today=()=>new Date().toLocaleDateString('en-CA'),YR=new Date().getFullYear();
-const dflt=()=>({accounts:[],limits:[],exc:[],contribs:[],fx:{r:1.37,d:null,manual:false},cur:'CAD',sync:{},cats:{types:[...TYPES],cls:[...CLS],inst:[],holders:[]}});
+const dflt=()=>({accounts:[],limits:[],exc:[],contribs:[],tk:[],fx:{r:1.37,d:null,manual:false},cur:'CAD',sync:{},cats:{types:[...TYPES],cls:[...CLS],inst:[],holders:[]}});
 let S=dflt(),lock=null,U={tab:'overview',scope:'all',by:'cls',dd:[],ddo:false,ddb:null,dds:null,accBy:'t',cgb:'type',year:YR,open:new Set(),cg:'m',incO:false,incX:new Set()};
 const norm=o=>{const d=dflt();for(const k in d)if(o&&o[k]!=null&&typeof o[k]==typeof d[k])d[k]=o[k];const nu=v=>Number.isFinite(+v)?+v:0;d.exc=Array.isArray(d.exc)?d.exc.filter(e=>typeof e=='string'&&/^[ta]:./.test(e)):[];d.accounts.forEach(a=>{a.h=Array.isArray(a.h)?a.h:[];a.h.forEach(h=>{h.amt=nu(h.amt);h.tkr=typeof h.tkr=='string'?h.tkr.trim().toUpperCase().slice(0,15):'';h.nm=typeof h.nm=='string'?h.nm.trim().slice(0,60):''});a.inst=typeof a.inst=='string'?a.inst:'';a.holder=typeof a.holder=='string'?a.holder.trim():'';a.room=nu(a.room);a.lim=a.lim===true||(a.lim==null&&a.room>0);if(a.off===true&&!d.exc.includes('a:'+a.id))d.exc.push('a:'+a.id);delete a.off;a.al=typeof a.al=='number'&&a.al>=0&&a.al<=100?a.al:null;if(a.rooms&&typeof a.rooms=='object')for(const y in a.rooms)a.rooms[y]=nu(a.rooms[y])});d.contribs.forEach(c=>{c.amt=nu(c.amt);c.cad=nu(c.cad);c.date=String(c.date||'');c.k=c.k=='w'?'w':''});d.limits.forEach(l=>{if(l.d=='min'){l.min=nu(l.min);delete l.max}else{delete l.d;delete l.min;l.max=nu(l.max)}if(typeof l.val!='string')l.val=String(l.val??'');if(Array.isArray(l.ex))l.ex=l.ex.filter(e=>typeof e=='string'&&/^[thack]:./.test(e));else delete l.ex});if(!(d.fx.r>0))d.fx.r=1.37;if(!Array.isArray(d.cats.types)||!Array.isArray(d.cats.cls))d.cats=dflt().cats;d.cats.inst=Array.isArray(d.cats.inst)?d.cats.inst.filter(x=>typeof x=='string'):[];d.cats.holders=Array.isArray(d.cats.holders)?d.cats.holders.filter(x=>typeof x=='string'):[];
  const r0=d.cats.rooms;d.cats.rooms={};if(r0&&typeof r0=='object'&&!Array.isArray(r0))for(const t in r0){const v=nu(r0[t]);if(v>0)d.cats.rooms[t]=v}
@@ -129,6 +129,9 @@ const norm=o=>{const d=dflt();for(const k in d)if(o&&o[k]!=null&&typeof o[k]==ty
  d.accounts.forEach(a=>{const v=d.cats.rooms[a.type];if(v>0&&!a.lim&&!(a.room>0)){a.lim=true;a.room=v;const al=d.cats.alerts[a.type];if(typeof al=='number')a.al=al}});d.cats.rooms={};d.cats.alerts={};
  /* legacy data from before holders existed: park those accounts under a placeholder holder (rename it in Manage categories → Holders) */
  if(d.accounts.some(a=>!a.holder)){d.accounts.forEach(a=>{if(!a.holder)a.holder=PH});if(!d.cats.holders.includes(PH))d.cats.holders.push(PH)}
+ /* ticker list: every ticker you hold or have saved, with its default investment type and currency */
+ {const seen=new Set(),L=[];(Array.isArray(d.tk)?d.tk:[]).forEach(e=>{if(!e||typeof e!='object')return;const t=String(e.t||'').trim().toUpperCase();if(!/^[A-Z0-9][A-Z0-9.\-^=]{0,14}$/.test(t)||seen.has(t))return;seen.add(t);L.push({t,cls:typeof e.cls=='string'?e.cls.trim().slice(0,60):'',cur:e.cur=='USD'?'USD':'CAD'})});
+  d.accounts.forEach(a=>a.h.forEach(h=>{if(h.tkr&&!seen.has(h.tkr)){seen.add(h.tkr);L.push({t:h.tkr,cls:h.cls||'',cur:h.cur=='USD'?'USD':'CAD'})}}));d.tk=L}
  return d};
 /* ---------- money ---------- */
 const R=()=>S.fx.r,toCAD=(a,c)=>c=='USD'?a*R():a,pc=x=>(x*100).toFixed(1)+'%';
@@ -159,9 +162,17 @@ const TKL={
  'Real estate':'VNQ XLRE IYR SCHH RWR XRE ZRE VRE REI.UN GRT.UN CAR.UN DIR.UN BEI.UN SRU.UN HR.UN KMP.UN AP.UN CRR.UN O PLD AMT SPG WELL PSA',
  'Crypto':'BTC ETH XRP DOGE ADA LTC DOT AVAX BNB SHIB MATIC USDT USDC XLM ATOM TRX'};
 const TKM=Object.create(null);Object.entries(TKL).forEach(([c,l])=>l.split(' ').forEach(t=>TKM[t]=c));
+/* TICKER LIST (S.tk): one entry per ticker, {t, cls, cur} = its default investment type (may be '') and currency. One list feeds the Add holding dialog, the Limits ticker picker and the Tickers sheet of the Excel file, so a ticker added in any of them shows up in all of them. A holding still stores its own type and currency; the list supplies the defaults. tkAll() also picks up tickers that only exist on holdings or limits (older data), so nothing has to be migrated. */
+const TKRE=/^[A-Z0-9][A-Z0-9.\-^=]{0,14}$/;
+const tkAll=()=>{const m=new Map((S.tk||[]).map(e=>[e.t,e]));rows().forEach(x=>{const t=x.h.tkr;if(t&&!m.has(t))m.set(t,{t,cls:x.h.cls||'',cur:x.h.cur=='USD'?'USD':'CAD'})});S.limits.forEach(L=>tkl(L).forEach(t=>{if(!m.has(t))m.set(t,{t,cls:'',cur:'CAD'})}));return[...m.values()].sort((a,b)=>a.t<b.t?-1:a.t>b.t?1:0)};
+const tkGet=t=>tkAll().find(e=>e.t==t)||null,tkHeld=t=>rows().filter(x=>x.h.tkr==t);
+const tkPut=(t,cls,cur)=>{S.tk=tkAll();let e=S.tk.find(x=>x.t==t);if(!e){e={t,cls:cls||'',cur:cur=='USD'?'USD':'CAD'};S.tk.push(e)}else if(!e.cls&&cls)e.cls=cls;return e};
+const tkApply=P=>{(P.tks||[]).forEach(e=>{const x=tkPut(e.t,e.cls,e.cur);if(e.cls)x.cls=e.cls;if(e.cur)x.cur=e.cur;if(e.cls&&!allCls().some(c=>c.toLowerCase()==e.cls.toLowerCase()))S.cats.cls.push(e.cls)})};
 const tkBase=t=>t.replace(/\.(TO|V|TSX|TSXV|NE|CN|NEO)$/,'');
 function tkCls(t){t=String(t||'').trim().toUpperCase();if(!t)return null;
- const own=rows().find(x=>x.h.tkr==t);if(own)return{cls:own.h.cls,src:'p',nm:own.h.nm};
+ const reg=(S.tk||[]).find(e=>e.t==t),own=rows().find(x=>x.h.tkr==t);
+ if(reg&&reg.cls)return{cls:reg.cls,src:'r',cur:reg.cur,nm:own?own.h.nm:''};
+ if(own)return{cls:own.h.cls,src:'p',nm:own.h.nm,cur:reg?reg.cur:own.h.cur};
  const c=TKM[t]||TKM[tkBase(t)]||TKM[t.split(/[.\-]/)[0]]||(/-(USD|CAD|USDT)$/.test(t)?'Crypto':null);return c?{cls:c,src:'l'}:null}
 const KEY={tkr:x=>lbl(x.h),cls:x=>x.h.cls,acc:x=>alabel(x.a),type:x=>x.a.type,cur:x=>x.h.cur,holder:x=>x.a.holder||'No holder'};
 const group=(r,by)=>{const m={};r.forEach(x=>{const k=KEY[by](x);m[k]=(m[k]||0)+x.v});return Object.entries(m).filter(e=>e[1]>0).sort((a,b)=>b[1]-a[1])};
@@ -414,7 +425,7 @@ function vOver(){const all=visRows(),T=sum(all);if(!S.accounts.length)return emp
  ${cv?CKSEL():sv?SKSEL():`<label>Group by<select data-chg="by">${O([['cls','Investment type'],['tkr','Holding (ticker)'],['acc','Account']],U.by)}</select></label>`}</div>
  ${cv?vCons(sr,st):sv?vSank(sr,st):st?`<div class="charts three"><div><div class="k ct">Holders</div>${allBtn('holder',who)}${donut(gh,st,'holder')}${legend(gh,st,'holder')}</div><div><div class="k ct">Account types</div>${allBtn('type','All account types')}${donut(gt,st,'type')}${legend(gt,st,'type')}</div><div><div class="k ct">${esc(BYN[U.by])}</div>${allBtn(U.by,U.by=='cls'?'All investment types':U.by=='tkr'?'All holdings':'All accounts')}${donut(g,st,U.by)}${legend(g,st,U.by)}${U.by=='tkr'&&!sr.some(x=>x.h.tkr||x.h.nm)?'<div class="k" style="text-align:center;margin-top:6px">No tickers yet. Add one when you add or edit a holding.</div>':''}</div></div>
  <div style="margin-top:16px"><div class="row" style="gap:6px 10px"><b>Currency</b>${gc.map(([n,v])=>`<button class="chip" data-act="dd" data-by="cur" data-n="${esc(n)}"><span class="dot" style="background:${col(n)}"></span>${esc(n)} ${fmt(v)} · ${pc(v/st)}</button>`).join('')}</div><div class="bar">${gc.map(([n,v])=>`<i title="${esc(n)}: ${pc(v/st)}" style="width:${v/st*100}%;background:${col(n)}"></i>`).join('')}</div></div><div class="k" style="text-align:center;margin-top:10px">${esc(who)} · click a slice or row to start a drill-down.</div>`:'<p class="k">Nothing held in this selection yet.</p>'}</div>`+vDD(sr)}
-function vAcc(){const T=sum(rows()),gh=U.accBy=='h';let h=`<div class="row" style="margin:16px 0 0"><h2 class="sp">Accounts</h2><div class="seg"><button class="${gh?'':'on'}" data-act="accBy" data-v="t">By type</button><button class="${gh?'on':''}" data-act="accBy" data-v="h">By holder</button></div><button class="b" data-act="manage">Manage categories</button>${S.accounts.length?'<button class="b" data-act="addHold">Add holding</button>':''}<button class="b" data-act="csvImp">Import Excel</button><button class="b p" data-act="addAcc">Add account</button></div>`;if(!S.accounts.length)return h+emptyCard;
+function vAcc(){const T=sum(rows()),gh=U.accBy=='h';let h=`<div class="row" style="margin:16px 0 0"><h2 class="sp">Accounts</h2><div class="seg"><button class="${gh?'':'on'}" data-act="accBy" data-v="t">By type</button><button class="${gh?'on':''}" data-act="accBy" data-v="h">By holder</button></div><button class="b" data-act="manage">Manage categories</button><button class="b" data-act="tkMan">Manage tickers</button>${S.accounts.length?'<button class="b" data-act="addHold">Add holding</button>':''}<button class="b" data-act="csvImp">Import Excel</button><button class="b p" data-act="addAcc">Add account</button></div>`;if(!S.accounts.length)return h+emptyCard;
  const nh=S.accounts.filter(a=>a.holder==PH).length;if(nh)h+=`<div class="alert"><b>${nh} account${nh>1?'s are':' is'} on the placeholder holder “${PH}”.</b> Edit ${nh>1?'each account':'the account'} to choose its real holder, or rename “${PH}” under Manage categories → Holders.</div>`;
  h+=`<div class="row" style="margin:10px 0 0;justify-content:flex-end"><button class="b" data-act="expA">Expand all</button><button class="b" data-act="colA">Collapse all</button></div>`;
  (gh?holders():types()).forEach(t=>{h+=`<div class="th"><span>${esc(t)}</span><span>${fmt(sum(filt((gh?'h:':'t:')+t)))}</span></div>`;
@@ -463,7 +474,7 @@ function vCon(){const ys=[...new Set([YR,U.year,...S.contribs.map(c=>+c.date.sli
 function vLim(){const R2=S.limits.map(L=>({L,x:lim(L)}));
  const card=({L,x})=>{const low=isLow(L),o=lbad(L,x),th=thr(L),id='L:'+L.id,cl=!U.le.has(id);return `<div class="li"><div class="lh"><button class="tg" data-act="lT" data-id="${esc(id)}" aria-expanded="${!cl}" aria-label="${cl?'Expand':'Collapse'} ${esc(lname(L))} limit">${cl?'▸':'▾'}</button><div class="lt" data-act="lT" data-id="${esc(id)}"><b>${esc(lname(L))}</b> <span class="lg">${low?'≥':'≤'} ${th}% of ${esc(scopeName(L.sc))}</span></div><span class="lp">${pc(x.p)}</span><span class="tag ${o?'bad':'ok'}">${o?(low?'Under minimum':'Over limit'):'OK'}</span><button class="ib" data-act="editL" data-id="${esc(L.id)}">Edit</button><button class="ib" data-act="delL" data-id="${esc(L.id)}">Delete</button></div><div class="bar"><i style="width:${Math.min(100,x.p*100)}%;background:${o?'var(--r)':'var(--g)'}"></i><u style="left:${Math.min(99.5,th)}%"></u></div>${cl?'':`<div class="ld">${fmt(x.m)} of ${fmt(x.t)}${exBul(L)}</div>`}</div>`};
  const sec=(low,ttl,sub,eg)=>{const l=R2.filter(r=>isLow(r.L)==low),n=l.filter(r=>lbad(r.L,r.x)).length,id=low?'sec:min':'sec:max',cl=U.lc.has(id);return `<div class="ls ${low?'mn':'mx'}"><div class="row" style="margin:0 0 6px;gap:4px"><button class="tg" data-act="lT" data-id="${id}" aria-expanded="${!cl}" aria-label="${cl?'Expand':'Collapse'} ${esc(ttl)}" style="font-size:12px;width:20px;padding:2px">${cl?'▸':'▾'}</button><h3 class="sp lsh" data-act="lT" data-id="${id}">${ttl} <span class="lsc">${l.length}</span>${n?` <span class="tag bad">${n} ${low?'under':'over'}</span>`:''}</h3></div>`+(cl?'':l.length?`<div class="ll">${l.map(card).join('')}</div>`:`<div class="k" style="margin:0 0 0 26px">${eg}</div>`)+'</div>'};
- return `<div class="row" style="margin:16px 0 0"><h2 class="sp">Limits &amp; alerts</h2><button class="b sm" data-act="lAll" data-v="e">Expand all</button><button class="b sm" data-act="lAll" data-v="c">Collapse all</button><button class="b p sm" data-act="addL">Add limit</button></div>`+
+ return `<div class="row" style="margin:16px 0 0"><h2 class="sp">Limits &amp; alerts</h2><button class="b sm" data-act="lAll" data-v="e">Expand all</button><button class="b sm" data-act="lAll" data-v="c">Collapse all</button><button class="b sm" data-act="tkMan">Manage tickers</button><button class="b p sm" data-act="addL">Add limit</button></div>`+
   sec(false,'Maximum limits','You get an alert when a share goes over its maximum.','No maximum limits yet. For example, cap Gold at 10% of your portfolio, or cap VFV + VOO together at 30% (CAD and USD funds are combined). You can choose which accounts a limit includes.')+
   sec(true,'Minimum limits','You get an alert when a share falls below its minimum.','No minimum limits yet. For example, keep Bonds at 20% or more, or make sure an ETF you rely on stays above 5%.')}
 const A=(u,t)=>`<a href="${u}" target="_blank" rel="noopener noreferrer">${t}</a>`;
@@ -521,7 +532,7 @@ const bad=m=>{$('#er').textContent=m;return false};
 function modal(title,body,ok,fn,cls=''){const d=$('#dlg');d.className=cls;d.innerHTML=`<h3>${title}</h3><div class="f">${body}</div><p class="er" id="er"></p><div class="ar"><button class="b cx" data-act="x">${ok?'Cancel':'Close'}</button>${ok?`<button class="b p" id="ok">${ok}</button>`:''}</div>`;
  if(!d.open)d.showModal();d.querySelector('input,select')?.focus();
  if(ok)$('#ok').onclick=async()=>{try{if(await fn()!==false)d.close()}catch(e){bad(e.message)}}}
-$('#dlg').onkeydown=e=>{if(e.key=='Enter'&&e.target.tagName!='BUTTON'){e.preventDefault();if(e.target.id?.startsWith('cn-')){e.target.parentElement.querySelector('[data-act]')?.click();return}$('#ok')?.click()}};
+$('#dlg').onkeydown=e=>{if(e.key=='Enter'&&e.target.tagName!='BUTTON'){e.preventDefault();if(e.target.id?.startsWith('tkn-')){$('#tkadd')?.click();return}if(e.target.id?.startsWith('cn-')){e.target.parentElement.querySelector('[data-act]')?.click();return}$('#ok')?.click()}};
 $('#dlg').oncancel=e=>{if($('#dlg').classList.contains('lk'))e.preventDefault()};
 const num=id=>parseFloat($(id).value);
 const pick=(id,nid,list,cur,ph)=>`<select id="${id}" data-new="${nid}">${O(list,cur)}<option value="__new">+ New…</option></select><input id="${nid}" placeholder="${ph}" ${list.length?'hidden':''}>`;
@@ -542,12 +553,12 @@ function accModal(id){const a=id?acc(id):{name:'',type:catT()[0]||'',inst:'',hol
  $('#lim').onchange=()=>{$('#limf').hidden=!$('#lim').checked}}
 function hModal(aid,hid,pre={}){const a=aid?acc(aid):null;if(!a&&!S.accounts.length)return toast('Add an account first');
  const h=hid?a.h.find(x=>x.id==hid):{cls:'',amt:'',cur:pre.cur||'CAD',tkr:'',nm:''},own=[...new Set(rows().map(x=>x.h.tkr).filter(Boolean))],
- dl=[...own.map(t=>[t,rows().find(x=>x.h.tkr==t).h.cls]),...Object.keys(TKM).filter(t=>!own.includes(t)).map(t=>[t,TKM[t]])];
+ dl=tkAll().map(e=>[e.t,(e.cls||'Type not set')+' · '+e.cur]);
  modal(hid?'Edit holding':a?'Add holding to '+esc(a.name):'Add holding',`${a?'':`<label>Account<select id="ac">${accOpts()}</select></label>`}
  <label>Ticker (optional)<input id="tk" list="tkl" value="${esc(h.tkr)}" maxlength="15" placeholder="e.g. AMZN, VFV, VFV.TO" autocomplete="off" autocapitalize="characters" spellcheck="false" style="text-transform:uppercase"></label>
  <datalist id="tkl">${dl.map(([t,c])=>`<option value="${esc(t)}" label="${esc(c)}"></option>`).join('')}</datalist>
  <label>Name (optional)<input id="nm" value="${esc(h.nm)}" maxlength="60" placeholder="e.g. Amazon, or Gold bars when there is no ticker"></label>
- <label>Investment type<select id="c" data-new="cn">${hid?'':'<option value="">Choose type…</option>'}${O(allCls(),h.cls)}<option value="__new">+ New…</option></select><input id="cn" placeholder="New investment type" hidden></label><div class="k" id="th"></div>
+ <label>Investment type<select id="c" data-new="cn">${hid?'':'<option value="">Choose type…</option>'}${O(allCls(),h.cls)}<option value="__new">+ New…</option></select><input id="cn" placeholder="New investment type" hidden></label><div class="k" id="th"></div><div class="k"><button type="button" class="ib" data-act="tkMan" style="padding:0;text-decoration:underline">Manage tickers</button> to edit or delete saved tickers (this form closes).</div>
  <div class="two"><label>Amount invested<input id="m" type="number" min="0" step="any" value="${h.amt}"></label><label>Currency<select id="u">${O(['CAD','USD'],h.cur)}</select></label></div>
  ${hid?'':`<label class="chk"><input type="checkbox" id="more"${pre.more?' checked':''}> Add another holding after saving</label>`}`,'Save',()=>{
  const A=a||acc($('#ac').value),tk=$('#tk').value.trim().toUpperCase().replace(/\s+/g,''),nm0=$('#nm').value.trim(),cls=canon(pv('c','cn'),allCls()),amt=num('#m');
@@ -555,19 +566,23 @@ function hModal(aid,hid,pre={}){const a=aid?acc(aid):null;if(!a&&!S.accounts.len
  if(tk&&!/^[A-Z0-9][A-Z0-9.\-^=]{0,14}$/.test(tk))return bad('Use only letters, numbers, dots and dashes in the ticker (up to 15 characters)');
  if(!cls)return bad('Choose an investment type');if(!(amt>=0))return bad('Enter a valid amount');
  const nm=nm0?canon(nm0,[...new Set(rows().map(x=>x.h.nm).filter(Boolean))]):'',o={id:hid||uid(),cls,amt,cur:$('#u').value,tkr:tk,nm};
- if(hid)Object.assign(h,o);else A.h.push(o);save();render();
+ if(hid)Object.assign(h,o);else A.h.push(o);if(tk)tkPut(tk,cls,o.cur);save();render();
  if(!hid&&$('#more').checked){toast('Added '+(tk||nm||cls));hModal(aid,null,{cur:o.cur,more:1,acc:A.id});return false}});
  /* typing a ticker picks the investment type for you (until you pick one yourself) */
  const sel=$('#c'),tkI=$('#tk'),nmI=$('#nm'),th=$('#th'),cn=$('#cn');let T=!!hid;
  if(!a&&pre.acc)$('#ac').value=pre.acc;
  const setCls=c=>{const m=allCls().find(x=>x.toLowerCase()==c.toLowerCase());if(m){sel.value=m;cn.hidden=true}else{sel.value='__new';cn.hidden=false;cn.value=c}},clr=()=>{sel.value='';cn.hidden=true};
- const det=()=>{const t=tkI.value.trim().toUpperCase().replace(/\s+/g,''),r=tkCls(t);
+ const uI=$('#u');let CU=!!hid;
+ const det=()=>{const t=tkI.value.trim().toUpperCase().replace(/\s+/g,''),r=tkCls(t),rg=t?tkGet(t):null;let m;
   if(!t){th.textContent='Ticker is optional. Leave it blank for cash, gold bars, property and similar.';if(!T)clr();return}
-  if(!r){th.textContent='Not in the built-in list. Choose the investment type yourself.';if(!T)clr();return}
-  if(!T)setCls(r.cls);if(r.nm&&!nmI.value.trim())nmI.value=r.nm;
-  const cur=(sel.value=='__new'?cn.value.trim():sel.value).toLowerCase();
-  th.textContent=r.src=='p'?`Same type as your other ${t} holding: ${r.cls}.`:cur&&cur!=r.cls.toLowerCase()?`Usually listed as ${r.cls}. Your choice is kept.`:T?`Recognised as ${r.cls}.`:`Recognised as ${r.cls}. Change it if that is not right.`};
- tkI.addEventListener('input',det);sel.addEventListener('change',()=>{T=true;det()});det();tkI.focus()}
+  if(rg&&!CU)uI.value=rg.cur;
+  if(!r){m='Not on your ticker list or in the built-in guesses. Choose the investment type yourself.';if(!T)clr()}
+  else{if(!T)setCls(r.cls);if(r.nm&&!nmI.value.trim())nmI.value=r.nm;
+   const cur=(sel.value=='__new'?cn.value.trim():sel.value).toLowerCase();
+   m=r.src=='r'?`On your ticker list as ${r.cls}.`:r.src=='p'?`Same type as your other ${t} holding: ${r.cls}.`:cur&&cur!=r.cls.toLowerCase()?`Usually listed as ${r.cls}. Your choice is kept.`:T?`Recognised as ${r.cls}.`:`Recognised as ${r.cls}. Change it if that is not right.`}
+  const cu=uI.value;if(rg){if(rg.cur!=cu)m+=` On your ticker list ${t} is ${rg.cur}; this holding will be saved as ${cu}.`}else if(TKRE.test(t))m+=` New ticker: it will be added to your ticker list as ${cu}.`;
+  th.textContent=m};
+ tkI.addEventListener('input',det);sel.addEventListener('change',()=>{T=true;det()});uI.addEventListener('change',()=>{CU=true;det()});det();tkI.focus()}
 const accOpts=()=>holders().map(hn=>`<optgroup label="${esc(hn)}">${S.accounts.filter(a=>(a.holder||'No holder')==hn).map(a=>`<option value="${esc(a.id)}">${esc(a.name)} · ${esc(a.type)}</option>`).join('')}</optgroup>`).join('');
 function cModal(kind){if(!S.accounts.length)return toast('Add an account first');const wd=kind=='w';
  modal(wd?'Add withdrawal':'Add contribution',`<label>Account<select id="a">${accOpts()}</select></label><div class="thr"><label>Year<input id="dy" type="number" min="1900" max="2100" step="1" value="${today().slice(0,4)}"></label><label>Month (optional)<select id="dmo"><option value="">Not specified</option>${MN.map((n,i)=>`<option value="${i+1}"${i+1==+today().slice(5,7)?' selected':''}>${n}</option>`).join('')}</select></label><label>Day (optional)<select id="dda"><option value="">Not specified</option>${Array.from({length:31},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join('')}</select></label></div><span class="k">Only the year is required. Enter just a year, a month and year, or a full date, whichever you know.</span>
@@ -581,16 +596,16 @@ function lModal(id){if(!S.accounts.length)return toast('Add an account first');
  /* sel = what is LEFT OUT (same saved format as always: 't:<type>' / 'a:<account id>'), but the picker shows it the other way round: a ticked box = included */
  const gv=E?(E.k=='tkr'?'tkr:*':E.k+':'+E.val):'',cl=allCls();if(E&&E.k=='cls'&&!cl.includes(E.val))cl.push(E.val);
  /* tsel = the tickers that count toward this limit (one or many); own = tickers you hold now */
- const tsel=new Set(E?tkl(E):[]),own=[...new Set(rows().map(x=>x.h.tkr).filter(Boolean))],TKRE=/^[A-Z0-9][A-Z0-9.\-^=]{0,14}$/;
+ const tsel=new Set(E?tkl(E):[]),nt=new Map();
  modal(E?'Edit limit':'New limit',`<label>Applies to<select id="s">${scopeSel(E?E.sc:'all')}</select></label><label>Investment type, holdings or currency<select id="g"><optgroup label="Investment type">${O(cl.map(c=>['cls:'+c,c]),gv)}</optgroup><optgroup label="Specific holdings">${O([['tkr:*','Specific tickers (one or more)']],gv)}</optgroup><optgroup label="Currency">${O([['cur:CAD','CAD holdings'],['cur:USD','USD holdings']],gv)}</optgroup></select></label>
- <div id="tkp" class="exd" hidden><div class="k" style="margin:0 0 6px">Tick every ticker that counts toward this limit. Their total is measured together, and USD funds are converted to CAD at your exchange rate. For example, tick VFV (CAD) and VOO (USD) to cap them as one S&amp;P 500 share.</div><div class="exl" id="tkl2"></div><div class="row" style="margin-top:8px;flex-wrap:nowrap"><input id="gt" placeholder="Add other tickers, e.g. VOO, IVV" autocomplete="off" autocapitalize="characters" spellcheck="false" style="flex:1;text-transform:uppercase"><button type="button" class="b" id="tka">Add</button></div></div>
+ <div id="tkp" class="exd" hidden><div class="k" style="margin:0 0 6px">Tick every ticker that counts toward this limit. Their total is measured together, and USD funds are converted to CAD at your exchange rate. For example, tick VFV (CAD) and VOO (USD) to cap them as one S&amp;P 500 share.</div><div class="exl" id="tkl2"></div><div class="row" style="margin-top:8px;flex-wrap:nowrap"><input id="gt" placeholder="New ticker(s), e.g. VOO, IVV" autocomplete="off" autocapitalize="characters" spellcheck="false" style="flex:1;min-width:0;text-transform:uppercase"><select id="gu" aria-label="Currency of the new ticker(s)" style="width:auto"><option>CAD</option><option>USD</option></select><button type="button" class="b" id="tka">Add</button></div><div class="k" style="margin-top:6px">A new ticker goes on your ticker list (shared with Add holding and the Excel file) in the currency chosen here. Change a ticker later with Manage tickers.</div></div>
  <label>Alert me when<select id="dr"><option value="max"${E&&isLow(E)?'':' selected'}>the share goes over a maximum</option><option value="min"${E&&isLow(E)?' selected':''}>the share falls below a minimum</option></select></label>
  <label><span id="xl">Maximum share (%)</span><input id="x" type="number" min="0" max="100" step="any" placeholder="10" value="${E?thr(E):''}"></label>
  <details class="exd" open><summary>Accounts included in this limit <span class="k" id="exn"></span></summary><div class="k" id="exh" style="margin:8px 0 6px"></div><div class="exl" id="exb"></div></details>`,'Save',()=>{
   const low=$('#dr').value=='min',m=num('#x');if(!(m>=0&&m<=100)||(low&&!(m>0)))return bad(low?'Enter a minimum above 0 and up to 100':'Enter a percentage from 0 to 100');const[k,...v]=$('#g').value.split(':');let val=v.join(':');if(k=='tkr'){if($('#gt').value.trim()&&addT()===false)return false;if(!tsel.size)return bad('Tick or type at least one ticker');val=[...tsel].join(',')}
   const ex=[...sel,...keep],L={id:E?E.id:uid(),sc:$('#s').value,k,val};if(low){L.d='min';L.min=m}else L.max=m;if(ex.length)L.ex=ex;
   if(ex.length&&!(sum(limRows(L))>0))return bad('Nothing would be left to measure. Tick at least one account to include.');
-  if(E){delete E.max;delete E.min;delete E.d;Object.assign(E,L);if(!ex.length)delete E.ex}else S.limits.push(L);save();U.tab='limits';render()});
+  if(k=='tkr')nt.forEach((v,t)=>{if(tsel.has(t))tkPut(t,v.cls,v.cur)});if(E){delete E.max;delete E.min;delete E.d;Object.assign(E,L);if(!ex.length)delete E.ex}else S.limits.push(L);save();U.tab='limits';render()});
  /* The account picker. It only offers what is inside the chosen "Applies to" scope: account types first (untick one = leave out every account of that type), each expandable to untick single accounts. It repaints whenever "Applies to" changes and drops left-out items that no longer apply. */
  /* the Overview include list must NOT affect limits, so every account is listed here, even ones left out of the dashboard */
  const inScope=(sc,a)=>(sc=='all'||(sc[0]=='h'&&(a.holder||'No holder')==sc.slice(2))||(sc[0]=='t'&&a.type==sc.slice(2))||(sc[0]=='a'&&a.id==sc.slice(2)));
@@ -610,8 +625,8 @@ function lModal(id){if(!S.accounts.length)return toast('Add an account first');
  $('#s').addEventListener('change',paint);
  const dirUI=()=>{$('#xl').textContent=$('#dr').value=='min'?'Minimum share (%)':'Maximum share (%)'};$('#dr').addEventListener('change',dirUI);dirUI();
  /* the ticker picker: owned tickers (plus any typed ones) as tick boxes; typed tickers are validated like the holding dialog's ticker field */
- const paintT=()=>{const all=[...new Set([...own,...tsel])].sort();$('#tkl2').innerHTML=all.length?all.map(t=>{const cs=[...new Set(rows().filter(x=>x.h.tkr==t).map(x=>x.h.cur))];return `<label class="chk"><input type="checkbox" data-tk="${esc(t)}"${tsel.has(t)?' checked':''}> ${esc(t)} <span class="k">${cs.length?esc(cs.join(' / ')):'not held right now'}</span></label>`}).join(''):'<div class="k">No holdings with a ticker yet. Type tickers below.</div>'};
- const addT=()=>{const inp=$('#gt'),ps=inp.value.toUpperCase().split(/[\s,;+]+/).filter(Boolean),b=ps.find(p=>!TKRE.test(p));if(b){bad('“'+b+'” is not a valid ticker (letters, numbers, dots and dashes, up to 15 characters)');return false}ps.forEach(p=>tsel.add(p));inp.value='';$('#er').textContent='';paintT();return true};
+ const paintT=()=>{const reg=new Map(tkAll().map(e=>[e.t,e]));nt.forEach((v,t)=>{if(!reg.has(t))reg.set(t,{t,cls:v.cls,cur:v.cur})});tsel.forEach(t=>{if(!reg.has(t))reg.set(t,{t,cls:'',cur:'CAD'})});const all=[...reg.keys()].sort();$('#tkl2').innerHTML=all.length?all.map(t=>{const e=reg.get(t),hd=tkHeld(t).length;return `<label class="chk"><input type="checkbox" data-tk="${esc(t)}"${tsel.has(t)?' checked':''}> ${esc(t)} <span class="k">${e.cur}${e.cls?' · '+esc(e.cls):''}${hd?'':' · not held right now'}${nt.has(t)?' · new':''}</span></label>`}).join(''):'<div class="k">Your ticker list is empty. Type tickers below.</div>'};
+ const addT=()=>{const inp=$('#gt'),ps=inp.value.toUpperCase().split(/[\s,;+]+/).filter(Boolean),b=ps.find(p=>!TKRE.test(p));if(b){bad('“'+b+'” is not a valid ticker (letters, numbers, dots and dashes, up to 15 characters)');return false}ps.forEach(p=>{tsel.add(p);if(!tkGet(p)&&!nt.has(p))nt.set(p,{cls:tkCls(p)?.cls||'',cur:$('#gu').value})});inp.value='';$('#er').textContent='';paintT();return true};
  $('#tkl2').addEventListener('change',e=>{const t=e.target.dataset.tk;if(!t)return;e.target.checked?tsel.add(t):tsel.delete(t)});
  $('#tka').onclick=addT;$('#gt').addEventListener('keydown',e=>{if(e.key=='Enter'){e.preventDefault();e.stopPropagation();addT()}});
  const tkUI=()=>{$('#tkp').hidden=$('#g').value!='tkr:*'};$('#g').addEventListener('change',()=>{tkUI();if(!$('#tkp').hidden)$('#gt').focus()});paintT();tkUI();paint()}
@@ -716,7 +731,7 @@ function catSave(){if(!catCommit())return false;let c=0;
   if(hr.size){const g=new Map();S.accounts.forEach(a=>{const nh=hr.has(a.holder)?hr.get(a.holder):a.holder,k=(nh||'').toLowerCase()+'|'+a.name.trim().toLowerCase(),e=g.get(k)||{n:0,mv:0,a,nh};e.n++;if(nh!=a.holder)e.mv=1;g.set(k,e)});
    const d=[...g.values()].find(e=>e.n>1&&e.mv);if(d)return bad('That would give “'+d.nh+'” two accounts named “'+d.a.name+'”. Rename one of those accounts first.')}}
  CK.forEach(k=>{const ren=new Map(),L=[],clr=new Set();
-  CD[k].forEach(r=>{if(r.del){c++;if(k=='inst'&&r.o!=null)clr.add(r.o);return}
+  CD[k].forEach(r=>{if(r.del){c++;if((k=='inst'||k=='cls')&&r.o!=null)clr.add(r.o);return}
    if(r.mg){c++;if(r.o!=null){const f=catFinal(r);if(f!=r.o)ren.set(r.o,f)}return}
    if(r.o==null||r.n!=r.o)c++;
    L.push(r.n);if(r.o!=null&&r.n!=r.o)ren.set(r.o,r.n)});
@@ -725,7 +740,7 @@ function catSave(){if(!catCommit())return false;let c=0;
    if(k=='inst'){S.accounts.forEach(a=>{if(ren.has(a.inst))a.inst=ren.get(a.inst);else if(clr.has(a.inst))a.inst=''})}
    else if(k=='types'){S.exc=S.exc.flatMap(e=>{if(e[0]!='t'||!ren.has(e.slice(2)))return[e];const o=e.slice(2),n=ren.get(o);return S.accounts.some(a=>a.type==n)?S.accounts.filter(a=>a.type==o).map(a=>'a:'+a.id):['t:'+n]});S.accounts.forEach(a=>{if(ren.has(a.type))a.type=ren.get(a.type)});rs('t:')}
    else if(k=='holders'){S.accounts.forEach(a=>{if(ren.has(a.holder))a.holder=ren.get(a.holder)});rs('h:')}
-   else{rows().forEach(x=>{if(ren.has(x.h.cls))x.h.cls=ren.get(x.h.cls)});S.limits.forEach(l=>{if(l.k=='cls'&&ren.has(l.val))l.val=ren.get(l.val);if(Array.isArray(l.ex))l.ex=l.ex.map(e=>e.startsWith('c:')&&ren.has(e.slice(2))?'c:'+ren.get(e.slice(2)):e)})}}
+   else{(S.tk||[]).forEach(e=>{if(ren.has(e.cls))e.cls=ren.get(e.cls);else if(clr.has(e.cls))e.cls=''});rows().forEach(x=>{if(ren.has(x.h.cls))x.h.cls=ren.get(x.h.cls)});S.limits.forEach(l=>{if(l.k=='cls'&&ren.has(l.val))l.val=ren.get(l.val);if(Array.isArray(l.ex))l.ex=l.ex.map(e=>e.startsWith('c:')&&ren.has(e.slice(2))?'c:'+ren.get(e.slice(2)):e)})}}
   S.cats[k]=L});
  U.dd=[];U.ddo=false;
  if(c){save();render();toast('Categories saved')}}
@@ -733,6 +748,49 @@ function catModal(){S.cats.types=catT();S.cats.holders=catH();S.cats.cls=allCls(
  const mk=k=>S.cats[k].map(n=>({o:n,n,del:0,mg:null}));
  CD={types:mk('types'),holders:mk('holders'),cls:mk('cls'),inst:mk('inst'),ed:null,open:new Set()};
  modal('Manage categories','<div id="cb"></div>','Save changes',catSave,'wide');catPaint()}
+/* ---------- Manage tickers: edit the shared ticker list (changes are staged until Save) ---------- */
+let TD=null;
+const tkCnt=t=>tkHeld(t).length,tkLims=t=>S.limits.filter(L=>tkl(L).includes(t)||exOf(L).includes('k:'+t)).length;
+function tkBody(){const cl=[...new Set([...allCls(),...TD.rows.map(r=>r.cls).filter(Boolean)])],CY=['CAD','USD'];
+ const rs=TD.rows.map((r,i)=>{const at=`data-i="${i}"`,hn=r.o==null?0:tkCnt(r.o),ln=r.o==null?0:tkLims(r.o),
+  sub=r.del?'will be removed'+(ln?' and taken out of '+ln+' limit'+(ln>1?'s':''):''):[r.o==null?'new':'',hn?'held in '+hn+' holding'+(hn>1?'s':''):r.o==null?'':'not held',ln?'in '+ln+' limit'+(ln>1?'s':''):''].filter(Boolean).join(' · ');
+  return r.del?`<div class="cr"><div class="cn dead">${esc(r.t)}<span class="k">${sub}</span></div><button class="ib" data-act="tkUndo" ${at}>Undo</button></div>`
+   :`<div class="cr"><input data-f="t" ${at} value="${esc(r.t)}" maxlength="15" aria-label="Ticker" autocomplete="off" spellcheck="false" style="width:104px;text-transform:uppercase"><select data-f="cls" ${at} aria-label="Investment type" style="width:auto;max-width:150px"><option value="">Type not set</option>${O(cl,r.cls)}</select><select data-f="cur" ${at} aria-label="Currency" style="width:auto">${O(CY,r.cur)}</select><span class="k" style="flex:1;min-width:110px">${sub}</span><button class="ib" data-act="tkDel" ${at}>Delete</button></div>`}).join('');
+ return (rs||'<div class="k" style="margin:8px 0">No tickers yet. Add one below, or add a holding that has a ticker.</div>')+`<div class="row" style="margin-top:10px;gap:6px"><input id="tkn-t" placeholder="New ticker" maxlength="15" autocomplete="off" autocapitalize="characters" spellcheck="false" style="width:140px;text-transform:uppercase"><select id="tkn-c" data-new="tkn-cn" aria-label="Investment type of the new ticker" style="width:auto;max-width:150px"><option value="">Type not set</option>${O(cl)}<option value="__new">+ New…</option></select><select id="tkn-u" aria-label="Currency of the new ticker" style="width:auto">${O(CY)}</select><button class="b" id="tkadd" data-act="tkAdd">Add</button></div><input id="tkn-cn" placeholder="New investment type" hidden style="margin-top:6px">`}
+function tkPaint(){const v={};['tkn-t','tkn-c','tkn-u','tkn-cn'].forEach(k=>{const e=$('#'+k);if(e)v[k]=e.value});$('#tb').innerHTML=tkBody();for(const k in v){const e=$('#'+k);if(e)e.value=v[k]}const c=$('#tkn-c');if(c&&c.value=='__new')$('#tkn-cn').hidden=false}
+function tkAddRow(){const t=$('#tkn-t').value.trim().toUpperCase().replace(/\s+/g,''),c0=$('#tkn-c').value,cls=c0=='__new'?canon($('#tkn-cn').value.trim(),allCls()):c0,cur=$('#tkn-u').value;
+ if(!t)return bad('Type a ticker first');if(!TKRE.test(t))return bad('Use only letters, numbers, dots and dashes in the ticker (up to 15 characters)');
+ if(c0=='__new'&&!cls)return bad('Type the new investment type, or pick one');
+ if(TD.rows.some(r=>!r.del&&r.t.trim().toUpperCase()==t))return bad('“'+t+'” is already on the list');
+ TD.rows.push({o:null,t,cls,cur,del:0});['tkn-t','tkn-cn'].forEach(k=>$('#'+k).value='');$('#tkn-c').value='';$('#tkn-cn').hidden=true;$('#er').textContent='';TD.uc=TD.uu=0;tkPaint();$('#tkn-t').focus()}
+function tkDelRow(i){const r=TD.rows[i];if(r.o==null){TD.rows.splice(i,1);return tkPaint()}const n=tkCnt(r.o);if(n)return toast('“'+r.o+'” is held in '+n+' holding'+(n>1?'s':'')+'. Remove those holdings first, or rename the ticker instead.');r.del=1;tkPaint()}
+function tkSave(){const live=TD.rows.filter(r=>!r.del),seen=new Set(),map=new Map(),gone=new Set();
+ for(const r of live){r.t=r.t.trim().toUpperCase().replace(/\s+/g,'');
+  if(!TKRE.test(r.t))return bad(r.t?'“'+r.t+'” has characters that are not allowed. Use letters, numbers, dots and dashes (up to 15).':'A ticker cannot be blank. Delete the row instead.');
+  if(seen.has(r.t))return bad('“'+r.t+'” is on the list twice. Rename or delete one of them.');seen.add(r.t);if(r.o!=null&&r.t!=r.o)map.set(r.o,r.t)}
+ TD.rows.forEach(r=>{if(r.del&&r.o!=null&&!seen.has(r.o))gone.add(r.o)});
+ const orig=new Map(tkAll().map(e=>[e.t,e])),cas=$('#tkcur').checked,lines=[];let changed=gone.size>0||live.some(r=>r.o==null);
+ live.forEach(r=>{if(r.o==null)return;const o=orig.get(r.o)||{cls:'',cur:'CAD'},n=tkCnt(r.o),pl=n+' holding'+(n>1?'s':''),tc=r.cls&&r.cls!=o.cls,cc=r.cur!=o.cur;
+  if(r.t!=r.o||tc||cc||(r.cls||'')!=(o.cls||''))changed=true;
+  if(!n)return;if(r.t!=r.o)lines.push(r.o+' is renamed to '+r.t+' on '+pl);if(tc)lines.push(r.t+': investment type '+(o.cls||'not set')+' → '+r.cls+' on '+pl);
+  if(cc&&cas)lines.push(r.t+': currency '+o.cur+' → '+r.cur+' on '+pl+'. Amounts stay the same numbers, so their CAD value changes.')});
+ if(!changed)return;
+ const lt=S.limits.filter(L=>tkl(L).some(t=>gone.has(t))||exOf(L).some(e=>e[0]=='k'&&gone.has(e.slice(2)))).length,dl=S.limits.filter(L=>L.k=='tkr'&&tkl(L).length&&tkl(L).every(t=>gone.has(t))).length;
+ if(lt)lines.push('Removed '+[...gone].join(', ')+' from '+lt+' limit'+(lt>1?'s':'')+(dl?'; '+dl+' limit'+(dl>1?'s that only covered':' that only covered')+' '+(dl>1?'them are':'it is')+' deleted':''));
+ if(lines.length&&!confirm('Apply these changes to your holdings and limits?\n\n'+lines.join('\n')))return false;
+ live.forEach(r=>{if(r.o==null)return;const o=orig.get(r.o)||{cls:'',cur:'CAD'};tkHeld(r.o).forEach(x=>{if(r.cls&&r.cls!=o.cls)x.h.cls=r.cls;if(cas&&r.cur!=o.cur)x.h.cur=r.cur})});
+ rows().forEach(x=>{const h=x.h;if(h.tkr&&map.has(h.tkr))h.tkr=map.get(h.tkr)});
+ S.limits=S.limits.filter(L=>{if(Array.isArray(L.ex)){L.ex=L.ex.filter(e=>!(e[0]=='k'&&gone.has(e.slice(2)))).map(e=>e[0]=='k'&&map.has(e.slice(2))?'k:'+map.get(e.slice(2)):e);if(!L.ex.length)delete L.ex}
+  if(L.k!='tkr')return true;const l=tkl(L).filter(t=>!gone.has(t)).map(t=>map.get(t)||t);L.val=[...new Set(l)].join(',');return l.length>0});
+ live.forEach(r=>{if(r.cls&&!S.cats.cls.includes(r.cls)&&!allCls().some(c=>c==r.cls))S.cats.cls.push(r.cls)});
+ S.tk=live.map(r=>({t:r.t,cls:r.cls||'',cur:r.cur}));
+ U.dd=[];U.ddo=false;U.ddb=null;save();render();toast('Ticker list saved')}
+function tkModal(){TD={rows:tkAll().map(e=>({o:e.t,t:e.t,cls:e.cls,cur:e.cur,del:0})),uc:0,uu:0};
+ modal('Manage tickers',`<div class="k">This list feeds the Add holding dialog, the Limits page and the Excel file. Edit a ticker's name, investment type or currency, or add a new one. Renaming a ticker or changing its type updates the holdings and limits that use it. A ticker that is held can't be deleted.</div><div id="tb" style="max-height:48vh;overflow-y:auto;padding-right:6px">${tkBody()}</div><label class="chk"><input type="checkbox" id="tkcur" checked> If I change a ticker's currency, also change it on holdings already entered <span class="k">(their amounts stay the same numbers)</span></label>`,'Save changes',tkSave,'wide');
+ const tb=$('#tb');
+ tb.addEventListener('input',e=>{const t=e.target;if(t.dataset.f=='t'&&t.dataset.i!=null)TD.rows[+t.dataset.i].t=t.value;
+  if(t.id=='tkn-t'){const k=t.value.trim().toUpperCase().replace(/\s+/g,''),r=k?tkCls(k):null;if(r){const s=$('#tkn-c'),m=allCls().find(x=>x.toLowerCase()==r.cls.toLowerCase());if(!TD.uc&&m){s.value=m;$('#tkn-cn').hidden=true}if(!TD.uu&&r.cur)$('#tkn-u').value=r.cur}}});
+ tb.addEventListener('change',e=>{const t=e.target,f=t.dataset.f;if(f&&t.dataset.i!=null)TD.rows[+t.dataset.i][f]=t.value;if(t.id=='tkn-c')TD.uc=1;if(t.id=='tkn-u')TD.uu=1})}
 /* ---------- first run: create passphrase or restore from GitHub ---------- */
 let boot;
 function welcome(done){boot=done;
@@ -769,16 +827,25 @@ function csvPlanR(R){const errs=[],warns=[],recs=[];
  const names=[...new Set(rows().map(x=>x.h.nm).filter(Boolean))],tm={},na=new Map(),nc=new Set(),nt=new Set(),nh=new Set(),ni=new Set();
  const dmap=new Map(),dk=new Set();if(R.defs&&R.defs.length){const dh=R.defs[0].map(nk),di={};for(const k of['acc','holder','type','inst'])di[k]=dh.findIndex(x=>CSVA[k].includes(x));
  if(di.acc>=0)R.defs.slice(1).forEach(r=>{const g=k=>di[k]>=0?String(r[di[k]]??'').trim():'',n=g('acc').toLowerCase();if(!n)return;const hk=n+'|'+g('holder').toLowerCase();if(g('holder')&&dk.has(hk)){const m='Accounts sheet: “'+g('acc')+'” is listed more than once for '+g('holder')+'. A holder can only have one account with a given name.';if(!errs.includes(m))errs.push(m)}dk.add(hk);(dmap.get(n)||dmap.set(n,[]).get(n)).push({holder:g('holder'),type:g('type'),inst:g('inst')})})}
+ const tkp=new Map();
+ if(R.tks&&R.tks.length){const th=R.tks[0].map(nk),ti={t:th.findIndex(x=>CSVA.tkr.includes(x)),c:th.findIndex(x=>CSVA.cls.includes(x)),u:th.findIndex(x=>CSVA.cur.includes(x))};
+  if(ti.t>=0)R.tks.slice(1).forEach((r,i)=>{const g=j=>j>=0?String(r[j]??'').trim():'',t=g(ti.t).toUpperCase().replace(/\s+/g,'');if(!t)return;const pe=[];
+   if(!TKRE.test(t))pe.push('Ticker “'+t+'” has characters that are not allowed');
+   const cu0=g(ti.u).toUpperCase(),cu={'':'',CAD:'CAD',CA:'CAD',USD:'USD',US:'USD'}[cu0];if(cu===undefined)pe.push('Currency “'+cu0+'” must be CAD or USD');
+   let cl=g(ti.c);cl=CSVC[nk(cl)]||cl;if(cl){const kn=allCls().find(x=>x.toLowerCase()==cl.toLowerCase());if(kn)cl=kn}
+   if(pe.length){errs.push('Tickers sheet, row '+(i+2)+': '+pe.join(' · '));return}
+   if(tkp.has(t)){errs.push('Tickers sheet: “'+t+'” is listed more than once');return}
+   tkp.set(t,{t,cls:cl,cur:cu})})}
  R.slice(1).forEach((r,i)=>{const rn=i+2;if(r.every(c=>!String(c).trim()))return;
   const g=k=>ix[k]>=0?String(r[ix[k]]??'').trim():'',pe=[];
   let acn=g('acc'),hd0=g('holder'),ty0=g('type'),ins0=g('inst').slice(0,60),tk=g('tkr').toUpperCase().replace(/\s+/g,''),nm0=g('nm').slice(0,60),cl0=g('cls'),am0=g('amt'),cu0=g('cur').toUpperCase();
   let amb='';if(acn&&dmap.size&&!S.accounts.some(a=>a.name.toLowerCase()==acn.toLowerCase()&&(!hd0||(a.holder||'').toLowerCase()==hd0.toLowerCase()))){const c=(dmap.get(acn.toLowerCase())||[]).filter(d=>!hd0||d.holder.toLowerCase()==hd0.toLowerCase());if(c.length==1){hd0=hd0||c[0].holder;ty0=ty0||c[0].type;ins0=ins0||c[0].inst.slice(0,60)}else if(c.length>1)amb='“'+acn+'” is on the Accounts sheet for several holders ('+[...new Set(c.map(d=>d.holder||'no holder'))].join(', ')+'), so choose the Holder'}
   if(!acn)pe.push('Account is missing');
   const amt=am0===''?NaN:Number(am0.replace(/[$,\s]/g,''));if(am0==='')pe.push('Amount is missing');else if(!(amt>=0&&isFinite(amt)))pe.push('Amount “'+am0+'” is not a valid number');
-  const cur={'':'CAD',CAD:'CAD',CA:'CAD',USD:'USD',US:'USD'}[cu0];if(!cur)pe.push('Currency “'+cu0+'” must be CAD or USD');
+  const cur=cu0===''?((tk&&((tkp.get(tk)&&tkp.get(tk).cur)||(tkGet(tk)||{}).cur))||'CAD'):{CAD:'CAD',CA:'CAD',USD:'USD',US:'USD'}[cu0];if(!cur)pe.push('Currency “'+cu0+'” must be CAD or USD');
   if(tk&&!/^[A-Z0-9][A-Z0-9.\-^=]{0,14}$/.test(tk))pe.push('Ticker “'+tk+'” has characters that are not allowed');
-  let cls=CSVC[nk(cl0)]||cl0;if(!cls&&tk)cls=tm[tk]||tkCls(tk)?.cls||'';
-  if(!cls)pe.push(tk?'Investment type is missing (ticker '+tk+' is not in the built-in list)':'Investment type is missing (needed when there is no ticker)');
+  let cls=CSVC[nk(cl0)]||cl0;if(!cls&&tk)cls=(tkp.get(tk)&&tkp.get(tk).cls)||tm[tk]||tkCls(tk)?.cls||'';
+  if(!cls)pe.push(tk?'Investment type is missing (ticker '+tk+' is not on your ticker list or the built-in list)':'Investment type is missing (needed when there is no ticker)');
   else{const kn=allCls().find(x=>x.toLowerCase()==cls.toLowerCase());
    if(kn)cls=kn;else if(cl0&&!nc.has(cls.toLowerCase())){nc.add(cls.toLowerCase());warns.push('New investment type “'+cls+'” (row '+rn+'). Check the spelling.')}
    if(tk&&!tm[tk])tm[tk]=cls}
@@ -797,7 +864,13 @@ function csvPlanR(R){const errs=[],warns=[],recs=[];
   const ins=ins0?canon(ins0,catI()):'';if(ins&&!catI().some(x=>x.toLowerCase()==ins.toLowerCase())&&!ni.has(ins.toLowerCase())){ni.add(ins.toLowerCase());warns.push('New institution “'+ins+'” (row '+rn+'). Check the spelling.')}
   if(pe.length){errs.push('Row '+rn+': '+pe.join(' · '));return}
   recs.push({k:key,a:A,name:A?A.name:acn,holder,type,ins,h:{id:uid(),cls,amt,cur,tkr:tk,nm}})});
- return{recs,errs,warns}}
+ const tks=[],tkc=new Map(tkAll().map(e=>[e.t,e])),want=new Map(tkp),nocur=[];
+ recs.forEach(r=>{const t=r.h.tkr;if(t&&!want.has(t))want.set(t,{t,cls:r.h.cls,cur:r.h.cur,h:1})});
+ want.forEach(e=>{const ex=tkc.get(e.t);
+  if(!ex){if(!e.cur&&!e.h)nocur.push(e.t);tks.push({t:e.t,cls:e.cls||'',cur:e.cur||'CAD',st:'new'})}
+  else if(!e.h){const dc=e.cls&&e.cls!=ex.cls,du=e.cur&&e.cur!=ex.cur;if(dc||du){tks.push({t:e.t,cls:e.cls||ex.cls,cur:e.cur||ex.cur,st:'upd'});warns.push('Tickers sheet changes '+e.t+': '+[dc?'type '+(ex.cls||'not set')+' → '+e.cls:'',du?'currency '+ex.cur+' → '+e.cur:''].filter(Boolean).join(', ')+'. Holdings you already have are not changed by this (use Manage tickers for that).')}}});
+ if(nocur.length)warns.push('Tickers sheet: no currency for '+nocur.join(', ')+'. They will be saved as CAD.');
+ return{recs,errs,warns,tks}}
 let CSVP=null,CSVM='add';
 function csvView(){const el=$('#csvp');if(!el)return;const P=CSVP;if(!P){el.innerHTML='';return}
  if(P.fatal){el.innerHTML=`<div class="alert"><b>${esc(P.fatal)}</b></div>`;return}
@@ -805,12 +878,13 @@ function csvView(){const el=$('#csvp');if(!el)return;const P=CSVP;if(!P){el.inne
  const nw=[...new Set(P.recs.filter(r=>!r.a).map(r=>r.k))],nwn=nw.map(k=>P.recs.find(r=>r.k==k).name),have=[...ex.values()].filter(a=>a.h.length),old=have.reduce((t,a)=>t+a.h.length,0),w=P.warns.map(x=>`<div class="k">${esc(x)}</div>`).join('');
  if(P.errs.length){const mc={};P.errs.forEach(x=>{for(const m of x.matchAll(/(?:: | · )([A-Z][A-Za-z ]*?) is missing/g))mc[m[1]]=(mc[m[1]]||0)+1});const ms=Object.entries(mc).map(([k,v])=>k+' ×'+v).join(', ');
   el.innerHTML=`<div class="alert"><b>${P.errs.length} row${P.errs.length>1?'s have':' has'} problems. Nothing has been imported.</b>${ms?`<div style="margin-top:4px">Missing values: <b>${esc(ms)}</b></div>`:''}<div style="max-height:32vh;overflow-y:auto;margin-top:6px">${P.errs.map(x=>`<div>${esc(x)}</div>`).join('')}</div><div class="k">Fix these in your file, then choose it again. Row numbers match the rows in your spreadsheet.</div></div>${w}`;return}
- const n=ex.size+nw.length;
+ const n=ex.size+nw.length,tkN=(P.tks||[]).filter(x=>x.st=='new'),tkU=(P.tks||[]).filter(x=>x.st=='upd'),tkL=a=>esc(a.slice(0,8).map(x=>x.t).join(', '))+(a.length>8?'…':''),tkI=tkN.length||tkU.length?`<div class="k" style="margin-top:4px">Ticker list: ${tkN.length?`${tkN.length} new (${tkL(tkN)})`:''}${tkN.length&&tkU.length?' · ':''}${tkU.length?`${tkU.length} updated (${tkL(tkU)})`:''}</div>`:'';
  el.innerHTML=`<div class="stp">Ready to import</div><div><b>${P.recs.length} holding${P.recs.length==1?'':'s'}</b> in ${n} account${n==1?'':'s'}${nw.length?` · ${nw.length} new: ${esc(nwn.slice(0,5).join(', '))}${nw.length>5?'…':''}`:''}</div>
- <table style="margin-top:6px">${P.recs.slice(0,8).map(r=>`<tr><td>${esc(dn(r.h))}<div class="k">${esc(r.h.cls)}</div></td><td>${esc(r.name)}<div class="k">${esc(r.holder||'')}</div></td><td class="n">${fmtN(r.h.amt,r.h.cur)}</td></tr>`).join('')}</table>${P.recs.length>8?`<div class="k">…and ${P.recs.length-8} more</div>`:''}
+ ${tkI}<table style="margin-top:6px">${P.recs.slice(0,8).map(r=>`<tr><td>${esc(dn(r.h))}<div class="k">${esc(r.h.cls)}</div></td><td>${esc(r.name)}<div class="k">${esc(r.holder||'')}</div></td><td class="n">${fmtN(r.h.amt,r.h.cur)}</td></tr>`).join('')}</table>${P.recs.length>8?`<div class="k">…and ${P.recs.length-8} more</div>`:''}
  ${have.length?`<div class="stp">${have.length==1?'This account already has':'These accounts already have'} ${old} holding${old==1?'':'s'}</div><label class="chk"><input type="radio" name="csvm" value="add"${CSVM=='add'?' checked':''}> Add the rows in the file to what is there</label><label class="chk"><input type="radio" name="csvm" value="rep"${CSVM=='rep'?' checked':''}> Replace ${have.length==1?'its':'their'} holdings with the rows in the file</label>`:''}${w}`;
  el.querySelectorAll('input[name=csvm]').forEach(r=>r.onchange=()=>{CSVM=r.value})}
-function csvApply(P,mode){const ex=new Map();P.recs.forEach(r=>{if(r.a)ex.set(r.a.id,r.a)});const have=[...ex.values()].filter(a=>a.h.length),old=have.reduce((t,a)=>t+a.h.length,0);
+function csvApply(P,mode){if(!P.recs.length){const n=(P.tks||[]).length;if(!confirm('Update your ticker list from the file ('+n+' ticker'+(n==1?'':'s')+')? No holdings are imported.'))return false;tkApply(P);save();render();toast('Ticker list updated');return}
+ const ex=new Map();P.recs.forEach(r=>{if(r.a)ex.set(r.a.id,r.a)});const have=[...ex.values()].filter(a=>a.h.length),old=have.reduce((t,a)=>t+a.h.length,0);
  const pl=(n,w)=>n+' '+w+(n==1?'':'s'),nAcc=new Set(P.recs.map(r=>r.k)).size,nNew=new Set(P.recs.filter(r=>!r.a).map(r=>r.k)).size;
  if(!confirm(`Import ${pl(P.recs.length,'holding')} into ${pl(nAcc,'account')}${nNew?` (${nNew} new)`:''}?\n\n`+(mode=='rep'&&old?`REPLACE: the ${pl(old,'existing holding')} in ${pl(have.length,'account')} will be deleted and replaced by the rows in the file. This cannot be undone.`:have.length?`ADD: your ${pl(old,'existing holding')} in ${pl(have.length,'account')} are kept, and the rows in the file are added alongside them. Importing the same file twice creates duplicates.`:'Your existing holdings are not changed.')))return false;
  const made=new Map(),cleared=new Set();
@@ -818,7 +892,7 @@ function csvApply(P,mode){const ex=new Map();P.recs.forEach(r=>{if(r.a)ex.set(r.
   if(!A){A=made.get(r.k);if(!A){A={id:uid(),name:r.name,type:r.type,inst:'',holder:r.holder,lim:false,room:0,al:null,h:[]};made.set(r.k,A);S.accounts.push(A)}}
   else if(mode=='rep'&&!cleared.has(A.id)){A.h=[];cleared.add(A.id)}
   if(r.ins&&!A.inst)A.inst=r.ins;A.h.push(r.h)});
- U.dd=[];U.ddo=false;U.ddb=null;U.ca=null;save();render();
+ tkApply(P);U.dd=[];U.ddo=false;U.ddb=null;U.ca=null;save();render();
  toast(`Imported ${P.recs.length} holding${P.recs.length==1?'':'s'}${made.size?` and ${made.size} new account${made.size==1?'':'s'}`:''}`)}
 /* ---------- Excel (.xlsx): template download and import. Small built-in zip reader/writer; nothing is uploaded. ---------- */
 const XML_NS='http://schemas.openxmlformats.org/spreadsheetml/2006/main',REL_NS='http://schemas.openxmlformats.org/officeDocument/2006/relationships',XLSX_MIME='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
@@ -857,13 +931,13 @@ function xlsxRows(F){const dp=new DOMParser(),X=s=>{const d=dp.parseFromString(s
    if(ci>=0&&ci<200)cells[ci]=v});
   for(let i=0;i<cells.length;i++)if(cells[i]===undefined)cells[i]='';out.push(cells)});
   return out};
- const main=grab(pk),ad=sheets.find(s=>s!==pk&&s.n.trim().toLowerCase()=='accounts');if(ad){try{main.defs=grab(ad)}catch{}}return main}
+ const main=grab(pk),ad=sheets.find(s=>s!==pk&&s.n.trim().toLowerCase()=='accounts');if(ad){try{main.defs=grab(ad)}catch{}}const td=sheets.find(s=>s!==pk&&s.n.trim().toLowerCase()=='tickers');if(td){try{main.tks=grab(td)}catch{}}return main}
 async function readXlsx(f){try{return xlsxRows(await unzip(await f.arrayBuffer()))}catch(e){throw new Error('Could not read that Excel file ('+e.message+'). Save it as .xlsx (not .xls).')}}
 const XE=s=>String(s).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g,'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),XL=i=>String.fromCharCode(65+i);
 function shXml(rows,o){const cell=(v,r,c)=>{if(v===''||v==null)return '';const ref=XL(c)+(r+1),s=r==0&&o.h?' s="1"':(typeof v=='number'&&o.st&&o.st[c]?` s="${o.st[c]}"`:'');if(v&&v.f)return `<c r="${ref}" t="str"><f>${XE(v.f)}</f>${v.v!=null?`<v>${XE(v.v)}</v>`:''}</c>`;return typeof v=='number'?`<c r="${ref}"${s}><v>${v}</v></c>`:`<c r="${ref}" t="inlineStr"${s}><is><t xml:space="preserve">${XE(v)}</t></is></c>`};
  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="${XML_NS}"><sheetViews><sheetView${o.sel?' tabSelected="1"':''} workbookViewId="0">${o.h?'<pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A2" sqref="A2"/>':''}</sheetView></sheetViews><sheetFormatPr defaultRowHeight="15"/><cols>${o.w.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"${o.hid&&o.hid.includes(i)?' hidden="1"':''}${o.st&&o.st[i]?` style="${o.st[i]}"`:''}/>`).join('')}</cols><sheetData>${rows.map((r,i)=>`<row r="${i+1}">${r.map((v,c)=>cell(v,i,c)).join('')}</row>`).join('')}</sheetData>${o.cf?o.cf.map((c,i)=>`<conditionalFormatting sqref="${c[0]}"><cfRule type="expression" dxfId="0" priority="${i+1}"><formula>${XE(c[1])}</formula></cfRule></conditionalFormatting>`).join(''):''}${o.dv?`<dataValidations count="${o.dv.length}">${o.dv.join('')}</dataValidations>`:''}</worksheet>`}
 /* Excel template: a Holdings sheet with dropdowns, fed by pick-list sheets built from your current categories and accounts */
-function xlsDownload(){const hs=catH().filter(h=>h!=PH),ty=catT(),ins=catI(),cl=allCls(),ac=S.accounts,hrw=rows(),tks=[...hrw.filter(x=>x.h.tkr).reduce((m,x)=>{const t=String(x.h.tkr).toUpperCase();if(!m.has(t))m.set(t,[t,x.h.cls||'',x.h.cur||'']);return m},new Map()).values()],tm=new Map(tks.map(t=>[t[0],t])),lst=(a,hd)=>[[hd],...a.map(x=>[x])],
+function xlsDownload(){const hs=catH().filter(h=>h!=PH),ty=catT(),ins=catI(),cl=allCls(),ac=S.accounts,hrw=rows(),tks=tkAll().map(e=>[e.t,e.cls||'',e.cur||'CAD']),tm=new Map(tks.map(t=>[t[0],t])),lst=(a,hd)=>[[hd],...a.map(x=>[x])],
  rg=(sh,n)=>`'${sh}'!$A$2:$A$${Math.max(100,n+50)}`,
  num=sq=>`<dataValidation type="decimal" operator="greaterThanOrEqual" allowBlank="1" showErrorMessage="1" errorTitle="Invalid amount" error="Enter a number that is 0 or more." sqref="${sq}"><formula1>0</formula1></dataValidation>`,
  dup=sq=>`<dataValidation type="custom" allowBlank="1" showErrorMessage="1" errorTitle="Duplicate account" error="This holder already has an account with this name. The same account name can only repeat across different holders." sqref="${sq}"><formula1>OR($A2="",$B2="",COUNTIFS($A$2:$A$1000,$A2,$B$2:$B$1000,$B2)=1)</formula1></dataValidation>`,
@@ -874,10 +948,10 @@ function xlsDownload(){const hs=catH().filter(h=>h!=PH),ty=catT(),ins=catI(),cl=
   '2. The dropdown choices come from the other sheets: Holders, Accounts, Account types, Institutions, Investment types, Tickers and Currency. They are a snapshot of your tracker taken when you downloaded this file.',
   '3. To use a value that is not in a list, add it to that sheet or just type it in the Holdings sheet. Excel will warn you; choose Yes. It is created when you import.',
   '4. Account: pick it from the dropdown. Account type and Institution fill in from the Accounts sheet for that holder and account, and Holder fills in too when the account name belongs to only one holder (you can type over any of them). If the same account name is used by several holders (for example Joint), choose the Holder yourself. The same holder cannot have two accounts with the same name: typing a duplicate account name is refused on the Accounts sheet, and any duplicate (for example after choosing a holder) turns red and is rejected on import. To set up a new account once, add it on the Accounts sheet. An account typed only in Holdings needs a Holder and an Account type there. Institution is optional and only fills in an account that has none yet.',
-  '5. Ticker is optional. List your tickers once on the Tickers sheet with their Investment type and Currency. Then pick a ticker from the dropdown in Holdings and its Investment type and Currency fill in automatically (you can type over them). A ticker that is not on the Tickers sheet can still be typed; the tracker then uses its built-in list for the Investment type. For things without a real ticker (for example Gold bars), make up a ticker such as GOLD and add it on the Tickers sheet. The tracker supports CAD and USD only, so the Currency sheet lists just those two.',
+  '5. Ticker is optional. Your tickers are listed once on the Tickers sheet with their Investment type and Currency. It is the same ticker list the tracker uses in Add holding and on the Limits page. Pick a ticker from the dropdown in Holdings and its Investment type and Currency fill in automatically (you can type over them). To add a new ticker, put it on the Tickers sheet with its Currency (CAD or USD); importing adds it to the tracker ticker list. A ticker that is not on the Tickers sheet can still be typed in Holdings; the tracker then uses its built-in list for the Investment type, and CAD unless you fill in the Currency. For things without a real ticker (for example Gold bars), make up a ticker such as GOLD and add it on the Tickers sheet. The tracker supports CAD and USD only, so the Currency sheet lists just those two.',
   '6. Amount is the amount invested, in the currency shown in the Currency column (CAD or USD).',
   '7. Required: Account and Amount on every row; Holder and Account type when the account is new; Investment type unless the Ticker is one the tracker recognises. A cell that still needs a value turns red. If anything required is missing, the tracker lists the missing values and imports nothing.',
-  '8. Keep the header names in row 1 of the Holdings sheet. Only the Holdings sheet is imported; the other sheets are just pick-lists (the Tickers sheet feeds the Ticker dropdown and fills Investment type and Currency).',
+  '8. Keep the header names in row 1 of the Holdings sheet and the Tickers sheet. The Holdings sheet is imported. The Tickers sheet is imported too: new tickers are added to the tracker ticker list, and a changed Investment type or Currency updates the list (holdings you already have are not changed by it; use Manage tickers in the tracker for that). The Accounts sheet is used to set up new accounts. The other sheets are only pick-lists.',
   '9. To update data you already have: download this file from the tracker (it comes filled with your current holdings), change the rows (amounts, tickers, add or delete rows), save, then import it and choose Replace for the accounts that already have holdings. Accounts that are not in the file are left as they are. Holding names are not included.',
   '10. Save as .xlsx, then import it in the tracker (Accounts tab, Import Excel). The file is read in your browser and never uploaded, and you will be asked to confirm before anything is imported.'],
  sh=[['Holdings',[['Holder','Account','Account type','Institution','Ticker','Investment type','Amount','Currency'],...Array.from({length:Math.max(999,hrw.length)},(_,i)=>{const n=i+2,x=hrw[i],fh={f:`IF($B${n}="","",IF(COUNTIF('Accounts'!$A$2:$A$1000,$B${n})=1,IFERROR(INDEX('Accounts'!$B$2:$B$1000,MATCH($B${n},'Accounts'!$A$2:$A$1000,0))&"",""),""))`},lk=c=>({f:`IF(OR($B${n}="",$A${n}=""),"",IFERROR(INDEX('Accounts'!$${c}$2:$${c}$1000,MATCH($B${n}&"|"&$A${n},'Accounts'!$E$2:$E$1000,0))&"",""))`});const tf=c=>({f:`IF($E${n}="","",IFERROR(INDEX('Tickers'!$${c}$2:$${c}$1000,MATCH($E${n},'Tickers'!$A$2:$A$1000,0))&"",""))`});
@@ -900,15 +974,15 @@ function xlsDownload(){const hs=catH().filter(h=>h!=PH),ty=catT(),ins=catI(),cl=
   ...sh.map((s,i)=>[`xl/worksheets/sheet${i+1}.xml`,shXml(s[1],s[2])])],
  a=document.createElement('a');a.href=URL.createObjectURL(zipStore(files,XLSX_MIME));a.download='portfolio-holdings-'+today()+'.xlsx';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1e3);const nn=hrw.filter(x=>x.h.nm).length;toast('Excel downloaded with your current holdings'+(nn?' · '+nn+' holding name'+(nn>1?'s are':' is')+' not included':''))}
 function csvModal(){CSVP=null;CSVM='add';
- modal('Import holdings from Excel',`<div class="k">One row per holding. The file is read in your browser and never uploaded. Accounts that don't exist yet are created. Leave Investment type blank to have it filled in from the ticker. The Excel file has dropdowns and comes filled with your current holdings, so you can edit it and import it back. For accounts that already have holdings, choose Replace to update them (Add would create duplicates).</div>
+ modal('Import holdings from Excel',`<div class="k">One row per holding. The file is read in your browser and never uploaded. Accounts that don't exist yet are created. Leave Investment type blank to have it filled in from the ticker. The Excel file has dropdowns and comes filled with your current holdings, so you can edit it and import it back. For accounts that already have holdings, choose Replace to update them (Add would create duplicates). Tickers listed on the Tickers sheet are added to your ticker list too.</div>
  <div class="row"><button class="b p" data-act="xlsTpl">Download Excel (with my current data)</button></div>
  <label>Excel file (.xlsx)<input type="file" id="csvf" accept=".xlsx,${XLSX_MIME}"></label><div id="csvp"></div>`,'Import',()=>{
- if(!CSVP||CSVP.fatal)return bad(CSVP?CSVP.fatal:'Choose a file first');if(CSVP.errs.length)return bad('Fix the problems listed above in your file, then choose it again');if(!CSVP.recs.length)return bad('The file has no holdings to import');
+ if(!CSVP||CSVP.fatal)return bad(CSVP?CSVP.fatal:'Choose a file first');if(CSVP.errs.length)return bad('Fix the problems listed above in your file, then choose it again');if(!CSVP.recs.length&&!(CSVP.tks||[]).length)return bad('The file has no holdings to import');
  return csvApply(CSVP,CSVM)},'wide');
  $('#csvf').onchange=async e=>{const f=e.target.files[0];CSVP=null;$('#er').textContent='';
   if(f){if(!/\.xlsx$/i.test(f.name))CSVP={fatal:/\.xls$/i.test(f.name)?'Old .xls files are not supported. Save the file as .xlsx and choose it again.':'Choose an Excel (.xlsx) file, ideally one made from the Excel template.'};else if(f.size>5e6)CSVP={fatal:'That file is too large for a holdings list (5 MB max).'};else try{CSVP=csvPlanR(await readXlsx(f))}catch(x){CSVP={fatal:x.message}}}csvView()}}
 /* ---------- events ---------- */
-const ACT={accBy:d=>{U.accBy=d.v;render()},
+const ACT={tkMan:()=>tkModal(),tkAdd:()=>tkAddRow(),tkDel:d=>tkDelRow(+d.i),tkUndo:d=>{TD.rows[+d.i].del=0;tkPaint()},accBy:d=>{U.accBy=d.v;render()},
  skAdd:()=>{const nx=SKN.find(o=>!U.sk.includes(o));if(nx){U.sk=[...U.sk,nx];skSave()}},skDel:d=>{if(U.sk.length>1){U.sk=U.sk.filter((_,i)=>i!=+d.i);skSave()}},vw:d=>{U.view=d.v=='c'||d.v=='s'?d.v:'d';try{localStorage.setItem(CVK,U.view)}catch{}U.czA=1;render()},
  cz:d=>{const id=d.id;
   if(!cdef()&&(id=='up'||id=='all'||id.startsWith('g:'))){U.cp=id=='up'?U.cp.slice(0,-1):id=='all'?[]:cpOf(id)}
