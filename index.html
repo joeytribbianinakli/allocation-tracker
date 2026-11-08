@@ -18,7 +18,7 @@
   Do not loosen the policy (no 'unsafe-inline', no extra connect-src hosts): it is a deliberate privacy feature.
   To verify, open the file in a browser and check the console for "violates the following Content Security Policy".
 -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-FUjCaw02dQAFZ8sQO/3rpxAQUvjxEOSun5R1jOXM7I0='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-M2ht0W255GlaWyWJkJSVIS9LLCXJfHI3wlQRp2Zpfqg='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
 <link rel="icon" href="data:,">
 <title>Portfolio tracker</title>
 <style>
@@ -581,10 +581,14 @@ function cashPlan(sc,ex,cf){ex=ex||[];const inP=c=>filt(sc,[c]).length>0&&!ex.so
    /* the generic placeholder is only used when this cash has nothing else it can buy, checked after every type has been looked at */
    if(gen&&!cand.some(c=>c.p==pj))cand.push({a:p.a,h:gen,v:0,x:0,nw:true,p:pj,ty:true})})}
  if(!cand.length)return{err:'Nothing to buy. The accounts you included hold nothing besides cash (or nothing of the types they invest in). Add holdings, or set what an account invests in (Edit account, "Invests in") and a position will be suggested.'};
- /* a minimum that nothing in the chosen accounts can fill gets a new position, placed in the first account that fits both the cash selection and the limit and has cash in that currency */
- lims.forEach(q=>{const L=q.L;if(q.tx||!isLow(L)||!(q.t>0)||cand.some(c=>c.p>=0&&cashInL(L,c)&&lmatch(L,c)))return;
-  const tk=tkl(L)[0],e=tk?tkGet(tk):null,h=L.k=='tkr'?{tkr:tk,nm:'',cls:(e&&e.cls)||(tkCls(tk)||{}).cls||'',cur:(e&&e.cur)||'CAD',amt:0}:L.k=='cur'?{tkr:'',nm:'',cls:'',cur:L.val,amt:0}:{tkr:'',nm:'',cls:L.val,cur:'CAD',amt:0};
-  const a=S.accounts.find(a=>{const c={a,h,v:0};return inP(c)&&cashInL(L,c)&&pi(a,h.cur)>=0&&okT(a,h.cls)});if(a)cand.push({a,h,v:0,x:0,nw:true,p:pi(a,h.cur)})});
+ /* a minimum that nothing in the chosen accounts can fill gets a new position. It is offered in EVERY included account that has cash in that currency (and invests in that type), not just the first one, so all the cash that can buy it is available to it; the plan then uses the accounts that already hold it first. A limit that names several tickers (for example QQQM + QQC.TO) is looked at ticker by ticker, in no particular order: while it is still under, each ticker is offered wherever there is cash in that ticker's own currency (set in the ticker list, or taken from where you hold it), so USD cash can buy the USD ticker and CAD cash the CAD one, and the limit's overall share decides how much goes to each. */
+ lims.forEach(q=>{const L=q.L;if(q.tx||!isLow(L)||!(q.t>0))return;
+  const any=cand.some(c=>c.p>=0&&cashInL(L,c)&&lmatch(L,c));if(any&&!(L.k=='tkr'&&q.m/q.t*100<L.min-1e-9))return;
+  (L.k=='tkr'?tkl(L):[tkl(L)[0]]).forEach(tk=>{
+   const e=tk?tkGet(tk):null,h=L.k=='tkr'?{tkr:tk,nm:'',cls:(e&&e.cls)||(tkCls(tk)||{}).cls||'',cur:(e&&e.cur)||'CAD',amt:0}:L.k=='cur'?{tkr:'',nm:'',cls:'',cur:L.val,amt:0}:{tkr:'',nm:'',cls:L.val,cur:'CAD',amt:0};
+   S.accounts.forEach(a=>{const c={a,h,v:0},pj=pi(a,h.cur);if(!(inP(c)&&cashInL(L,c)&&pj>=0&&pots[pj].cap>=0.5&&okT(a,h.cls)))return;
+    if(cand.some(z=>z.a===a&&z.p==pj&&(L.k=='tkr'?z.h.tkr==tk:lmatch(L,z))))return;
+    cand.push({a,h:{...h},v:0,x:0,nw:true,p:pj})})})});
  const n=cand.length,J=lims.length,inS=lims.map(q=>cand.map(c=>cashInL(q.L,c))),mt=lims.map((q,j)=>cand.map((c,i)=>inS[j][i]&&lmatch(q.L,c))),
   m0=lims.map(q=>q.m),t0=lims.map(q=>q.t),/* THE USUAL MIX IS MEASURED PER HOLDING ACROSS ALL INCLUDED ACCOUNTS: KV = what each holding (ticker, type, currency) is worth in total over every included account, wherever it sits, so VFV kept in three accounts is one VFV with one overall share. kk = the holding each buyable row belongs to, kv = its total today, w = its share of the whole included portfolio. */
   V=sum(pr),KV=pr.reduce((M,x)=>{const k=kf(x.h);M.set(k,(M.get(k)||0)+x.v);return M},new Map()),kk=cand.map(c=>kf(c.h)),av0=KV.size?V/KV.size:1,
@@ -594,7 +598,7 @@ function cashPlan(sc,ex,cf){ex=ex||[];const inP=c=>filt(sc,[c]).length>0&&!ex.so
   dt=lims.map(q=>pots.map(p=>p.rs.reduce((s,r)=>s+(cashInL(q.L,r.x)?r.w:0),0))),
   viol=(j,mm,tt)=>{if(!(tt>0))return 0;const L=lims[j].L,r=mm/tt*100;return isLow(L)?Math.max(0,L.min-r):Math.max(0,r-L.max)},
   bf0=lims.map((q,j)=>viol(j,m0[j],t0[j])),
-  N=400,d=Ct/N,best=l=>l.reduce((a,b)=>b.def>a.def+1e-12||(b.def>=a.def-1e-12&&b.rem>a.rem+1e-9)?b:a);
+  N=400,d=Ct/N,best=l=>l.reduce((a,b)=>{if(b.def>a.def+1e-12)return b;if(b.def<a.def-1e-12)return a;if(b.nw!=a.nw)return b.nw?a:b;return b.rem>a.rem+1e-9?b:a});
  let m=m0,t=t0;
  /* one run of the plan. Spending is optional (the cash is already yours): a buy that would push a limit that is fine today past its edge, or make a limit worse, is skipped and that cash stays unused. Spending cash is a move inside the portfolio: the money leaves the account's cash holding and goes into the holding bought, so the totals stay the same. Each step is d (CAD) or what is left in that account's pot for that currency, whichever is smaller. */
  const go=()=>{m=[...m0];t=[...t0];cand.forEach(c=>{c.x=0});pots.forEach(p=>{p.used=0});let X=0;const KX=new Map();
@@ -604,7 +608,7 @@ function cashPlan(sc,ex,cf){ex=ex||[];const inP=c=>filt(sc,[c]).length>0&&!ex.so
      const av=lims.map((q,j)=>viol(j,m[j]+sz*((mt[j][i]?1:0)-dm[j][c.p]),t[j]+sz*((inS[j][i]?1:0)-dt[j][c.p])));let wmx=false,wmn=false,wtg=false,sa=0;av.forEach((x,j)=>{const q=lims[j];if(!q.pull){if(isLow(q.L)){if(x>1e-9&&bf[j]<=1e-9)wmn=true;else if(x>bf[j]+1e-9&&dm[j][c.p]>1e-9)wmn=true}else if(x>bf[j]+1e-9)wmx=true}sa+=x});
      /* wtg: buying this would add to a target that is already at or over its target share */
      lims.forEach((q,j)=>{if(q.pull&&mt[j][i]&&t[j]>0&&bf[j]<=1e-9)wtg=true});
-     return{i,av,wmx,wmn,wtg,sa,fe:true,sz,def:w[i]*(V+X+d)-(kv[i]+(KX.get(kk[i])||0)),rem}});
+     return{i,av,wmx,wmn,wtg,sa,fe:true,sz,def:w[i]*(V+X+d)-(kv[i]+(KX.get(kk[i])||0)),rem,nw:c.nw}});
    const pool=info.filter(o=>o.fe);if(!pool.length)break;
    const ok=pool.filter(o=>!o.wmx&&!o.wmn);
    let pick=null;
