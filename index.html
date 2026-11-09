@@ -18,7 +18,7 @@
   Do not loosen the policy (no 'unsafe-inline', no extra connect-src hosts): it is a deliberate privacy feature.
   To verify, open the file in a browser and check the console for "violates the following Content Security Policy".
 -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-mP95YoMf3Vxqva4N4iNV0LslWiB6Dn1vpVgJmSbhfdU='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v9NXQj0dysN+uAFGKELzfaLIpW2Iy3bUOVGsxe40tFk='; style-src 'unsafe-inline'; connect-src https://api.frankfurter.dev https://open.er-api.com https://api.github.com; base-uri 'none'; form-action 'none'">
 <link rel="icon" href="data:,">
 <title>Portfolio tracker</title>
 <style>
@@ -38,7 +38,7 @@ button{font:inherit;cursor:pointer}button:focus-visible,select:focus-visible,inp
 .b,.ib,.chip{border:1px solid var(--b);background:var(--c);color:var(--t);border-radius:6px;padding:5px 11px;font-size:12px}
 .b.p{background:var(--a);border-color:var(--a);color:#fff;font-weight:600}.ib{border:0;background:none;padding:2px 6px;color:var(--m);font-size:12px}.ib:hover{color:var(--t);background:color-mix(in srgb,var(--t) 8%,transparent)}.chip{font-size:12px;color:var(--m);padding:3px 10px}
 .seg{display:flex;border:1px solid var(--b);border-radius:6px;overflow:hidden}.seg button{border:0;background:none;color:var(--m);padding:4px 10px;font-size:12px}.seg button.on{background:var(--a);color:#fff}
-.cmpt{display:inline-flex;align-items:center;gap:8px;margin:10px 0 2px;font-size:13px;color:var(--t);cursor:pointer}.cmpt input{width:auto;flex:none;margin:0;padding:0}.cmpg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--b);border-radius:10px;overflow:hidden;margin-top:6px}.cmpc{padding:14px 16px;min-width:0}.cmpc:nth-child(3n+2),.cmpc:nth-child(3n){border-left:1px solid var(--b)}.cmpc:nth-child(n+4){border-top:1px solid var(--b)}.cmpn{display:none;font-weight:600;margin-bottom:6px}.cmpg table{width:100%;font-size:13px}.cmpg .hl tr.a1:first-child td{padding-top:0}.cmpg .hl td{padding-top:5px;padding-bottom:5px}.cmpg .hl tr.a1 td{padding-bottom:8px}.cmpg .hl td.n{white-space:nowrap;padding-left:10px}.cmpg .k{font-size:12px;line-height:1.5}@media(max-width:640px){.cmpg{grid-template-columns:1fr}.cmpc:nth-child(n){border-left:0}.cmpc:nth-child(n+2){border-top:1px solid var(--b)}.cmpn{display:block}}
+.cmpt{display:inline-flex;align-items:center;gap:8px;margin:10px 0 2px;font-size:13px;color:var(--t);cursor:pointer}.cmpt input{width:auto;flex:none;margin:0;padding:0}.cmpg{border:1px solid var(--b);border-radius:10px;overflow:hidden;margin-top:6px}.cmpa+.cmpa{border-top:1px solid var(--b)}.cmph{padding:12px 16px 10px;border-bottom:1px solid var(--b)}.cmpr{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.cmpc{padding:12px 16px;min-width:0}.cmpc+.cmpc{border-left:1px solid var(--b)}.cmpn{display:none;font-weight:600;margin-bottom:6px}.cmpg table{width:100%;font-size:13px}.cmpg .hl td{padding-top:5px;padding-bottom:5px}.cmpg .hl td.n{white-space:nowrap;padding-left:10px}.cmpg .k{font-size:12px;line-height:1.5}@media(max-width:640px){.cmpr{grid-template-columns:1fr}.cmpc+.cmpc{border-left:0;border-top:1px solid var(--b)}.cmpn{display:block}}
 .ctabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:12px 0 6px}.ctabs button{display:flex;flex-direction:column;gap:2px;text-align:left;border:1px solid var(--b);border-radius:8px;background:none;color:var(--m);padding:8px 10px;font-size:11px;line-height:1.3;cursor:pointer}.ctabs button b{color:var(--t);font-size:13px}.ctabs button.on{border-color:var(--a);background:color-mix(in srgb,var(--a) 12%,transparent)}.ctabs button.on b{color:var(--a)}@media(max-width:430px){.ctabs{grid-template-columns:1fr}}
 main{padding-bottom:48px}
 .card{background:var(--c);border:1px solid var(--b);border-radius:10px;padding:12px 14px;margin:8px 0}
@@ -146,6 +146,7 @@ const norm=o=>{const d=dflt();for(const k in d)if(o&&o[k]!=null&&typeof o[k]==ty
 /* ---------- money ---------- */
 const R=()=>S.fx.r,toCAD=(a,c)=>c=='USD'?a*R():a,pc=x=>(x*100).toFixed(1)+'%';
 const nf=(c,d=0)=>new Intl.NumberFormat('en-CA',{style:'currency',currency:c,maximumFractionDigits:d,minimumFractionDigits:d});
+const cadP=(c,t)=>c=='CAD'?t.replace(/^(-?)\$/,'$1CA$$'):t;
 /* amounts are masked until the eye is toggled; never saved, so every load starts hidden */
 let HID=true;const MASK='••••••',EYE='<path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/>',EYEOFF='<path d="M17.94 17.94A10.07 10.07 0 0 1 12 19c-7 0-11-7-11-7a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 5c7 0 11 7 11 7a18.5 18.5 0 0 1-2.16 3.19M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
 const fmt=v=>HID?MASK:nf(S.cur).format(S.cur=='CAD'?v:v/R()),fmtN=(a,c)=>HID?MASK:nf(c,2).format(a);
@@ -669,7 +670,7 @@ function cashPlans(sc,ex,cf){const list=[];for(const a of CASHAP){const P=cashPl
  return{all:null,list}}
 
 function cashCard(){
- const c=U.cash,r=c.run,fm=(v,cu)=>HID?MASK:nf(cu,0).format(v),cls=allCls();
+ const c=U.cash,r=c.run,fm=(v,cu)=>HID?MASK:cadP(cu,nf(cu,0).format(v)),fmN=(v,cu)=>HID?MASK:cadP(cu,nf(cu,2).format(v)),cls=allCls();
  const tsel=(k,cu)=>{const v=cashEff(c[k],cu),Lc=v&&!cls.some(x=>x.toLowerCase()==v.toLowerCase())?[...cls,v]:cls;return `<select data-cash="${k}"><option value="-"${v?'':' selected'}>None</option>${Lc.map(x=>`<option value="${esc(x)}"${v&&x.toLowerCase()==v.toLowerCase()?' selected':''}>${esc(x)}</option>`).join('')}</select>`},
   rsv=(k,m,lb)=>`<label>${lb}<span class="uw"><input data-cash="${k}" type="number" inputmode="decimal" min="0" step="any" placeholder="0 (optional)" value="${esc(c[k])}"><select data-cash="${m}" aria-label="${esc(lb)}: unit"><option value="p"${c[m]=='d'?'':' selected'}>%</option><option value="d"${c[m]=='d'?' selected':''}>$</option></select></span></label>`;
  const inp=`<div class="sel"><label>Investment type for CAD cash${tsel('tc','CAD')}</label><label>Investment type for USD cash${tsel('tu','USD')}</label></div>
@@ -683,21 +684,24 @@ function cashCard(){
   uc=sn('CAD','use'),uu=sn('USD','use'),kc=sn('CAD','keep'),ku=sn('USD','keep'),
   kept=kc>=0.5||ku>=0.005?`<div class="k" style="margin-top:4px">Kept in cash and not used: ${[kc>=0.5?fm(kc,'CAD'):'',ku>=0.005?fm(ku,'USD'):''].filter(Boolean).join(' and ')}</div>`:'';
  if(P.none)return `<div class="card" id="cashc">${head}<div id="cashr" style="margin-top:14px"><div class="alert">${uc+uu*R()<0.5&&kc+ku<0.005?'There is no cash to allocate in the accounts you included.':'All of the cash in these accounts is set to be kept, so there is nothing to allocate. Lower the amount to keep if you want to use some of it.'}</div>${kept}</div></div>`;
- const avl=[sn('CAD','tot')>=0.5?fmtN(sn('CAD','tot'),'CAD'):'',sn('USD','tot')>=0.005?fmtN(sn('USD','tot'),'USD'):''].filter(Boolean).join(' + '),
-  src=[uc>=0.5?fmtN(uc,'CAD'):'',uu>=0.005?fmtN(uu,'USD')+' at '+R().toFixed(4):''].filter(Boolean).join(' + ');
+ const avl=[sn('CAD','tot')>=0.5?fmN(sn('CAD','tot'),'CAD'):'',sn('USD','tot')>=0.005?fmN(sn('USD','tot'),'USD'):''].filter(Boolean).join(' + '),
+  src=[uc>=0.5?fmN(uc,'CAD'):'',uu>=0.005?fmN(uu,'USD')+' at '+R().toFixed(4):''].filter(Boolean).join(' + ');
  const gl=cashLines(P);
  const gl2Of=Q=>{const gl=cashLines(Q);return [...gl,...[...new Set(Q.pots.map(p=>p.a))].filter(a=>!gl.some(e=>e.a===a)).map(a=>({a,l:[],tot:0}))]},
-  eRows=(Q,e)=>{const pp=Q.pots.filter(p=>p.a===e.a),av=pp.map(p=>fm(p.tot,p.cu)+' '+p.cu+(p.keep>=0.005?' (keeping '+fm(p.keep,p.cu)+')':'')).join(' + '),used=pp.map(p=>fm(p.used/p.fx,p.cu)+' '+p.cu).join(' + ');
-  return `<tr class="a1"><td colspan="2"><b>${esc(alabel(e.a))}</b> <span class="k">${esc(e.a.type)}${e.a.holder&&e.a.holder!=PH?' · '+esc(e.a.holder):''}</span><div class="k">Available: ${av}</div><div class="k">Using: <b>${used}</b></div></td><td class="n"><b>${e.tot>=0.5?fmt(e.tot):'—'}</b></td></tr>`+(e.l.length?'':`<tr><td style="padding-left:18px" colspan="3"><span class="k">No purchase suggested for this account's cash.</span></td></tr>`)+e.l.map(x=>`<tr><td style="padding-left:18px">${esc(x.t)}${x.all?' <span class="tag ok">new</span>':''} <span class="k">${esc(x.s)}${(x.s?' · ':'')+x.cu}</span></td><td class="n"><b>${fm(x.n,x.cu)}</b></td><td class="n">${x.cu=='USD'?`<span class="k">≈ ${fmt(x.x)}</span>`:''}</td></tr>`).join('')},
+  eAv=(Q,e)=>Q.pots.filter(p=>p.a===e.a).map(p=>fm(p.tot,p.cu)+(p.keep>=0.005?' (keeping '+fm(p.keep,p.cu)+')':'')).join(' + '),
+  eUse=(Q,e)=>Q.pots.filter(p=>p.a===e.a).map(p=>fm(p.used/p.fx,p.cu)).join(' + '),
+  eName=e=>`<b>${esc(alabel(e.a))}</b> <span class="k">${esc(e.a.type)}${e.a.holder&&e.a.holder!=PH?' · '+esc(e.a.holder):''}</span>`,
+  eTick=e=>(e.l.length?'':`<tr><td style="padding-left:18px" colspan="3"><span class="k">No purchase suggested for this account's cash.</span></td></tr>`)+e.l.map(x=>`<tr><td style="padding-left:18px">${esc(x.t)}${x.all?' <span class="tag ok">new</span>':''} <span class="k">${esc(x.s)}</span></td><td class="n"><b>${fm(x.n,x.cu)}</b></td><td class="n">${x.cu=='USD'?`<span class="k">≈ ${fmt(x.x)}</span>`:''}</td></tr>`).join(''),
+  eRows=(Q,e)=>`<tr class="a1"><td colspan="2">${eName(e)}<div class="k">Available: ${eAv(Q,e)}</div><div class="k">Using: <b>${eUse(Q,e)}</b></div></td><td class="n"><b>${e.tot>=0.5?fmt(e.tot):'—'}</b></td></tr>`+eTick(e),
   nothing=`<div class="alert" style="margin-top:12px">Nothing could be bought with this cash. The accounts that hold it have no holdings in the same currency, or those holdings are already at or over their limits.</div>`,
   buyOf=Q=>cashLines(Q).length?`<table class="hl">${gl2Of(Q).map(e=>eRows(Q,e)).join('')}</table>`:nothing,
   cmpAcc=(()=>{const m=[];PL.list.forEach(z=>gl2Of(z.P).forEach(e=>{if(!m.some(a=>a.id===e.a.id))m.push(e.a)}));return m})(),
-  cmpGrid=()=>PL.list.every(z=>!cashLines(z.P).length)?nothing:`<div class="cmpg">${cmpAcc.map(a=>PL.list.map(z=>{const e=gl2Of(z.P).find(x=>x.a.id===a.id);return `<div class="cmpc"><div class="cmpn">${esc(z.a.n)}</div>${e?`<table class="hl">${eRows(z.P,e)}</table>`:''}</div>`}).join('')).join('')}</div>`,
+  cmpGrid=()=>PL.list.every(z=>!cashLines(z.P).length)?nothing:`<div class="cmpg">${cmpAcc.map(a=>{const es=PL.list.map(z=>({z,e:gl2Of(z.P).find(x=>x.a.id===a.id)})),f=es.find(x=>x.e);return `<div class="cmpa"><div class="cmph">${eName(f.e)}<div class="k">Available: ${eAv(f.z.P,f.e)}</div></div><div class="cmpr">${es.map(({z,e})=>`<div class="cmpc"><div class="cmpn">${esc(z.a.n)}</div>${e?`<table class="hl"><tr class="u1"><td colspan="2"><span class="k">Using: <b>${eUse(z.P,e)}</b></span></td><td class="n"><b>${e.tot>=0.5?fmt(e.tot):'—'}</b></td></tr>${eTick(e)}</table>`:''}</div>`).join('')}</div></div>`}).join('')}</div>`,
   cmpOn=U.cash.cp===true,cmpTog=`<label class="cmpt"><input type="checkbox" id="cashcmp"${cmpOn?' checked':''}> Compare all plans</label>`,
   buyT=cmpOn?`<div class="stp">What to buy</div>${cmpGrid()}`:(gl.length?`<div class="stp">What to buy</div>`:'')+buyOf(P);
  /* cash left in each account, and the cash that stayed unused */
  const un=ps.filter(p=>p.cap-p.used>=1),
-  lf=un.length&&gl.length?`<div class="k" style="margin-top:6px">Left unused: ${un.map(p=>esc(alabel(p.a))+' '+fm((p.cap-p.used)/p.fx,p.cu)+' '+p.cu).join(', ')}. No eligible holding to add to, or already at limit. Set Invests in (Edit account).</div>`:'',
+  lf=un.length&&gl.length?`<div class="k" style="margin-top:6px">Left unused: ${un.map(p=>esc(alabel(p.a))+' '+fm((p.cap-p.used)/p.fx,p.cu)).join(', ')}. No eligible holding to add to, or already at limit. Set Invests in (Edit account).</div>`:'',
   accs=[...new Set(ps.map(p=>p.a))],pot=(a,cu)=>ps.find(p=>p.a===a&&p.cu==cu),left=p=>p.tot-p.used/p.fx,
   cell=(a,cu)=>{const p=pot(a,cu);return p?fm(left(p),cu):'—'},
   tl=cu=>ps.filter(p=>p.cu==cu).reduce((s,p)=>s+left(p),0),
@@ -712,7 +716,7 @@ function cashCard(){
   tabsT=`<div class="ctabs" role="tablist" aria-label="Allocation approach">${PL.list.map(z=>{const q=z.s,on=z.a.id==sel;return `<button type="button" role="tab" aria-selected="${on}" class="${on?'on':''}" data-act="cashSt" data-v="${z.a.id}"><b>${esc(z.a.n)}</b><span>${q.tr} transaction${q.tr==1?'':'s'} · ${q.ps} position${q.ps==1?'':'s'}</span><span>${pc(q.drift)} off your mix</span></button>`}).join('')}</div><div class="k">${esc(cur.a.d)}${cur.same?' Same as '+esc(cur.same.n)+'.':''} <span class="k">Transactions: buy lines. Positions: distinct holdings. Off mix: 0% = your usual mix.</span></div>`;
  /* what the plan actually spends (the capacity is P.Ct; a plan may leave some of it unused when limits block every buy), and a pointer for an unmet minimum: accounts whose cash could fill it if they were allowed to invest in that type */
  const usedN=cu=>ps.filter(p=>p.cu==cu).reduce((s,p)=>s+p.used/p.fx,0),usedT=ps.reduce((s,p)=>s+p.used,0),
-  srcU=[usedN('CAD')>=0.5?fmtN(usedN('CAD'),'CAD'):'',usedN('USD')>=0.005?fmtN(usedN('USD'),'USD')+' at '+R().toFixed(4):''].filter(Boolean).join(' + '),
+  srcU=[usedN('CAD')>=0.5?fmN(usedN('CAD'),'CAD'):'',usedN('USD')>=0.005?fmN(usedN('USD'),'USD')+' at '+R().toFixed(4):''].filter(Boolean).join(' + '),
   hint=o=>{if(!o.low||o.L.k!='cls'||!(o.fix>0))return '';const as=[...new Set(ps.filter(p=>!P.cand.some(c=>c.a===p.a&&lmatch(o.L,c))).map(p=>p.a))];return as.length?`<li>Let ${esc(as.map(alabel).join(', '))} invest in ${esc(o.L.val)} (Edit account)</li>`:''};
  const op=P.open.length?`<details class="alert" id="cashlo" style="margin-top:12px"${U.cash.lo?' open':''}><summary style="cursor:pointer"><b>${P.open.length==1?'1 limit':P.open.length+' limits'} not met</b></summary>${P.open.map(o=>{const fx=o.low?(o.fix>0?[`Add ~${fmt(o.fix)} of new money`]:[]):(o.more>0?[`Add ~${fmt(o.more)} of new money to everything else`]:[]),h=hint(o);return `<div style="margin-top:8px"><b>${esc(lname(o.L))}</b> ${lsym(o.L)} of ${esc(scopeName(o.L.sc))}<div class="k">${lbad(o.L,{t:o.t0,p:o.p0})?pc(o.p0)+' → '+pc(o.p1):pc(o.p1)+' after'}${fx.length||h?' · fix with:':''}</div>${fx.length||h?`<ul class="k" style="margin:2px 0 0;padding-left:18px">${fx.map(x=>'<li>'+x+'</li>').join('')}${h}</ul>`:''}</div>`}).join('')}</details>`:'';
  /* mix by investment type: the total stays the same, so cash types shrink by what was spent and the types bought grow */
@@ -723,7 +727,7 @@ function cashCard(){
   mixT=`<div class="stp">Mix by investment type</div><table>${mix.map(k=>{const b=b0.get(k)||0,a=a0.get(k)||0,df=a-b;return `<tr><td><span class="dot" style="background:${col(k)}"></span>${esc(k)}</td><td class="n">${tv>0?pc(b/tv):'—'} → <b>${tv>0?pc(a/tv):'—'}</b></td><td class="n"><span class="k">${Math.abs(df)<0.5?'—':(df>0?'+':'−')+fmt(Math.abs(df))}</span></td></tr>`}).join('')}</table><div class="k" style="margin-top:6px">This counts every account in your portfolio. The limits above only count the accounts each limit applies to (see "excluding" there), so the percentages can differ.</div>`;
  return `<div class="card" id="cashc">${head}<div id="cashr" style="margin-top:14px"><div>Available: <b>${fmt(sn('CAD','tot')+sn('USD','tot')*R())}</b> <span class="k">(${avl})</span></div><div>Free to allocate: <b>${fmt(P.Ct)}</b> <span class="k">(${src})</span> </div>${tabsT}${cmpTog}<div style="margin-top:10px">Allocated by this plan: <b>${fmt(usedT)}</b> <span class="k">(${srcU||'nothing'})</span>${P.Ct-usedT>=1?` <span class="k">· ${fmt(P.Ct-usedT)} left unused</span>`:''}</div>${kept}${HID?'<div class="k" style="margin-top:4px">Amounts hidden (eye button to show).</div>':''}${op}${buyT}${lf}${balT}${lt}${mixT}<div class="k" style="margin-top:12px">This is arithmetic on your own holdings and limits, not financial advice.</div></div></div>`}
 /* popup: the cash found in each account, what you keep and what is free to use (follows the types, the keep amounts and the account choice as they are now) */
-function cashAvail(){const c=U.cash,cf=cashCf(),fm=(v,cu)=>HID?MASK:nf(cu,2).format(v);
+function cashAvail(){const c=U.cash,cf=cashCf(),fm=(v,cu)=>HID?MASK:cadP(cu,nf(cu,2).format(v));
  if(!cf.tc&&!cf.tu){toast('Pick the investment type for your CAD cash, USD cash or both first');return}
  const ps=cashPots(c.sc,c.ex,cf);
  if(!ps.length){modal('Available cash',`<div class="k">No cash found. Nothing is held under ${[cf.tc,cf.tu].filter(Boolean).map(esc).join(' or ')} yet. Add each account's available cash as a holding with that investment type.</div>`);return}
